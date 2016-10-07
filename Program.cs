@@ -19,10 +19,13 @@ namespace ConsoleApp2
 		{
 			Initialize(handle, baudrate);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-			serviceHandler.GetMenus((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE04);
+			//написать функцию для преобразования 1-64 в 0x70 0x00 - байты ХХ и УУ в схеме 10 09 2E [XX] 75 FE 01 00 00 [YY] 00
+			//Console.WriteLine(serviceHandler.GetMenus((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02));
+			serviceHandler.SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x7175, new byte[] { 0xFE, 0x01, 0x00, 0x00, 0x01, 0x00 });
+			Console.WriteLine(serviceHandler.GetMenus((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02));
 
-			//UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] identifiers = { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE04 }; //0xFE00 menus, 0xFE02 menu 2
-			//byte[] byteArray = serviceHandler.SendReadDataByIdentifier(identifiers);
+			//UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] identifiers = { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x5375, (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE01, (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x0000, (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x2300 }; //0xFE00 menus, 0xFE02 menu 2
+			//byte[] byteArray = serviceHandler.SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE01, new byte[] { 0x00, 0x00, 0x23, 0x00 });
 			//foreach (byte b in byteArray) Console.Write($"{b:X2} ");
 			//Console.WriteLine();
 

@@ -54,14 +54,14 @@ namespace PCAN_UDS_TEST
                         if (i == 8)
                         {
                             totalMenuCount = byteArray[7];
-                            menuString += $"Total menu count: {totalMenuCount}\n{byteArray[i]}";
+                            menuString += $"Total menu count: {totalMenuCount}\n{byteArray[i] + 1} ";
                         }
                         else if (byteArray[i] == 0x00)
                         {
                             i++;
                             if (i < byteArray.Length)
                             {
-                                menuString += $"\n{byteArray[i]} ";
+                                menuString += $"\n{byteArray[i] + 1} ";
                                 if (byteArray[i] == totalMenuCount - 1) run = false;
                             }
                         }
