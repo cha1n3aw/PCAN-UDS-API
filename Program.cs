@@ -10,8 +10,8 @@ namespace BodAss
         private static uint timeoutValue = 5000;
         private static readonly CantpHandle handle = CantpHandle.PCANTP_HANDLE_USBBUS1;
         private static readonly CantpBaudrate baudrate = CantpBaudrate.PCANTP_BAUDRATE_250K;
-		private static readonly byte sourceAddress = 0xFA;
-		private static readonly byte destinationAddress = 0x01;
+		private static readonly byte sourceAddress = 0xF8;
+		private static readonly byte destinationAddress = 0x03;
 
 		static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
@@ -163,18 +163,14 @@ namespace BodAss
 
             Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+			
+			foreach (byte b in serviceHandler.SendDiagnosticSessionControl(0x03)) Console.Write($"{b:X2} ");
 
+			serviceHandler.UdsSetSecurityAccessLevel(0x07);
             List<MenuParameterMapping> menuParameterMappings = new()
             {
-                new MenuParameterMapping { menuNumber = 0, parameterNumber = 0 },
-                new MenuParameterMapping { menuNumber = 0, parameterNumber = 1 },
-                new MenuParameterMapping { menuNumber = 0, parameterNumber = 2 },
-                new MenuParameterMapping { menuNumber = 0, parameterNumber = 3 },
-                new MenuParameterMapping { menuNumber = 0, parameterNumber = 4 },
-                new MenuParameterMapping { menuNumber = 0, parameterNumber = 5 },
-                new MenuParameterMapping { menuNumber = 0, parameterNumber = 6 },
-                new MenuParameterMapping { menuNumber = 0, parameterNumber = 7 },
-                new MenuParameterMapping { menuNumber = 1, parameterNumber = 0 },
+				//new MenuParameterMapping { menuNumber = 0, parameterNumber = 0 },
+				//new MenuParameterMapping { menuNumber = 1, parameterNumber = 0 },
                 new MenuParameterMapping { menuNumber = 1, parameterNumber = 1 },
                 new MenuParameterMapping { menuNumber = 1, parameterNumber = 2 },
                 new MenuParameterMapping { menuNumber = 1, parameterNumber = 3 },
@@ -188,17 +184,24 @@ namespace BodAss
                 new MenuParameterMapping { menuNumber = 2, parameterNumber = 3 },
                 new MenuParameterMapping { menuNumber = 2, parameterNumber = 4 },
                 new MenuParameterMapping { menuNumber = 2, parameterNumber = 5 },
-                new MenuParameterMapping { menuNumber = 2, parameterNumber = 6 },
-                new MenuParameterMapping { menuNumber = 2, parameterNumber = 7 },
-                new MenuParameterMapping { menuNumber = 3, parameterNumber = 0 },
-                new MenuParameterMapping { menuNumber = 3, parameterNumber = 1 }
+                //new MenuParameterMapping { menuNumber = 1, parameterNumber = 6 },
+                //new MenuParameterMapping { menuNumber = 1, parameterNumber = 7 },
+                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 0 },
+                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 1 },
+                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 2 },
+                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 3 },
+                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 4 },
+                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 5 },
+                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 6 },
+                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 7 },
+                //new MenuParameterMapping { menuNumber = 3, parameterNumber = 0 },
+                //new MenuParameterMapping { menuNumber = 3, parameterNumber = 1 }
             };
 
-            serviceHandler.SetCustomView(menuParameterMappings, out Dictionary<ushort, List<MenuParameterMapping>> responseMapping);
-
-            serviceHandler.LiveUpdateParameters(responseMapping, out List<MenuParameterMapping> responseWithValuesMapping);
-            foreach (MenuParameterMapping menuParameter in responseWithValuesMapping)
-                Console.WriteLine($"{menuParameter.menuNumber} - {menuParameter.parameterNumber} - {menuParameter.value}");
+            //serviceHandler.SetCustomView(menuParameterMappings, out Dictionary<ushort, List<MenuParameterMapping>> responseMapping);
+            //serviceHandler.LiveUpdateParameters(responseMapping, out List<MenuParameterMapping> responseWithValuesMapping);
+            //foreach (MenuParameterMapping menuParameter in responseWithValuesMapping)
+            //    Console.WriteLine($"{menuParameter.menuNumber} - {menuParameter.parameterNumber} - {menuParameter.value}");
             
 
             //serviceHandler.SendDiagnosticSessionControl();
@@ -212,7 +215,7 @@ namespace BodAss
             //PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
             //PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
             //PrintLiveData(serviceHandler);
-            //Uninitialize(handle);
+            Uninitialize(handle);
         }
 
         private static bool Uninitialize(CantpHandle handle)

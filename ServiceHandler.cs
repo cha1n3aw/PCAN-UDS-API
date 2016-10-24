@@ -155,11 +155,11 @@ namespace PCAN_UDS_TEST
             {
                 byte[] response = SendSecurityAccess(accessLevel);
                 byte[] responseSeed = new byte[response.Length - 2];
-                foreach (byte b in responseSeed) Console.Write($"{b:X2} ");
-                Console.WriteLine();
                 Array.Copy(response, 2, responseSeed, 0, response.Length - 2);
                 Array.Resize(ref responseSeed, 16);
-                SecurityAccess securityAccess = new();
+				foreach (byte b in responseSeed) Console.Write($"{b:X2} ");
+				Console.WriteLine();
+				SecurityAccess securityAccess = new();
                 byte[] key = securityAccess.GetKey(responseSeed);
                 response = SendSecurityAccessWithData((byte)(accessLevel + 1), key);
                 foreach (byte b in response) Console.Write($"{b:X2} ");
@@ -246,7 +246,10 @@ namespace PCAN_UDS_TEST
                 foreach (KeyValuePair<ushort, List<MenuParameterMapping>> mapping in responseMapping)
                 {
                     byte[] response = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)mapping.Key });
-                    int y = 4;
+					foreach (byte b in response) Console.Write($"{b:X2} ");
+                    Console.WriteLine();
+
+					int y = 4;
                     List<MenuParameterMapping> responseData = new();
                     while (y < response.Length)
                     {
@@ -640,9 +643,9 @@ namespace PCAN_UDS_TEST
         /// The DiagnosticSessionControl service is used to enable different diagnostic sessions in the server.
         /// </summary>
         /// <returns>Byte array that contains response message</returns>
-        public byte[] SendDiagnosticSessionControl()
+        public byte[] SendDiagnosticSessionControl(byte authParameter)
         {
-            Console.WriteLine($"Service: {UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_DS)}");
+            Console.WriteLine($"Service: {UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, (UDSApi.uds_svc_param_dsc)authParameter)}");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
             Console.WriteLine($"WaitForService: {responseStatus}");
             if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
@@ -991,7 +994,12 @@ namespace PCAN_UDS_TEST
             Console.WriteLine($"Allocate TX message: {UDSApi.StatusIsOk_2013(status) && result}");
 
             UdsStatus resultStatus = UDSApi.Write_2013(handle, ref udsMessage);
-            if (UDSApi.StatusIsOk_2013(resultStatus)) Console.WriteLine("Write succeeded");
+            if (UDSApi.StatusIsOk_2013(resultStatus))
+            {
+
+				Thread.Sleep(100);
+				Console.WriteLine("Write succeeded");
+            }
             else Console.WriteLine("Write error: " + result, "Error");
             Console.WriteLine($"Free TX message: {UDSApi.MsgFree_2013(ref udsMessage)}");
             return true;
