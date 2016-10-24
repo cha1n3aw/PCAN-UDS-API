@@ -207,6 +207,37 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region BodasServiceWrappers
+        public bool SetCustomView(Dictionary<byte, List<DATA_IDENTIFIER>> requestParameters)
+        {
+            int count = 0;
+			foreach (KeyValuePair<byte, List<DATA_IDENTIFIER>> requestParameter in requestParameters)
+				count += requestParameter.Value.Count;
+            byte[] menuDataPairs = new byte[count];
+			for (int i = 0; i < requestParameters.Count; i++)
+            {
+				for (int y = 0; y < requestParameters[i].Value.Count)
+                    menuDataPairs[count]
+			}
+				//List <Object> menuDidPairs = new();
+				foreach (KeyValuePair<byte, List<DATA_IDENTIFIER>> requestParameter in requestParameters)
+            {
+                count += requestParameter.Value.Count;
+                foreach (DATA_IDENTIFIER dataIdentifier in requestParameter.Value)
+                {
+                    byte[] pair = new byte[4] { (byte)((ushort)dataIdentifier >> 8), (byte)((ushort)dataIdentifier & 0xFF), 0x00, requestParameter.Key };
+					menuDidPairs.Add(pair);
+				}
+            }
+            for (ushort i = 0xFE00; i < 0xFE00 + (count / 16) + 1; i++)
+            {
+				List<byte> customViewArray = new() { 0xBB, 0x01, (byte)(i >> 8), (byte)(i & 0x00FF) };
+                for (int y = 0; y < 16; y++)
+                    customViewArray.Add(menuDidPairs[]);
+				SendUSDT();
+			}
+            return true;
+        }
+
         public bool LiveUpdateParameters(List<DATA_IDENTIFIER> requestIdentifiers, out Dictionary<DATA_IDENTIFIER, List<ProcessData>> responseList) //byte parametersCount, 
         {
             responseList = new();
@@ -959,11 +990,7 @@ namespace PCAN_UDS_TEST
             Console.WriteLine($"Allocate TX message: {UDSApi.StatusIsOk_2013(status) && result}");
 
             UdsStatus resultStatus = UDSApi.Write_2013(handle, ref udsMessage);
-            if (UDSApi.StatusIsOk_2013(resultStatus))
-            {
-                Thread.Sleep(200);
-                Console.WriteLine("Write succeeded");
-            }
+            if (UDSApi.StatusIsOk_2013(resultStatus)) Console.WriteLine("Write succeeded");
             else Console.WriteLine("Write error: " + result, "Error");
             Console.WriteLine($"Free TX message: {UDSApi.MsgFree_2013(ref udsMessage)}");
             return true;
