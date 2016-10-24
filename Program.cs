@@ -10,8 +10,8 @@ namespace BodAss
         private static uint timeoutValue = 5000;
         private static readonly CantpHandle handle = CantpHandle.PCANTP_HANDLE_USBBUS1;
         private static readonly CantpBaudrate baudrate = CantpBaudrate.PCANTP_BAUDRATE_250K;
-		private static readonly byte sourceAddress = 0xF8;
-		private static readonly byte destinationAddress = 0x03;
+		private static readonly byte sourceAddress = 0xFA;
+		private static readonly byte destinationAddress = 0x01;
 
 		static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
@@ -163,11 +163,12 @@ namespace BodAss
 
             Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-			
-			foreach (byte b in serviceHandler.SendDiagnosticSessionControl(0x03)) Console.Write($"{b:X2} ");
+            foreach (byte b in serviceHandler.SendReadDataByIdentifier(new DATA_IDENTIFIER[] {(DATA_IDENTIFIER)0xFE19 })) Console.Write($"{b:X2} ");
+			//serviceHandler.SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.PUDS_SVC_PARAM_ER_SR);
+			//foreach (byte b in serviceHandler.SendDiagnosticSessionControl(0x03)) Console.Write($"{b:X2} ");
 
-			serviceHandler.UdsSetSecurityAccessLevel(0x07);
-            List<MenuParameterMapping> menuParameterMappings = new()
+			//serviceHandler.UdsSetSecurityAccessLevel(0x07);
+			List<MenuParameterMapping> menuParameterMappings = new()
             {
 				//new MenuParameterMapping { menuNumber = 0, parameterNumber = 0 },
 				//new MenuParameterMapping { menuNumber = 1, parameterNumber = 0 },
