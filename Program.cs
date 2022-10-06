@@ -19,8 +19,8 @@ namespace ConsoleApp2
 		{
 			Initialize(handle, baudrate);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-			serviceHandler.SendService();
-
+			//serviceHandler.SendService();
+			    
 			//byte[] byteArray = serviceHandler.ReceiveService();
 			//foreach (byte b in byteArray)
 			//	Console.Write($"{b:X2} ");

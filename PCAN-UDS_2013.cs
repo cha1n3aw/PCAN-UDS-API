@@ -2373,7 +2373,7 @@ namespace Peak.Can.Uds
         #endregion
         #region UDS Service: TesterPresent
         // ISO-14229-1:2013 §9.6.2.2 p.59
-        public enum uds_svc_param_tp : Byte
+        public enum UDS_SERVICE_PARAMETER_TESTER_PRESENT : Byte
         {
             /// <summary>
             /// Zero SubFunction
@@ -2397,7 +2397,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U1)]
-            uds_svc_param_tp testerpresent_type);
+            UDS_SERVICE_PARAMETER_TESTER_PRESENT testerpresent_type);
 
         /// <summary>
         /// TesterPresent service indicates to a server (or servers) that a client is still connected
@@ -2414,7 +2414,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request)
         {
-            return SvcTesterPresent_2013(channel, request_config, out out_msg_request, uds_svc_param_tp.PUDS_SVC_PARAM_TP_ZSUBF);
+            return SvcTesterPresent_2013(channel, request_config, out out_msg_request, UDS_SERVICE_PARAMETER_TESTER_PRESENT.PUDS_SVC_PARAM_TP_ZSUBF);
         }
 
         #endregion
@@ -2936,7 +2936,7 @@ namespace Peak.Can.Uds
         #endregion
         #region UDS Service: ReadDataByIdentifier
         // ISO-14229-1:2013 §C.1 p337
-        public enum uds_svc_param_di : ushort
+        public enum UDS_SERVICE_PARAMETER_DATA_IDENTIFIER : ushort
         {
             /// <summary>
             /// bootSoftwareIdentificationDataIdentifier
@@ -3082,7 +3082,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.U2, SizeParamIndex = 4)]
-            uds_svc_param_di[] data_identifier,
+            UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] data_identifier,
             UInt32 data_identifier_length);
 
 
@@ -3133,7 +3133,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U2)]
-            uds_svc_param_di data_identifier);
+            UDS_SERVICE_PARAMETER_DATA_IDENTIFIER data_identifier);
 
         #endregion
         #region UDS Service: ReadDataByPeriodicIdentifier
@@ -3221,7 +3221,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U2)]
-            uds_svc_param_di dynamically_defined_data_identifier,
+            UDS_SERVICE_PARAMETER_DATA_IDENTIFIER dynamically_defined_data_identifier,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 7)]
             ushort[] source_data_identifier,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 7)]
@@ -3257,7 +3257,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U2)]
-            uds_svc_param_di dynamically_defined_data_identifier,
+            UDS_SERVICE_PARAMETER_DATA_IDENTIFIER dynamically_defined_data_identifier,
             Byte memory_address_size,
             Byte memory_size_size,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 8)]
@@ -3282,7 +3282,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U2)]
-            uds_svc_param_di dynamically_defined_data_identifier);
+            UDS_SERVICE_PARAMETER_DATA_IDENTIFIER dynamically_defined_data_identifier);
 
         /// <summary>
         /// The Clear All Dynamically Defined Data Identifier function shall be used to clear
@@ -3320,7 +3320,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U2)]
-            uds_svc_param_di  data_identifier,
+            UDS_SERVICE_PARAMETER_DATA_IDENTIFIER  data_identifier,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 5)]
             Byte[] data_record,
             UInt32 data_record_size);
@@ -3412,7 +3412,7 @@ namespace Peak.Can.Uds
         #endregion
         #region UDS Service: ReadDTCInformation
         // ISO-14229-1:2013 §11.3.2.2 p.194
-        public enum uds_svc_param_rdtci : Byte
+        public enum UDS_SERVICE_PARAMETER_READ_DTC_INFORMATION_TYPE : Byte
         {
             /// <summary>
             /// report Number Of DTC By Status Mask
@@ -3577,7 +3577,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U1)]
-            uds_svc_param_rdtci PUDS_SVC_PARAM_RDTCI_Type,
+            UDS_SERVICE_PARAMETER_READ_DTC_INFORMATION_TYPE PUDS_SVC_PARAM_RDTCI_Type,
             Byte dtc_status_mask);
 
         /// <summary>
@@ -3635,7 +3635,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U1)]
-            uds_svc_param_rdtci PUDS_SVC_PARAM_RDTCI_Type,
+            UDS_SERVICE_PARAMETER_READ_DTC_INFORMATION_TYPE PUDS_SVC_PARAM_RDTCI_Type,
             UInt32 dtc_mask,
             Byte dtc_extended_data_record_number);
 
@@ -3658,7 +3658,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U1)]
-            uds_svc_param_rdtci PUDS_SVC_PARAM_RDTCI_Type,
+            UDS_SERVICE_PARAMETER_READ_DTC_INFORMATION_TYPE PUDS_SVC_PARAM_RDTCI_Type,
             byte dtc_severity_mask,
             Byte dtc_status_mask);
 
@@ -3701,7 +3701,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U1)]
-            uds_svc_param_rdtci PUDS_SVC_PARAM_RDTCI_Type);
+            UDS_SERVICE_PARAMETER_READ_DTC_INFORMATION_TYPE PUDS_SVC_PARAM_RDTCI_Type);
 
         /// <summary>
         /// This service allows a client to read the status of server-resident Diagnostic Trouble Code (DTC) information.
@@ -3905,7 +3905,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U2)]
-            uds_svc_param_di data_identifier,
+            UDS_SERVICE_PARAMETER_DATA_IDENTIFIER data_identifier,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 5)]
             byte[] control_option_record,
             UInt32 control_option_record_size,
@@ -3920,7 +3920,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U2)]
-            uds_svc_param_di data_identifier,
+            UDS_SERVICE_PARAMETER_DATA_IDENTIFIER data_identifier,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 5)]
             byte[] control_option_record,
             UInt32 control_option_record_size,
@@ -3944,7 +3944,7 @@ namespace Peak.Can.Uds
             CantpHandle channel,
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
-            uds_svc_param_di data_identifier,
+            UDS_SERVICE_PARAMETER_DATA_IDENTIFIER data_identifier,
             byte[] control_option_record,
             UInt32 control_option_record_size)
         {
@@ -3955,7 +3955,7 @@ namespace Peak.Can.Uds
         #endregion
         #region UDS Service: RoutineControl
         // ISO-14229-1:2013 §13.2.2.2 p.262
-        public enum uds_svc_param_rc : Byte
+        public enum UDS_SERVICE_PARAMETER_ROUTINE_CONTROL : Byte
         {
             /// <summary>
             /// Start Routine
@@ -3971,7 +3971,7 @@ namespace Peak.Can.Uds
             PUDS_SVC_PARAM_RC_RRR = 0x03
         }
         // routineIdentifier: ISO-14229-1:2013 §F.1 p.375
-        public enum uds_svc_param_rc_rid : ushort
+        public enum UDS_SERVICE_PARAMETER_ROUTINE_CONTROL_IDENTIFIER : ushort
         {
             /// <summary>
             /// routineIdentifier: DeployLoopRoutineID
@@ -4010,9 +4010,9 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U1)]
-            uds_svc_param_rc routine_control_type,
+            UDS_SERVICE_PARAMETER_ROUTINE_CONTROL routine_control_type,
             [MarshalAs(UnmanagedType.U2)]
-            uds_svc_param_rc_rid routine_identifier,
+            UDS_SERVICE_PARAMETER_ROUTINE_CONTROL_IDENTIFIER routine_identifier,
             [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 6)]
             byte[] routine_control_option_record,
             UInt32 routine_control_option_record_size);
@@ -4024,9 +4024,9 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U1)]
-            uds_svc_param_rc routine_control_type,
+            UDS_SERVICE_PARAMETER_ROUTINE_CONTROL routine_control_type,
             [MarshalAs(UnmanagedType.U2)]
-            uds_svc_param_rc_rid routine_identifier,
+            UDS_SERVICE_PARAMETER_ROUTINE_CONTROL_IDENTIFIER routine_identifier,
             IntPtr routine_control_option_record,
             UInt32 routine_control_option_record_size);
 
@@ -4045,8 +4045,8 @@ namespace Peak.Can.Uds
             CantpHandle channel,
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
-            uds_svc_param_rc routine_control_type,
-            uds_svc_param_rc_rid routine_identifier)
+            UDS_SERVICE_PARAMETER_ROUTINE_CONTROL routine_control_type,
+            UDS_SERVICE_PARAMETER_ROUTINE_CONTROL_IDENTIFIER routine_identifier)
         {
             return SvcRoutineControl_2013(channel, request_config, out out_msg_request, routine_control_type, routine_identifier, IntPtr.Zero, 0);
         }
