@@ -36,22 +36,64 @@ namespace PCAN_UDS_TEST
 
         public bool SendService()
         {
-            string messageString = string.Empty;
+            //string messageString = string.Empty;
+            //Console.WriteLine($"Service: {UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_DS)}");
+            //UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
+            //Console.WriteLine($"WaitForService: {responseStatus}");
+            //if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
+            //{
+            //    for (int i = 0; i < udsMessageResponse.message.MessageDataAnyCopy.length; i++)
+            //        messageString += $"{Marshal.ReadByte(udsMessageResponse.message.MessageDataAnyCopy.Data + i):X2} ";
+            //    Console.WriteLine(messageString);
+            //    return true;
+            //}
+            //else
+            //{
+            //    Console.WriteLine("Corrupted response, no message received");
+            //    return false;
+            //}
+        }
+
+        public byte[] SendDiagnosticSessionControl()
+        {
             Console.WriteLine($"Service: {UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_DS)}");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
             Console.WriteLine($"WaitForService: {responseStatus}");
             if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
             {
-                for (int i = 0; i < udsMessageResponse.message.MessageDataAnyCopy.length; i++)
-                    messageString += $"{Marshal.ReadByte(udsMessageResponse.message.MessageDataAnyCopy.Data + i):X2} ";
-                Console.WriteLine(messageString);
-                return true;
+                byte[] udsMessageByteArray = new byte[udsMessageResponse.message.MessageDataAnyCopy.length];
+                if (CanTpApi.getData_2016(ref udsMessageResponse.message, 0, udsMessageByteArray, (int)udsMessageResponse.message.MessageDataAnyCopy.length))
+                {
+                    if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
+                        UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_DiagnosticSessionControl + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
+                    Console.WriteLine($"Write response message for service: {UDSApi.Write_2013(handle, ref service_response_msg)}");
+                    Console.WriteLine($"Free response message: {UDSApi.MsgFree_2013(ref service_response_msg)}");
+                    return udsMessageByteArray;
+                }
             }
-            else
+            Console.WriteLine("Corrupted response, no message received");
+            return Array.Empty<byte>();
+        }
+
+        public byte[] SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
+        {
+            Console.WriteLine($"Service: {UDSApi.SvcECUReset_2013(handle, requestConfig, out UdsMessage outMessage, resetParameter)}");
+            UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
+            Console.WriteLine($"WaitForService: {responseStatus}");
+            if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
             {
-                Console.WriteLine("Corrupted response, no message received");
-                return false;
+                byte[] udsMessageByteArray = new byte[udsMessageResponse.message.MessageDataAnyCopy.length];
+                if (CanTpApi.getData_2016(ref udsMessageResponse.message, 0, udsMessageByteArray, (int)udsMessageResponse.message.MessageDataAnyCopy.length))
+                {
+                    if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
+                        UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_ECUReset + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
+                    Console.WriteLine($"Write response message for service: {UDSApi.Write_2013(handle, ref service_response_msg)}");
+                    Console.WriteLine($"Free response message: {UDSApi.MsgFree_2013(ref service_response_msg)}");
+                    return udsMessageByteArray;
+                }
             }
+            Console.WriteLine("Corrupted response, no message received");
+            return Array.Empty<byte>();
         }
 
         public byte[] ReceiveService()
@@ -77,7 +119,7 @@ namespace PCAN_UDS_TEST
                     if (CanTpApi.getData_2016(ref udsMessage.message, 0, udsMessageByteArray, (int)udsMessage.message.MessageDataAnyCopy.length))
                     {
                         if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
-                            UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)uds_service.PUDS_SERVICE_SI_DiagnosticSessionControl + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
+                            UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_DiagnosticSessionControl + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
                         Console.WriteLine($"Write response message for service: {UDSApi.Write_2013(handle, ref service_response_msg)}");
                         Console.WriteLine($"Free response message: {UDSApi.MsgFree_2013(ref service_response_msg)}");
                         return udsMessageByteArray;

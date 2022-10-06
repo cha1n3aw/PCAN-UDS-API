@@ -1953,7 +1953,7 @@ namespace Peak.Can.Uds
     /// <summary>
     /// PUDS Service ids defined in ISO 14229-1:2013
     /// </summary>
-    public enum uds_service : Byte
+    public enum UDS_SERVICE : Byte
     {
         /// <summary>
         /// see ISO 14229-1:2013
@@ -2126,7 +2126,7 @@ namespace Peak.Can.Uds
 
         #region UDS Service: ECU_Reset
         // ISO-14229-1:2013 §9.3.2.2 p.43
-        public enum uds_svc_param_er : Byte
+        public enum UDS_SERVICE_PARAMETER_ECU_RESET : Byte
         {
             /// <summary>
             /// Hard Reset
@@ -2164,7 +2164,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U1)]
-            uds_svc_param_er reset_type);
+            UDS_SERVICE_PARAMETER_ECU_RESET reset_type);
         #endregion
 
         #region UDS Service: SecurityAccess
@@ -2696,19 +2696,19 @@ namespace Peak.Can.Uds
             /// <summary>
             /// Recommended service (first byte of service to respond to record)
             /// </summary>
-            PUDS_SVC_PARAM_ROE_STRT_SI_RDBI = uds_service.PUDS_SERVICE_SI_ReadDataByIdentifier,
+            PUDS_SVC_PARAM_ROE_STRT_SI_RDBI = UDS_SERVICE.PUDS_SERVICE_SI_ReadDataByIdentifier,
             /// <summary>
             /// Recommended service (first byte of service to respond to record)
             /// </summary>
-            PUDS_SVC_PARAM_ROE_STRT_SI_RDTCI = uds_service.PUDS_SERVICE_SI_ReadDTCInformation,
+            PUDS_SVC_PARAM_ROE_STRT_SI_RDTCI = UDS_SERVICE.PUDS_SERVICE_SI_ReadDTCInformation,
             /// <summary>
             /// Recommended service (first byte of service to respond to record)
             /// </summary>
-            PUDS_SVC_PARAM_ROE_STRT_SI_RC = uds_service.PUDS_SERVICE_SI_RoutineControl,
+            PUDS_SVC_PARAM_ROE_STRT_SI_RC = UDS_SERVICE.PUDS_SERVICE_SI_RoutineControl,
             /// <summary>
             /// Recommended service (first byte of service to respond to record)
             /// </summary>
-            PUDS_SVC_PARAM_ROE_STRT_SI_IOCBI = uds_service.PUDS_SERVICE_SI_InputOutputControlByIdentifier
+            PUDS_SVC_PARAM_ROE_STRT_SI_IOCBI = UDS_SERVICE.PUDS_SERVICE_SI_InputOutputControlByIdentifier
         }
 
         /// <summary>
