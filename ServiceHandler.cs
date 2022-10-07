@@ -78,39 +78,40 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool GetDataFromByteArray(byte[] byteArray, out Data[] dataArray)
+        public bool GetDataFromByteArray(byte[] byteArray, out List<Data> dataArray)
         {
-            dataArray = Array.Empty<Data>();
+            dataArray = new();
             int y = 6;
             for (; y < byteArray.Length; y += 3)
             {
-                dataArray[dataArray.Length] = new Data();
-                for (; byteArray[y] != 0x00; y++) dataArray[^1].name += (char)byteArray[y];
+                Data data = new();
+                for (; byteArray[y] != 0x00; y++) data.name += (char)byteArray[y];
                 y++;
-                dataArray[^1].valueType = byteArray[y];
-                dataArray[^1].minValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                data.valueType = byteArray[y];
+                data.minValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
                 y += 2;
-                dataArray[^1].maxValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                data.maxValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
                 y += 2;
-                dataArray[^1].step = byteArray[y];
+                data.step = byteArray[y];
                 y++;
-                for (; byteArray[y] != 0x00; y++) dataArray[dataArray.Length].name += (char)byteArray[y];
+                for (; byteArray[y] != 0x00; y++) data.name += (char)byteArray[y];
                 y++;
-                dataArray[^1].multiplier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                data.multiplier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                 y += 2;
-                dataArray[^1].divider = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                data.divider = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                 y += 2;
-                dataArray[^1].precision = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                data.precision = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                 y += 2;
-                dataArray[^1].accessLevel = byteArray[y];
+                data.accessLevel = byteArray[y];
                 y++;
-                dataArray[^1].defaultValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                data.defaultValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
                 y += 2;
-                dataArray[^1].eepromPage = byteArray[y];
+                data.eepromPage = byteArray[y];
                 y++;
-                dataArray[^1].eepromAddress = byteArray[y];
+                data.eepromAddress = byteArray[y];
                 y += 3;
-                dataArray[^1].value = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                data.value = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                dataArray.Add(data);
             }
             return true;
         }
@@ -119,13 +120,13 @@ namespace PCAN_UDS_TEST
         public bool GetDataByIdentifiers(out byte[] dataArray)
         {
             UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers = {
-                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD0E,
-                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD1E,
-                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD2E,
-                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD3E,
-                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD4E,
-                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD5E,
-                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD6E,
+                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD0E,
+                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD1E,
+                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD2E,
+                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD3E,
+                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD4E,
+                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD5E,
+                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD6E,
                 (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD7E};
 
             dataArray = SendReadDataByIdentifier(dataIdentifiers);
@@ -134,10 +135,10 @@ namespace PCAN_UDS_TEST
         }
 
 
-        public bool GetMenus(out string[] menuStrings)
+        public bool GetMenus(out List<string> menuStrings)
         {
+            menuStrings = new();
             int menuCount = 0;
-            menuStrings = Array.Empty<string>();
             bool run = true;
             while (run)
             {
@@ -149,18 +150,18 @@ namespace PCAN_UDS_TEST
                         if (i == 8)
                         {
                             menuCount = byteArray[7];
-                            menuStrings[menuStrings.Length] = (byteArray[i] + 1).ToString();
+							menuStrings.Add($"{(byteArray[i] + 1)} ");
                         }
                         else if (byteArray[i] == 0x00)
                         {
                             i++;
                             if (i < byteArray.Length)
                             {
-                                menuStrings[menuStrings.Length] = (byteArray[i] + 1).ToString();
+								menuStrings.Add($"{(byteArray[i] + 1)} ");
                                 if (byteArray[i] == menuCount - 1) run = false;
                             }
                         }
-                        else menuStrings[^1] += $" {(char)byteArray[i]}";
+                        else menuStrings[^1] += $"{(char)byteArray[i]}";
                     }
                 }
                 else return false;
@@ -168,14 +169,13 @@ namespace PCAN_UDS_TEST
             return true;
         }
 
-        public bool GetSubMenus(byte menuNumber, out string[] subMenuStrings)
+        public bool GetSubMenus(byte menuNumber, out List<string> subMenuStrings)
         {
-            subMenuStrings = Array.Empty<string>();
-            uint subMenuCount = 0;
-            bool run = true;
-            while (run)
+            subMenuStrings = new();
+            //uint subMenuCount = 0;
+            for (int y = 0; y < 8; y++)
             {
-                if (!SetSubMenuCursor(menuNumber, null)) return false;
+                if (!SetSubMenuCursor(menuNumber, (byte)y)) return false;
                 byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02 });
                 if (byteArray != null && byteArray != Array.Empty<byte>())
                 {
@@ -183,19 +183,18 @@ namespace PCAN_UDS_TEST
                     {
                         if (i == 8)
                         {
-                            subMenuCount = byteArray[7];
-                            subMenuStrings[subMenuStrings.Length] = (byteArray[i] + 1).ToString();
+                            //subMenuCount = byteArray[7];
+                            subMenuStrings.Add($"{(byteArray[i] + 1)} ");
                         }
                         else if (byteArray[i] == 0x00)
                         {
                             i++;
                             if (i < byteArray.Length)
                             {
-                                subMenuStrings[subMenuStrings.Length] = (byteArray[i] + 1).ToString();
-                                if (byteArray[i] == subMenuCount - 1) run = false;
+                                subMenuStrings.Add($"{(byteArray[i] + 1)} ");
                             }
                         }
-                        else subMenuStrings[^1] += $" {(char)byteArray[i]}";
+                        else subMenuStrings[^1] += $"{(char)byteArray[i]}";
                     }
                 }
                 else return false;
@@ -208,8 +207,9 @@ namespace PCAN_UDS_TEST
             byte[] response;
             if (subMenuNumber == null) response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | 0xFE), new byte[] { 0x01, 0x00, 0x00, menuNumber });
             else response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSubMenuAddress((byte)subMenuNumber)), new byte[] { 0xFE, 0x01, 0x00, 0x00, menuNumber, (byte)subMenuNumber });
-            if (response.Equals(new byte[] { 0x6E, 0xFE, 0x01 })) return true;
-            return false;
+            //if (response.Equals(new byte[] { 0x6E, 0xFE, 0x01 })) return true;
+            //return false;
+            return true;
         }
         #endregion
 
