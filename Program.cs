@@ -19,12 +19,14 @@ namespace ConsoleApp2
 		{
 			Initialize(handle, baudrate);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-			//serviceHandler.SendService();
-			    
-			//byte[] byteArray = serviceHandler.ReceiveService();
-			//foreach (byte b in byteArray)
-			//	Console.Write($"{b:X2} ");
-			//Console.WriteLine();
+            
+            UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] identifiers = { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE00 }; //0xFE00 menus, 0xFE02 menu 2
+            byte[] byteArray = serviceHandler.SendReadDataByIdentifier(identifiers);
+            for (int i = 9; i < byteArray.Length; i++)
+                if (byteArray[i] == 0x00) Console.WriteLine();
+                else Console.Write((char)byteArray[i]);
+            Console.WriteLine();
+            
             Uninitialize(handle);
 		}
 
