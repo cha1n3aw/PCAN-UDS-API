@@ -1,6 +1,7 @@
 ﻿using PCAN_UDS_TEST;
 using Peak.Can.IsoTp;
 using Peak.Can.Uds;
+using System.Collections;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -19,17 +20,32 @@ namespace ConsoleApp2
 		{
 			Initialize(handle, baudrate);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-			//написать функцию для преобразования 1-64 в 0x70 0x00 - байты ХХ и УУ в схеме 10 09 2E [XX] 75 FE 01 00 00 [YY] 00
-			//Console.WriteLine(serviceHandler.GetMenus((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02));
-			serviceHandler.SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x7175, new byte[] { 0xFE, 0x01, 0x00, 0x00, 0x01, 0x00 });
-			Console.WriteLine(serviceHandler.GetMenus((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02));
+			if (!serviceHandler.GetMenus(out string[] menuStrings)) return;
+            for (byte i = 0; i < menuStrings.Length; i++)
+			{
+				Console.WriteLine(menuStrings[i]);
+                if (!serviceHandler.GetSubMenus(i, out string[] subMenuStrings)) return;
+                for(byte y = 0; y < subMenuStrings.Length; y++)
+				{
+					Console.WriteLine(subMenuStrings[y]);
+					if (!serviceHandler.GetDataByIdentifiers(out byte[] byteArray)) return;
+					if (!serviceHandler.GetDataFromByteArray(byteArray, out Data[] dataArray)) return;
+					for (int x = 0; x < dataArray.Length; x++)
+						Console.WriteLine($"{dataArray[x].name} {dataArray[x].value}");
+                }
+            }
+            
+            //написать функцию для преобразования 1-64 в 0x70 0x00 - байты ХХ и УУ в схеме 10 09 2E [XX] 75 FE 01 00 00 [YY] 00
+            //Console.WriteLine(serviceHandler.GetMenus((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02));
+            //serviceHandler.SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x7175, new byte[] { 0xFE, 0x01, 0x00, 0x00, 0x01, 0x00 });
+            //Console.WriteLine(serviceHandler.GetMenus((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02));
 
-			//UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] identifiers = { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x5375, (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE01, (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x0000, (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x2300 }; //0xFE00 menus, 0xFE02 menu 2
-			//byte[] byteArray = serviceHandler.SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE01, new byte[] { 0x00, 0x00, 0x23, 0x00 });
-			//foreach (byte b in byteArray) Console.Write($"{b:X2} ");
-			//Console.WriteLine();
+            //UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] identifiers = { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x5375, (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE01, (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x0000, (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x2300 }; //0xFE00 menus, 0xFE02 menu 2
+            //byte[] byteArray = serviceHandler.SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE01, new byte[] { 0x00, 0x00, 0x23, 0x00 });
+            //foreach (byte b in byteArray) Console.Write($"{b:X2} ");
+            //Console.WriteLine();
 
-			Uninitialize(handle);
+            Uninitialize(handle);
 		}
 
         private static void GetVersionInformation()

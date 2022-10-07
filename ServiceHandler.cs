@@ -39,38 +39,121 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region HighLevelServices
-        public string GetMenus(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER dataIdentifier)
+        private byte GetMenuAddress(byte menuNumber)
         {
-            string menuString = string.Empty;
-            uint totalMenuCount = 0;
+            return (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
+        }
+
+        private byte GetSubMenuAddress(byte subMenuNumber)
+        {
+            switch (subMenuNumber)
+            {
+                case 0x00: return 0x75;
+                case 0x01: return 0x74;
+                case 0x02: return 0x77;
+                case 0x03: return 0x76;
+                case 0x04: return 0x71;
+                case 0x05: return 0x70;
+                case 0x06: return 0x73;
+                case 0x07: return 0x72;
+                default: return 0x00;
+            }
+        }
+
+        public bool GetDataByIdentifiers(out byte[] dataArray)
+        {
+            UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers = {
+                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD0E,
+                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD1E,
+                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD2E,
+                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD3E,
+                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD4E,
+                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD5E,
+                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD6E,
+                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD7E};
+
+            dataArray = SendReadDataByIdentifier(dataIdentifiers);
+            if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
+            else return false;
+        }
+
+
+        public bool GetMenus(out string[] menuStrings)
+        {
+            int menuCount = 0;
+            menuStrings = Array.Empty<string>();
             bool run = true;
             while (run)
             {
-                byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { dataIdentifier });
+                byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE00 });
                 if (byteArray != null && byteArray != Array.Empty<byte>())
                 {
                     for (int i = 8; i < byteArray.Length; i++)
                     {
                         if (i == 8)
                         {
-                            totalMenuCount = byteArray[7];
-                            menuString += $"Total menu count: {totalMenuCount}\n{byteArray[i] + 1} ";
+                            menuCount = byteArray[7];
+                            menuStrings[menuStrings.Length] = (byteArray[i] + 1).ToString();
                         }
                         else if (byteArray[i] == 0x00)
                         {
                             i++;
                             if (i < byteArray.Length)
                             {
-                                menuString += $"\n{byteArray[i] + 1} ";
-                                if (byteArray[i] == totalMenuCount - 1) run = false;
+                                menuStrings[menuStrings.Length] = (byteArray[i] + 1).ToString();
+                                if (byteArray[i] == menuCount - 1) run = false;
                             }
                         }
-                        else menuString += $"{(char)byteArray[i]}";
+                        else menuStrings[^1] += $" {(char)byteArray[i]}";
                     }
                 }
+                else return false;
             }
-            return menuString;
-            afd
+            return true;
+        }
+
+        public bool GetSubMenus(byte menuNumber, out string[] subMenuStrings)
+        {
+            subMenuStrings = Array.Empty<string>();
+            uint subMenuCount = 0;
+            bool run = true;
+            while (run)
+            {
+                if (!SetSubMenuCursor(menuNumber, null)) return false;
+                byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02 });
+                if (byteArray != null && byteArray != Array.Empty<byte>())
+                {
+                    for (int i = 8; i < byteArray.Length; i++)
+                    {
+                        if (i == 8)
+                        {
+                            subMenuCount = byteArray[7];
+                            subMenuStrings[subMenuStrings.Length] = (byteArray[i] + 1).ToString();
+                        }
+                        else if (byteArray[i] == 0x00)
+                        {
+                            i++;
+                            if (i < byteArray.Length)
+                            {
+                                subMenuStrings[subMenuStrings.Length] = (byteArray[i] + 1).ToString();
+                                if (byteArray[i] == subMenuCount - 1) run = false;
+                            }
+                        }
+                        else subMenuStrings[^1] += $" {(char)byteArray[i]}";
+                    }
+                }
+                else return false;
+            }
+            return true;
+        }
+
+        public bool SetSubMenuCursor(byte menuNumber, byte? subMenuNumber)
+        {
+            byte[] response;
+            if (subMenuNumber == null) response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | 0xFE), new byte[] { 0x01, 0x00, 0x00, menuNumber });
+            else response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSubMenuAddress((byte)subMenuNumber)), new byte[] { 0xFE, 0x01, 0x00, 0x00, menuNumber, (byte)subMenuNumber });
+            if (response.Equals(new byte[] { 0x6E, 0xFE, 0x01 })) return true;
+            return false;
         }
         #endregion
 
