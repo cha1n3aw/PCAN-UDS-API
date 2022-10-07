@@ -34,7 +34,7 @@ namespace ConsoleApp2
 						Console.WriteLine($"{dataArray[x].name} {dataArray[x].value}");
                 }
             }
-            
+
             //написать функцию для преобразования 1-64 в 0x70 0x00 - байты ХХ и УУ в схеме 10 09 2E [XX] 75 FE 01 00 00 [YY] 00
             //Console.WriteLine(serviceHandler.GetMenus((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02));
             //serviceHandler.SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0x7175, new byte[] { 0xFE, 0x01, 0x00, 0x00, 0x01, 0x00 });

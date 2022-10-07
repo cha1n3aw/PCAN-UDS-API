@@ -4,6 +4,24 @@ using System.Runtime.InteropServices;
 
 namespace PCAN_UDS_TEST
 {
+    public struct Data
+    {
+        public string name;
+        public byte valueType;
+        public short minValue;
+        public short maxValue;
+        public byte step;
+        public int dimension;
+        public ushort multiplier;
+        public ushort divider;
+        public ushort precision;
+        public byte accessLevel;
+        public short defaultValue;
+        public byte eepromPage;
+        public byte eepromAddress;
+        public short value;
+    }
+
     public class ServiceHandler
     {
         #region GlobalParameters
@@ -59,6 +77,44 @@ namespace PCAN_UDS_TEST
                 default: return 0x00;
             }
         }
+
+        public bool GetDataFromByteArray(byte[] byteArray, out Data[] dataArray)
+        {
+            dataArray = Array.Empty<Data>();
+            int y = 6;
+            for (; y < byteArray.Length; y += 3)
+            {
+                dataArray[dataArray.Length] = new Data();
+                for (; byteArray[y] != 0x00; y++) dataArray[^1].name += (char)byteArray[y];
+                y++;
+                dataArray[^1].valueType = byteArray[y];
+                dataArray[^1].minValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                y += 2;
+                dataArray[^1].maxValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                y += 2;
+                dataArray[^1].step = byteArray[y];
+                y++;
+                for (; byteArray[y] != 0x00; y++) dataArray[dataArray.Length].name += (char)byteArray[y];
+                y++;
+                dataArray[^1].multiplier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                y += 2;
+                dataArray[^1].divider = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                y += 2;
+                dataArray[^1].precision = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                y += 2;
+                dataArray[^1].accessLevel = byteArray[y];
+                y++;
+                dataArray[^1].defaultValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                y += 2;
+                dataArray[^1].eepromPage = byteArray[y];
+                y++;
+                dataArray[^1].eepromAddress = byteArray[y];
+                y += 3;
+                dataArray[^1].value = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+            }
+            return true;
+        }
+
 
         public bool GetDataByIdentifiers(out byte[] dataArray)
         {
