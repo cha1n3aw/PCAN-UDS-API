@@ -70,6 +70,7 @@ namespace PCAN_UDS_TEST
                 }
             }
             return menuString;
+            afd
         }
         #endregion
 
