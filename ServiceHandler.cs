@@ -38,6 +38,41 @@ namespace PCAN_UDS_TEST
         }
         #endregion
 
+        #region HighLevelServices
+        public string GetMenus(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER dataIdentifier)
+        {
+            string menuString = string.Empty;
+            uint totalMenuCount = 0;
+            bool run = true;
+            while (run)
+            {
+                byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { dataIdentifier });
+                if (byteArray != null && byteArray != Array.Empty<byte>())
+                {
+                    for (int i = 8; i < byteArray.Length; i++)
+                    {
+                        if (i == 8)
+                        {
+                            totalMenuCount = byteArray[7];
+                            menuString += $"Total menu count: {totalMenuCount}\n{byteArray[i]}";
+                        }
+                        else if (byteArray[i] == 0x00)
+                        {
+                            i++;
+                            if (i < byteArray.Length)
+                            {
+                                menuString += $"\n{byteArray[i]} ";
+                                if (byteArray[i] == totalMenuCount - 1) run = false;
+                            }
+                        }
+                        else menuString += $"{(char)byteArray[i]}";
+                    }
+                }
+            }
+            return menuString;
+        }
+        #endregion
+
         #region SendServices
         /// <summary>
         /// The DiagnosticSessionControl service is used to enable different diagnostic sessions in the server.
