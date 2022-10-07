@@ -15,19 +15,52 @@ namespace ConsoleApp2
 		private static readonly byte sourceAddress = 0xFA;
 		private static readonly byte destinationAddress = 0x01;
 
+		static void GetMenus(ServiceHandler serviceHandler)
+		{
+			uint totalMenuCount = 0;
+			bool run = true;
+			while (run)
+			{
+				UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] identifiers = { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE04 }; //0xFE00 menus, 0xFE02 menu 2
+				byte[] byteArray = serviceHandler.SendReadDataByIdentifier(identifiers);
+				if (byteArray != null && byteArray != Array.Empty<byte>())
+				{
+					for (int i = 8; i < byteArray.Length; i++)
+					{
+						if (i == 8)
+						{
+							totalMenuCount = byteArray[7];
+							Console.WriteLine($"Total menu count: {totalMenuCount}");
+							Console.Write($"{byteArray[i]} ");
+						}
+						else if (byteArray[i] == 0x00)
+						{
+							i++;
+							Console.WriteLine();
+							if (i < byteArray.Length)
+							{
+								Console.Write($"{byteArray[i]} ");
+								if (byteArray[i] == totalMenuCount - 1) run = false;
+							}
+						}
+						else Console.Write((char)byteArray[i]);
+					}
+					Console.WriteLine();
+				}
+			}
+		}
+
 		static void Main(string[] args)
 		{
 			Initialize(handle, baudrate);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-            
-            UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] identifiers = { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE00 }; //0xFE00 menus, 0xFE02 menu 2
-            byte[] byteArray = serviceHandler.SendReadDataByIdentifier(identifiers);
-            for (int i = 9; i < byteArray.Length; i++)
-                if (byteArray[i] == 0x00) Console.WriteLine();
-                else Console.Write((char)byteArray[i]);
-            Console.WriteLine();
-            
-            Uninitialize(handle);
+			GetMenus(serviceHandler);
+
+			//UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] identifiers = { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE04 }; //0xFE00 menus, 0xFE02 menu 2
+			//byte[] byteArray = serviceHandler.SendReadDataByIdentifier(identifiers);
+			//foreach (byte b in byteArray) Console.Write($"{b:X2} ");
+			//Console.WriteLine();
+			Uninitialize(handle);
 		}
 
         private static void GetVersionInformation()
