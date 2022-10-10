@@ -139,6 +139,7 @@ namespace PCAN_UDS_TEST
                     data.value = (short)(byteArray[y] << 8 | byteArray[y + 1]);
                     y++;
 					dataArray.Add(data);
+
                 }
                 return true;
             }
