@@ -1,6 +1,7 @@
 ﻿using Peak.Can.IsoTp;
 using Peak.Can.Uds;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace PCAN_UDS_TEST
 {
@@ -20,6 +21,9 @@ namespace PCAN_UDS_TEST
         public byte eepromPage;
         public byte eepromAddress;
         public short value;
+
+        public override string ToString() =>
+            $"{name}, {valueType}, {minValue}, {maxValue}, {step}, {dimension}, {multiplier}, {divider}, {precision}, {accessLevel}, {defaultValue}, {eepromPage}, {eepromAddress}, {value}";
     }
 
     public class ServiceHandler
@@ -78,14 +82,21 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool GetDataFromByteArray(byte[] byteArray, out List<Data> dataArray)
+        public static bool GetDataFromByteArray(byte[] byteArray, out List<Data> dataArray)
         {
             dataArray = new();
             int y = 6;
             for (; y < byteArray.Length; y += 3)
             {
+                if (y == byteArray.Length - 1) return true;
                 Data data = new();
-                for (; byteArray[y] != 0x00; y++) data.name += (char)byteArray[y];
+                //for (; byteArray[y] != 0x00; y++) data.name += (char)byteArray[y];
+                while (byteArray[y] != 0x00)
+                {
+                    data.name += (char)byteArray[y];
+                    y++;
+                }
+                Console.WriteLine(data.name);
                 y++;
                 data.valueType = byteArray[y];
                 data.minValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
@@ -115,6 +126,7 @@ namespace PCAN_UDS_TEST
             }
             return true;
         }
+
 
 
         public bool GetDataByIdentifiers(out byte[] dataArray)
@@ -559,8 +571,22 @@ namespace PCAN_UDS_TEST
             }
             return Array.Empty<byte>();
         }
-        #endregion
-    }
+		#endregion
+
+		#region DiagnosticService
+		private bool GetVersionInformation(out string versionString)
+		{
+			UdsStatus status;
+			const int BUFFER_SIZE = 256;
+            versionString = string.Empty;
+			status = UDSApi.GetValue_2013(CantpHandle.PCANTP_HANDLE_NONEBUS, UdsParameter.PUDS_PARAMETER_API_VERSION, Marshal.StringToHGlobalAnsi(versionString), BUFFER_SIZE);
+			Console.WriteLine($"PCAN-UDS API Version: {versionString} ({status})");
+            return true;
+		}
+
+		#endregion
+
+	}
 }
 
 //public bool SendService()
