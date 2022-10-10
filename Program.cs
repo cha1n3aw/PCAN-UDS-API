@@ -20,6 +20,15 @@ namespace ConsoleApp2
 		{
             Initialize(handle, baudrate);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+            List<ushort> dataIdentifiers = new() {
+                //0xFD0E,
+                //0xFD1E,
+                //0xFD2E,
+                //0xFD3E,
+                //0xFD4E,
+                //0xFD5E,
+                //0xFD6E,
+                0xFD7E };
 
             Dictionary<string, Dictionary<string, List<Data>>> menuStructure = new();
             if (serviceHandler.GetMenus(out List<string> menuStrings))
@@ -31,11 +40,15 @@ namespace ConsoleApp2
                     {
                         foreach (string subMenuString in subMenuStringsList)
                         {
-                            if (serviceHandler.GetDataByIdentifiers(out byte[] byteArray))
-                                if (serviceHandler.GetDataFromByteArray(byteArray, out List<Data> dataArray))
-                                    menuContents.Add(subMenuString, dataArray);
-                                else Console.WriteLine("Failed to parse data");
-                            else Console.WriteLine("Failed to get parameters");
+                            List<Data> tempDataList = new();
+                            while(tempDataList.Count < dataIdentifiers.Count)
+                            {
+                                if (serviceHandler.GetDataByIdentifiers(dataIdentifiers.Cast<UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER>().ToArray(), out byte[] byteArray))
+                                    if (serviceHandler.GetDataFromByteArray(byteArray, out List<Data> dataList)) tempDataList.AddRange(dataList);
+                                    else Console.WriteLine("Failed to parse data");
+                                else Console.WriteLine("Failed to get parameters");
+                            }
+                            menuContents.Add(subMenuString, tempDataList);
                         }
                     }
                     Console.WriteLine("Failed to get sub-menus");
@@ -51,7 +64,7 @@ namespace ConsoleApp2
                 {
                     Console.WriteLine(subMenu.Key);
                     foreach (Data data in subMenu.Value)
-                        Console.WriteLine(data.name);
+                        Console.WriteLine(data.ToString());
                 }
             }
 

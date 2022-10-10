@@ -7,6 +7,7 @@ namespace PCAN_UDS_TEST
 {
     public struct Data
     {
+        public ushort dataIdentifier;
         public string name;
         public byte valueType;
         public short minValue;
@@ -85,57 +86,54 @@ namespace PCAN_UDS_TEST
 		public bool GetDataFromByteArray(byte[] byteArray, out List<Data> dataArray)
 		{
 			dataArray = new();
-			int y = 6;
-			for (; y < byteArray.Length; y += 3)
-			{
-				if (y == byteArray.Length - 1) return true;
-				Data data = new();
-				for (; byteArray[y] != 0x00; y++) data.name += (char)byteArray[y];
-				y++;
-				data.valueType = byteArray[y];
-				y++;
-				data.minValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
-				y += 2;
-				data.maxValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
-				y += 3;
-				data.step = byteArray[y];
-				Console.WriteLine(data.step);
-				y++;
-				for (; byteArray[y] != 0x00; y++) data.dimension += (char)byteArray[y];
-				y++;
-				data.multiplier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
-				y += 2;
-				data.divider = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
-				y += 2;
-				data.precision = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
-				y += 2;
-				data.accessLevel = byteArray[y];
-				y++;
-				data.defaultValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
-				y += 2;
-				data.eepromPage = byteArray[y];
-				y++;
-				data.eepromAddress = byteArray[y];
-				y += 3;
-				data.value = (short)(byteArray[y] << 8 | byteArray[y + 1]);
-				y++;
-				dataArray.Add(data);
-			}
-			return true;
+			int y = 4;
+            try
+            {
+                for (; y < byteArray.Length; y++)
+                {
+                    Data data = new();
+                    data.dataIdentifier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                    y += 2;
+                    for (; byteArray[y] != 0x00; y++) data.name += (char)byteArray[y];
+                    y++;
+                    data.valueType = byteArray[y];
+                    y++;
+                    data.minValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                    y += 2;
+                    data.maxValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                    y += 3;
+                    data.step = byteArray[y];
+                    y++;
+                    for (; byteArray[y] != 0x00; y++) data.dimension += (char)byteArray[y];
+                    y++;
+                    data.multiplier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                    y += 2;
+                    data.divider = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                    y += 2;
+                    data.precision = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                    y += 2;
+                    data.accessLevel = byteArray[y];
+                    y++;
+                    data.defaultValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                    y += 2;
+                    data.eepromPage = byteArray[y];
+                    y++;
+                    data.eepromAddress = byteArray[y];
+                    y += 3;
+                    data.value = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                    y++;
+                    dataArray.Add(data);
+                }
+                return true;
+            }
+            catch(Exception)
+            {
+                return false;
+            }
 		}
 
-		public bool GetDataByIdentifiers(out byte[] dataArray)
+		public bool GetDataByIdentifiers(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
         {
-            UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers = {
-                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD0E,
-                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD1E,
-                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD2E,
-                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD3E,
-                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD4E,
-                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD5E,
-                //(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD6E,
-                (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFD7E};
-
             dataArray = SendReadDataByIdentifier(dataIdentifiers);
             if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
             else return false;
