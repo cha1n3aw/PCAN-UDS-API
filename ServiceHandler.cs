@@ -127,8 +127,6 @@ namespace PCAN_UDS_TEST
             return true;
         }
 
-
-
         public bool GetDataByIdentifiers(out byte[] dataArray)
         {
             UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers = {
@@ -145,7 +143,6 @@ namespace PCAN_UDS_TEST
             if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
             else return false;
         }
-
 
         public bool GetMenus(out List<string> menuStrings)
         {
@@ -574,16 +571,21 @@ namespace PCAN_UDS_TEST
 		#endregion
 
 		#region DiagnosticService
-		private bool GetVersionInformation(out string versionString)
+		public bool GetVersionInformation(out string versionString)
 		{
-			UdsStatus status;
 			const int BUFFER_SIZE = 256;
-            versionString = string.Empty;
-			status = UDSApi.GetValue_2013(CantpHandle.PCANTP_HANDLE_NONEBUS, UdsParameter.PUDS_PARAMETER_API_VERSION, Marshal.StringToHGlobalAnsi(versionString), BUFFER_SIZE);
-			Console.WriteLine($"PCAN-UDS API Version: {versionString} ({status})");
-            return true;
+            StringBuilder stringBuilder = new();
+            if (UDSApi.StatusIsOk_2013(UDSApi.GetValue_2013(CantpHandle.PCANTP_HANDLE_NONEBUS, UdsParameter.PUDS_PARAMETER_API_VERSION, stringBuilder, BUFFER_SIZE)))
+            {
+                versionString = $"PCAN-UDS API Version: {stringBuilder}";
+                return true;
+            }
+            else
+            {
+                versionString = "Failed to fetch API version";
+                return false;
+            }
 		}
-
 		#endregion
 
 	}
