@@ -2,6 +2,8 @@
 using Peak.Can.IsoTp;
 using Peak.Can.Uds;
 
+//TODO: basic info & errors
+
 namespace BodAss
 {
     internal class Program
@@ -17,50 +19,87 @@ namespace BodAss
             Initialize(handle, baudrate);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
             List<ushort> dataIdentifiers = new() { 0xFD0E, 0xFD1E,0xFD2E, 0xFD3E, 0xFD4E, 0xFD5E, 0xFD6E, 0xFD7E };
-            Dictionary<string, Dictionary<string, List<Data>>> menuStructure = new();
-            if (serviceHandler.GetMenus(out List<string> menuStrings))
-            {
-                for (byte i = 0; i < menuStrings.Count; i++)
-                {
-					if (menuStrings[i].Equals(string.Empty)) continue;
-					Dictionary<string, List<Data>> menuContents = new();
-                    if (serviceHandler.GetSubMenus(i, 0xFE02, out List<string> subMenuStringsList))
-                    {
-                        for (byte y = 0; y < subMenuStringsList.Count; y++)
-                        {
-                            if (subMenuStringsList[y].Equals(string.Empty)) continue;
-                            List<Data> tempDataList = new();
-                            while(tempDataList.Count < dataIdentifiers.Count)
-                            {
-                                if (serviceHandler.GetDataByIdentifiers(i, y, dataIdentifiers.Cast<UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER>().ToArray(), out byte[] byteArray))
-                                    if (serviceHandler.GetDataFromByteArray(byteArray, 0x00, out List<Data> dataList)) tempDataList.AddRange(dataList);
-                                    else
-                                    {
-                                        Console.WriteLine("Failed to parse data");
-                                        break;
-                                    }
-                                else Console.WriteLine("Failed to get parameters");
+			List<ushort> processDataIdentifiers = new() { 0xFD8E, 0xFD9E, 0xFDAE, 0xFDBE, 0xFDCE, 0xFDDE, 0xFDEE, 0xFDFE };
+
+			Dictionary<string, List<Data>> menuContents = new();
+			if (serviceHandler.GetMenus(0xFE04, out List<string> menuStrings))
+			{
+				for (byte i = 0; i < menuStrings.Count; i++)
+				{
+					List<Data> tempProcessDataList = new();
+					while (tempProcessDataList.Count < processDataIdentifiers.Count)
+					{
+						if (serviceHandler.GetDataByIdentifiers(i, null, 0xFE05, processDataIdentifiers.Cast<UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER>().ToArray(), out byte[] byteArray))
+						{
+							if (serviceHandler.GetDataFromByteArray(byteArray, 0x80, out List<Data> processDataList))
+							{
+								if (i == 5) foreach (byte b in byteArray) Console.Write($"{b:X2} ");
+								Console.WriteLine();
+								tempProcessDataList.AddRange(processDataList);
 							}
-                            menuContents.Add(subMenuStringsList[y], tempDataList);
-                        }
-                    }
-                    else Console.WriteLine("Failed to get sub-menus");
-					menuStructure.Add(menuStrings[i], menuContents);
-                }
-            }
-            else Console.WriteLine("Failed to get menus");
+							else
+							{
+								Console.WriteLine("Failed to parse data");
+								break;
+							}
+						}
+						else Console.WriteLine("Failed to get parameters");
+					}
+					menuContents.Add(menuStrings[i], tempProcessDataList);
+				}
+			}
 
-            foreach (KeyValuePair<string, Dictionary<string, List<Data>>> menu in menuStructure)
-            {
-                Console.WriteLine(menu.Key);
-                foreach (KeyValuePair<string, List<Data>> subMenu in menu.Value)
-                {
-                    Console.WriteLine($"  |__ {subMenu.Key}");
-                    foreach (Data data in subMenu.Value.Where(x => x.isAccessible)) Console.WriteLine($"  |  |__ {data}, DID: {data.dataIdentifier:X4}");
-                }
-            }
+			foreach (var pair in menuContents)
+			{
+				Console.WriteLine($"{pair.Key}");
+				foreach (Data data in pair.Value.Where(x => x.isAccessible)) Console.WriteLine($"  |__ {data}, DID: {data.dataIdentifier:X4}");
+			}
 
-            Uninitialize(handle);
+
+			//       Dictionary<string, Dictionary<string, List<Data>>> menuStructure = new();
+			//if (serviceHandler.GetMenus(0xFE00, out List<string> menuStrings))
+			//{
+			//	for (byte i = 0; i < menuStrings.Count; i++)
+			//	{
+			//		if (menuStrings[i].Equals(string.Empty)) continue;
+			//		Dictionary<string, List<Data>> menuContents = new();
+			//		if (serviceHandler.GetSubMenus(i, out List<string> subMenuStringsList))
+			//		{
+			//			for (byte y = 0; y < subMenuStringsList.Count; y++)
+			//			{
+			//				if (subMenuStringsList[y].Equals(string.Empty)) continue;
+			//				List<Data> tempDataList = new();
+			//				while (tempDataList.Count < dataIdentifiers.Count)
+			//				{
+			//					if (serviceHandler.GetDataByIdentifiers(i, y, dataIdentifiers.Cast<UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER>().ToArray(), out byte[] byteArray))
+			//						if (serviceHandler.GetDataFromByteArray(byteArray, 0x00, out List<Data> dataList)) tempDataList.AddRange(dataList);
+			//						else
+			//						{
+			//							Console.WriteLine("Failed to parse data");
+			//							break;
+			//						}
+			//					else Console.WriteLine("Failed to get parameters");
+			//				}
+			//				menuContents.Add(subMenuStringsList[y], tempDataList);
+			//			}
+			//		}
+			//		else Console.WriteLine("Failed to get sub-menus");
+			//		menuStructure.Add(menuStrings[i], menuContents);
+			//	}
+			//}
+			//else Console.WriteLine("Failed to get menus");
+
+			//       foreach (KeyValuePair<string, Dictionary<string, List<Data>>> menu in menuStructure)
+			//       {
+			//           Console.WriteLine(menu.Key);
+			//           foreach (KeyValuePair<string, List<Data>> subMenu in menu.Value)
+			//           {
+			//               Console.WriteLine($"  |__ {subMenu.Key}");
+			//               foreach (Data data in subMenu.Value.Where(x => x.isAccessible)) Console.WriteLine($"  |  |__ {data}, DID: {data.dataIdentifier:X4}");
+			//           }
+			//       }
+
+			Uninitialize(handle);
         }
 
 		private static bool Uninitialize(CantpHandle handle)
