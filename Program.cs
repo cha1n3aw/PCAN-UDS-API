@@ -24,7 +24,7 @@ namespace BodAss
                 {
 					if (menuStrings[i].Equals(string.Empty)) continue;
 					Dictionary<string, List<Data>> menuContents = new();
-                    if (serviceHandler.GetSubMenus(i, out List<string> subMenuStringsList))
+                    if (serviceHandler.GetSubMenus(i, 0xFE02, out List<string> subMenuStringsList))
                     {
                         for (byte y = 0; y < subMenuStringsList.Count; y++)
                         {

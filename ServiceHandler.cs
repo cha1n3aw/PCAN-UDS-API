@@ -61,7 +61,7 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region HighLevelServices
-        public byte[] GetSequence(byte offset, byte length) //A004446, a(n) = Nimsum n + 5.
+        public byte[] GetSequence(byte offset, byte length) //A004446, self-inverse permutation of the natural numbers: a(n) = Nimsum n + 5.
         {
             byte[] sequence = new byte[length];
             for (byte i = 0; i < length; i++) sequence[i] = (byte)((i ^ 5) + offset);
@@ -129,7 +129,7 @@ namespace PCAN_UDS_TEST
 
 		public bool GetDataByIdentifiers(byte menuNumber, byte subMenuNumber, UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
         {
-            if (SetSubMenuCursor(menuNumber, subMenuNumber))
+            if (SetCursor(menuNumber, subMenuNumber, 0xFE01))
             {
                 dataArray = SendReadDataByIdentifier(dataIdentifiers);
                 if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
@@ -178,11 +178,11 @@ namespace PCAN_UDS_TEST
             return true;
         }
 
-        public bool GetSubMenus(byte menuNumber, out List<string> subMenuStrings)
+        public bool GetSubMenus(byte menuNumber, ushort dataIdentifier, out List<string> subMenuStrings)
         {
             subMenuStrings = new();
-            if (!SetSubMenuCursor(menuNumber, 0x00)) return false;
-            byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02 });
+            if (!SetCursor(menuNumber, 0x00, 0xFE01)) return false;
+            byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)dataIdentifier });
             if (byteArray != null && byteArray != Array.Empty<byte>())
                 for (int i = 8; i < byteArray.Length; i++)
                     if (i == 8)
@@ -200,15 +200,15 @@ namespace PCAN_UDS_TEST
             return true;
         }
 
-        public bool SetSubMenuCursor(byte menuNumber, byte? subMenuNumber)
+        public bool SetCursor(byte menuNumber, byte? subMenuNumber, ushort dataIdentifier)
         {
             byte[] response;
-            if (subMenuNumber == null) response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | 0xFE), new byte[] { 0x01, 0x00, 0x00, menuNumber });
-            else response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] { 0xFE, 0x01, 0x00, 0x00, menuNumber, (byte)subMenuNumber });
+            if (subMenuNumber == null) response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | (byte)(dataIdentifier >> 8)), new byte[] { (byte)(dataIdentifier & 0x00FF), 0x00, 0x00, menuNumber });
+            else response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] { (byte)(dataIdentifier >> 8), (byte)(dataIdentifier & 0x00FF), 0x00, 0x00, menuNumber, (byte)subMenuNumber });
             Console.Write("Set submenu cursor response: ");
             foreach (byte b in response) Console.Write($"{b:X2} ");
             Console.WriteLine();
-            //if (response.Equals(new byte[] { 0x6E, 0xFE, 0x01 })) return true;
+            //if (response.Equals(new byte[] { 0x6E, (byte)(dataIdentifier >> 8), (byte)(dataIdentifier & 0x00FF) })) return true;
             //return false;
             return true;
         }
