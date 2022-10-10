@@ -70,7 +70,7 @@ namespace PCAN_UDS_TEST
 
         private byte GetMenuAddress(byte menuNumber) => (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
 
-		public bool GetDataFromByteArray(byte[] byteArray, out List<Data> dataArray)
+		public bool GetDataFromByteArray(byte[] byteArray, byte dataType, out List<Data> dataArray) //0x00 for parameters, 0x80 for processdata
 		{
 			dataArray = new();
 			int y = 4; //6
@@ -92,12 +92,15 @@ namespace PCAN_UDS_TEST
                     y++;
                     data.valueType = byteArray[y];
                     y++;
-                    data.minValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
-                    y += 2;
-                    data.maxValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
-                    y += 3;
-                    data.step = byteArray[y];
-                    y++;
+                    if (dataType == 0x00)
+                    {
+                        data.minValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                        y += 2;
+                        data.maxValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                        y += 3;
+                        data.step = byteArray[y];
+                        y++;
+                    }
                     for (; byteArray[y] != 0x00; y++) data.dimension += (char)byteArray[y];
                     y++;
                     data.multiplier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
@@ -110,10 +113,13 @@ namespace PCAN_UDS_TEST
                     y++;
                     data.defaultValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
                     y += 2;
-                    data.eepromPage = byteArray[y];
-                    y++;
-                    data.eepromAddress = byteArray[y];
-                    y += 3;
+                    if (dataType == 0x00)
+                    {
+                        data.eepromPage = byteArray[y];
+                        y++;
+                        data.eepromAddress = byteArray[y];
+                        y += 3;
+                    }
                     data.value = (short)(byteArray[y] << 8 | byteArray[y + 1]);
                     y++;
 					dataArray.Add(data);

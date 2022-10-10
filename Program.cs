@@ -33,7 +33,7 @@ namespace BodAss
                             while(tempDataList.Count < dataIdentifiers.Count)
                             {
                                 if (serviceHandler.GetDataByIdentifiers(i, y, dataIdentifiers.Cast<UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER>().ToArray(), out byte[] byteArray))
-                                    if (serviceHandler.GetDataFromByteArray(byteArray, out List<Data> dataList)) tempDataList.AddRange(dataList);
+                                    if (serviceHandler.GetDataFromByteArray(byteArray, 0x00, out List<Data> dataList)) tempDataList.AddRange(dataList);
                                     else
                                     {
                                         Console.WriteLine("Failed to parse data");
