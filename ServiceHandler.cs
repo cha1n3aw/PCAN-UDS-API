@@ -61,23 +61,14 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region HighLevelServices
-        private byte GetMenuAddress(byte menuNumber) => (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
-        
-        private byte GetSubMenuAddress(byte subMenuNumber)
+        public byte[] GetSequence(byte offset, byte length) //A004446, a(n) = Nimsum n + 5.
         {
-            switch (subMenuNumber)
-            {
-                case 0x00: return 0x75;
-                case 0x01: return 0x74;
-                case 0x02: return 0x77;
-                case 0x03: return 0x76;
-                case 0x04: return 0x71;
-                case 0x05: return 0x70;
-                case 0x06: return 0x73;
-                case 0x07: return 0x72;
-                default: return 0x00;
-            }
+            byte[] sequence = new byte[length];
+            for (byte i = 0; i < length; i++) sequence[i] = (byte)((i ^ 5) + offset);
+            return sequence;
         }
+
+        private byte GetMenuAddress(byte menuNumber) => (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
 
 		public bool GetDataFromByteArray(byte[] byteArray, out List<Data> dataArray)
 		{
@@ -213,7 +204,7 @@ namespace PCAN_UDS_TEST
         {
             byte[] response;
             if (subMenuNumber == null) response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | 0xFE), new byte[] { 0x01, 0x00, 0x00, menuNumber });
-            else response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSubMenuAddress((byte)subMenuNumber)), new byte[] { 0xFE, 0x01, 0x00, 0x00, menuNumber, (byte)subMenuNumber });
+            else response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] { 0xFE, 0x01, 0x00, 0x00, menuNumber, (byte)subMenuNumber });
             Console.Write("Set submenu cursor response: ");
             foreach (byte b in response) Console.Write($"{b:X2} ");
             Console.WriteLine();
