@@ -21,13 +21,13 @@ namespace ConsoleApp2
             Initialize(handle, baudrate);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
             List<ushort> dataIdentifiers = new() {
-                //0xFD0E,
-                //0xFD1E,
-                //0xFD2E,
-                //0xFD3E,
-                //0xFD4E,
-                //0xFD5E,
-                //0xFD6E,
+                0xFD0E,
+                0xFD1E,
+                0xFD2E,
+                0xFD3E,
+                0xFD4E,
+                0xFD5E,
+                0xFD6E,
                 0xFD7E };
 
             Dictionary<string, Dictionary<string, List<Data>>> menuStructure = new();
@@ -35,24 +35,32 @@ namespace ConsoleApp2
             {
                 for (byte i = 0; i < menuStrings.Count; i++)
                 {
-                    Dictionary<string, List<Data>> menuContents = new();
+					if (menuStrings[i].Length < 3) continue;
+					Dictionary<string, List<Data>> menuContents = new();
                     if (serviceHandler.GetSubMenus(i, out List<string> subMenuStringsList))
                     {
-                        foreach (string subMenuString in subMenuStringsList)
+                        for (byte y = 0; y < subMenuStringsList.Count; y++)
                         {
+                            if (subMenuStringsList[y].Length < 3) continue;
                             List<Data> tempDataList = new();
                             while(tempDataList.Count < dataIdentifiers.Count)
                             {
-                                if (serviceHandler.GetDataByIdentifiers(dataIdentifiers.Cast<UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER>().ToArray(), out byte[] byteArray))
-                                    if (serviceHandler.GetDataFromByteArray(byteArray, out List<Data> dataList)) tempDataList.AddRange(dataList);
-                                    else Console.WriteLine("Failed to parse data");
-                                else Console.WriteLine("Failed to get parameters");
-                            }
-                            menuContents.Add(subMenuString, tempDataList);
+                                if (serviceHandler.SetSubMenuCursor(i, y))
+                                    if (serviceHandler.GetDataByIdentifiers(dataIdentifiers.Cast<UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER>().ToArray(), out byte[] byteArray))
+                                        if (serviceHandler.GetDataFromByteArray(byteArray, out List<Data> dataList)) tempDataList.AddRange(dataList);
+                                        else
+                                        {
+                                            Console.WriteLine("Failed to parse data");
+                                            break;
+                                        }
+                                    else Console.WriteLine("Failed to get parameters");
+                                else Console.WriteLine("Failed to set sub-menu cursor");
+							}
+                            menuContents.Add(subMenuStringsList[y], tempDataList);
                         }
                     }
-                    Console.WriteLine("Failed to get sub-menus");
-                    menuStructure.Add(menuStrings[i], menuContents);
+                    else Console.WriteLine("Failed to get sub-menus");
+					menuStructure.Add(menuStrings[i], menuContents);
                 }
             }
             else Console.WriteLine("Failed to get menus");
@@ -62,9 +70,8 @@ namespace ConsoleApp2
                 Console.WriteLine(menu.Key);
                 foreach (var subMenu in menu.Value)
                 {
-                    Console.WriteLine(subMenu.Key);
-                    foreach (Data data in subMenu.Value)
-                        Console.WriteLine(data.ToString());
+                    Console.WriteLine($"  |__ {subMenu.Key}");
+                    foreach (Data data in subMenu.Value) Console.WriteLine($"     |__ {data}");
                 }
             }
 

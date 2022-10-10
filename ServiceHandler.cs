@@ -24,7 +24,7 @@ namespace PCAN_UDS_TEST
         public short value;
 
         public override string ToString() =>
-            $"{name}, {valueType}, {minValue}, {maxValue}, {step}, {dimension}, {multiplier}, {divider}, {precision}, {accessLevel}, {defaultValue}, {eepromPage}, {eepromAddress}, {value}";
+            $"{name}: {minValue} - {value} - {maxValue}, {dimension}";
     }
 
     public class ServiceHandler
@@ -86,14 +86,20 @@ namespace PCAN_UDS_TEST
 		public bool GetDataFromByteArray(byte[] byteArray, out List<Data> dataArray)
 		{
 			dataArray = new();
-			int y = 4;
+			int y = 6; //4
             try
             {
-                for (; y < byteArray.Length; y++)
+                for (; y <= byteArray.Length; y += 3) //y++
                 {
-                    Data data = new();
-                    data.dataIdentifier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
-                    y += 2;
+                    if (byteArray[y] == 0x00)
+                    {
+                        //Console.WriteLine($"Security access denied at index {y}");
+                        dataArray.Add(new Data());
+                        continue;
+                    }
+					Data data = new();
+                    //data.dataIdentifier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                    //y += 3;
                     for (; byteArray[y] != 0x00; y++) data.name += (char)byteArray[y];
                     y++;
                     data.valueType = byteArray[y];
@@ -108,9 +114,9 @@ namespace PCAN_UDS_TEST
                     y++;
                     data.multiplier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                     y += 2;
-                    data.divider = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+					data.divider = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                     y += 2;
-                    data.precision = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+					data.precision = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                     y += 2;
                     data.accessLevel = byteArray[y];
                     y++;
@@ -122,12 +128,13 @@ namespace PCAN_UDS_TEST
                     y += 3;
                     data.value = (short)(byteArray[y] << 8 | byteArray[y + 1]);
                     y++;
-                    dataArray.Add(data);
+					dataArray.Add(data);
                 }
                 return true;
             }
-            catch(Exception)
+            catch(Exception e)
             {
+				Console.WriteLine($"{e.Message} at {y}");
                 return false;
             }
 		}
@@ -176,33 +183,29 @@ namespace PCAN_UDS_TEST
         public bool GetSubMenus(byte menuNumber, out List<string> subMenuStrings)
         {
             subMenuStrings = new();
-            //uint subMenuCount = 0;
-            for (int y = 0; y < 8; y++)
+            if (!SetSubMenuCursor(menuNumber, 0x00)) return false;
+            byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02 });
+            if (byteArray != null && byteArray != Array.Empty<byte>())
             {
-                if (!SetSubMenuCursor(menuNumber, (byte)y)) return false;
-                byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02 });
-                if (byteArray != null && byteArray != Array.Empty<byte>())
+                for (int i = 8; i < byteArray.Length; i++)
                 {
-                    for (int i = 8; i < byteArray.Length; i++)
+                    if (i == 8)
                     {
-                        if (i == 8)
+                        //subMenuCount = byteArray[7];
+                        subMenuStrings.Add($"{(byteArray[i] + 1)} ");
+                    }
+                    else if (byteArray[i] == 0x00)
+                    {
+                        i++;
+                        if (i < byteArray.Length)
                         {
-                            //subMenuCount = byteArray[7];
                             subMenuStrings.Add($"{(byteArray[i] + 1)} ");
                         }
-                        else if (byteArray[i] == 0x00)
-                        {
-                            i++;
-                            if (i < byteArray.Length)
-                            {
-                                subMenuStrings.Add($"{(byteArray[i] + 1)} ");
-                            }
-                        }
-                        else subMenuStrings[^1] += $"{(char)byteArray[i]}";
                     }
+                    else subMenuStrings[^1] += $"{(char)byteArray[i]}";
                 }
-                else return false;
             }
+            else return false;
             return true;
         }
 
