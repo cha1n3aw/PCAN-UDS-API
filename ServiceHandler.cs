@@ -1,6 +1,5 @@
 ﻿using Peak.Can.IsoTp;
 using Peak.Can.Uds;
-using System.Runtime.InteropServices;
 using System.Text;
 
 namespace PCAN_UDS_TEST
@@ -8,6 +7,7 @@ namespace PCAN_UDS_TEST
     public struct Data
     {
         public ushort dataIdentifier;
+        public bool isAccessible; //ensures that did is accessible and no "security access denied" error happened
         public string name;
         public byte valueType;
         public short minValue;
@@ -23,8 +23,7 @@ namespace PCAN_UDS_TEST
         public byte eepromAddress;
         public short value;
 
-        public override string ToString() =>
-            $"{name}: {minValue} - {value} - {maxValue}, {dimension}";
+        public override string ToString() => $"{name}: {minValue} - {value} - {maxValue}, {dimension}";
     }
 
     public class ServiceHandler
@@ -62,11 +61,8 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region HighLevelServices
-        private byte GetMenuAddress(byte menuNumber)
-        {
-            return (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
-        }
-
+        private byte GetMenuAddress(byte menuNumber) => (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
+        
         private byte GetSubMenuAddress(byte subMenuNumber)
         {
             switch (subMenuNumber)
@@ -86,20 +82,21 @@ namespace PCAN_UDS_TEST
 		public bool GetDataFromByteArray(byte[] byteArray, out List<Data> dataArray)
 		{
 			dataArray = new();
-			int y = 6; //4
+			int y = 4; //6
             try
             {
-                for (; y <= byteArray.Length; y += 3) //y++
+                for (; y <= byteArray.Length; y++) //y+=3
                 {
+					Data data = new();
+                    data.dataIdentifier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                     if (byteArray[y] == 0x00)
                     {
-                        //Console.WriteLine($"Security access denied at index {y}");
-                        dataArray.Add(new Data());
+                        data.isAccessible = false;
+                        dataArray.Add(data);
                         continue;
                     }
-					Data data = new();
-                    //data.dataIdentifier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
-                    //y += 3;
+                    else data.isAccessible = true;
+                    y += 3;
                     for (; byteArray[y] != 0x00; y++) data.name += (char)byteArray[y];
                     y++;
                     data.valueType = byteArray[y];
@@ -132,18 +129,26 @@ namespace PCAN_UDS_TEST
                 }
                 return true;
             }
-            catch(Exception e)
+            catch(Exception)
             {
-				Console.WriteLine($"{e.Message} at {y}");
+                dataArray = new();
                 return false;
             }
 		}
 
-		public bool GetDataByIdentifiers(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
+		public bool GetDataByIdentifiers(byte menuNumber, byte subMenuNumber, UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
         {
-            dataArray = SendReadDataByIdentifier(dataIdentifiers);
-            if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
-            else return false;
+            if (SetSubMenuCursor(menuNumber, subMenuNumber))
+            {
+                dataArray = SendReadDataByIdentifier(dataIdentifiers);
+                if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
+                else return false;
+            }
+            else
+            {
+                dataArray = Array.Empty<byte>();
+                return false;
+            }
         }
 
         public bool GetMenus(out List<string> menuStrings)
@@ -161,14 +166,16 @@ namespace PCAN_UDS_TEST
                         if (i == 8)
                         {
                             menuCount = byteArray[7];
-							menuStrings.Add($"{(byteArray[i] + 1)} ");
+                            if (byteArray[i + 1] == 0x00) menuStrings.Add(string.Empty);
+                            else menuStrings.Add($"{(byteArray[i] + 1)} ");
                         }
                         else if (byteArray[i] == 0x00)
                         {
-                            i++;
-                            if (i < byteArray.Length)
+                            i++; //jump to a next byte that contains menu number
+                            if (i + 1 < byteArray.Length) //if "out of bounds" is ok
                             {
-								menuStrings.Add($"{(byteArray[i] + 1)} ");
+                                if (byteArray[i + 1] == 0x00) menuStrings.Add(string.Empty); //next 0x00 represents that menu name is empty
+                                else menuStrings.Add($"{(byteArray[i] + 1)} ");
                                 if (byteArray[i] == menuCount - 1) run = false;
                             }
                         }
@@ -186,25 +193,18 @@ namespace PCAN_UDS_TEST
             if (!SetSubMenuCursor(menuNumber, 0x00)) return false;
             byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02 });
             if (byteArray != null && byteArray != Array.Empty<byte>())
-            {
                 for (int i = 8; i < byteArray.Length; i++)
-                {
                     if (i == 8)
-                    {
-                        //subMenuCount = byteArray[7];
-                        subMenuStrings.Add($"{(byteArray[i] + 1)} ");
-                    }
+                        if (byteArray[i + 1] == 0x00) subMenuStrings.Add(string.Empty); 
+                        else subMenuStrings.Add($"{(byteArray[i] + 1)} ");
                     else if (byteArray[i] == 0x00)
                     {
                         i++;
-                        if (i < byteArray.Length)
-                        {
-                            subMenuStrings.Add($"{(byteArray[i] + 1)} ");
-                        }
+                        if (i + 1 < byteArray.Length)
+                            if (byteArray[i + 1] == 0x00) subMenuStrings.Add(string.Empty);
+                            else subMenuStrings.Add($"{(byteArray[i] + 1)} ");
                     }
                     else subMenuStrings[^1] += $"{(char)byteArray[i]}";
-                }
-            }
             else return false;
             return true;
         }
@@ -214,6 +214,9 @@ namespace PCAN_UDS_TEST
             byte[] response;
             if (subMenuNumber == null) response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | 0xFE), new byte[] { 0x01, 0x00, 0x00, menuNumber });
             else response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSubMenuAddress((byte)subMenuNumber)), new byte[] { 0xFE, 0x01, 0x00, 0x00, menuNumber, (byte)subMenuNumber });
+            Console.Write("Set submenu cursor response: ");
+            foreach (byte b in response) Console.Write($"{b:X2} ");
+            Console.WriteLine();
             //if (response.Equals(new byte[] { 0x6E, 0xFE, 0x01 })) return true;
             //return false;
             return true;
@@ -588,23 +591,3 @@ namespace PCAN_UDS_TEST
 
 	}
 }
-
-//public bool SendService()
-//{
-//    string messageString = string.Empty;
-//    Console.WriteLine($"Service: {UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_DS)}");
-//    UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
-//    Console.WriteLine($"WaitForService: {responseStatus}");
-//    if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
-//    {
-//        for (int i = 0; i < udsMessageResponse.message.MessageDataAnyCopy.length; i++)
-//            messageString += $"{Marshal.ReadByte(udsMessageResponse.message.MessageDataAnyCopy.Data + i):X2} ";
-//        Console.WriteLine(messageString);
-//        return true;
-//    }
-//    else
-//    {
-//        Console.WriteLine("Corrupted response, no message received");
-//        return false;
-//    }
-//}
