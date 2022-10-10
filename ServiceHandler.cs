@@ -127,10 +127,10 @@ namespace PCAN_UDS_TEST
                     y += 2;
                     data.accessLevel = byteArray[y];
                     y++;
-                    data.defaultValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
-                    y += 2;
-                    if (dataType == 0x00)
-                    {
+					if (dataType == 0x00)
+					{
+						data.defaultValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                        y += 2;
                         data.eepromPage = byteArray[y];
                         y++;
                         data.eepromAddress = byteArray[y];
