@@ -26,7 +26,23 @@ namespace PCAN_UDS_TEST
         public override string ToString() => $"{name}: {minValue} - {value} - {maxValue}, {dimension}";
     }
 
-    public class ServiceHandler
+	public struct ProcessData
+	{
+		public ushort dataIdentifier;
+		public bool isAccessible; //ensures that did is accessible and no "security access denied" error happened
+		public string name;
+		public byte valueType;
+		public string dimension;
+		public ushort multiplier;
+		public ushort divider;
+		public ushort precision;
+		public byte accessLevel;
+		public short value;
+
+		public override string ToString() => $"{name}: {value}, {dimension}";
+	}
+
+	public class ServiceHandler
     {
         #region GlobalParameters
         private readonly CantpHandle handle;
