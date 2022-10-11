@@ -123,25 +123,81 @@ namespace PCAN_UDS_TEST
 
 		#region HighLevelServices
 
-		public bool GetControllerInformation(DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
+		public bool GetControllerInformation(DATA_IDENTIFIER[] dataIdentifiers, out List<string> dataList)
 		{
-            List<string> strings = new();
-			dataArray = SendReadDataByIdentifier(dataIdentifiers);
+            dataList = new();
+			byte[] dataArray = SendReadDataByIdentifier(dataIdentifiers);
             int y = 4;
-            for (; y < dataArray.Length; y++)
+            while(y < dataArray.Length)
             {
-                DATA_IDENTIFIER tempDataIdentifier = ()dataArray[y] << 8 | dataArray[y+1];
-                switch ((dataArray[y], dataArray[y+1]))
+                DATA_IDENTIFIER dataIdentifier = (DATA_IDENTIFIER)(dataArray[y] << 8 | dataArray[y + 1]);
+                y += 2;
+                switch (dataIdentifier)
                 {
-                    case (0xFE, 0x09):
-                        y += 2;
-                        strings.Add($"{(char)dataArray[y]}");
+                    case (DATA_IDENTIFIER.GET_SYSTEM_VOLTAGE):
+                        dataList.Add($"{dataArray[y]}");
+                        y++;
                         break;
-                    case (0xF1, 0x92):
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWNDID):
+                        dataList.Add(string.Empty);
+                        for (int i = 0; i < 3; i++) dataList[^1] += $"{dataArray[y + i]:X2} ";
+                        y += 3;
+                        break;
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSIDDID):
+                        dataList.Add(string.Empty);
+                        for (; dataArray[y] != 0xF1; y++) dataList[^1] += (char)dataArray[y];
+                        break;
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADIDID):
+                        dataList.Add(string.Empty);
+                        for (; dataArray[y] != 0x00; y++) dataList[^1] += (char)dataArray[y];
+                        y++;
+                        break;
+                    case (DATA_IDENTIFIER.GET_UNKNOWN_DATA):
+                        dataList.Add(string.Empty);
+                        for (int i = 0; i < 6 ; i++) dataList[^1] += $"{dataArray[y + i]:X2} ";
+                        y += 6;
+                        break;
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ASFPDID):
+                        dataList.Add(string.Empty);
+                        for (int i = 0; i < 7; i++) dataList[^1] += $"{dataArray[y + i]:X2} ";
+                        y += 7;
+                        break;
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWVNDID):
+                        dataList.Add($"{(char)dataArray[y]}{(char)dataArray[y + 1]} : ");
                         y += 2;
+                        for (int i = 0; i < 4; i++) dataList[^1] += $"{dataArray[y + i]:X2} ";
+                        y += 4;
+                        break;
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUSNDID):
+                        dataList.Add(string.Empty);
+                        for (int i = 0; i < 4; i++) dataList[^1] += $"{dataArray[y + i]:X2} ";
+                        y += 4;
+                        break;
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_BSIDID):
+                        byte length = dataArray[y];
+                        y++;
+                        dataList.Add($"{length} : ");
+                        for (int i = 0; i < 16 * length; i++) dataList[^1] += $"{(char)dataArray[y + i]}";
+                        break;
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_BSFPDID):
+                        dataList.Add($"{dataArray[y]}");
+                        y++;
+                        break;
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUMDDID):
+                        dataList.Add(string.Empty);
+                        for (int i = 0; i < 4; i++) dataList[^1] += $"{dataArray[y + i]:X2}";
+                        y += 4;
+                        break;
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID):
+                        dataList.Add($"{dataArray[y]:X2}");
+                        y++;
+                        break;
+                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID):
+                        dataList.Add(string.Empty);
+                        for (; dataArray[y] != 0x00; y++) dataList[^1] += (char)dataArray[y];
+                        y++;
                         break;
                 }
-                y++;
             }
 			return true;
 		}

@@ -29,6 +29,7 @@ namespace BodAss
                 DATA_IDENTIFIER.GET_PARAMETER_5,
                 DATA_IDENTIFIER.GET_PARAMETER_6,
 				DATA_IDENTIFIER.GET_PARAMETER_7 };
+
 			DATA_IDENTIFIER[] processDataIdentifiers = {
                 DATA_IDENTIFIER.GET_PROCESSDATA_0,
                 DATA_IDENTIFIER.GET_PROCESSDATA_1,
@@ -39,84 +40,96 @@ namespace BodAss
                 DATA_IDENTIFIER.GET_PROCESSDATA_6,
                 DATA_IDENTIFIER.GET_PROCESSDATA_7 };
 
-			Dictionary<string, List<Data>> menuContents = new();
-			if (serviceHandler.GetMenus(DATA_IDENTIFIER.GET_PROCESSDATA_MENUS, out List<string> menuStrings))
-			{
-				for (byte i = 0; i < menuStrings.Count; i++)
-				{
-					List<Data> tempProcessDataList = new();
-					while (tempProcessDataList.Count < processDataIdentifiers.Length)
-					{
-						if (serviceHandler.GetDataByIdentifiers(i, null, DATA_IDENTIFIER.SET_PROCESSDATA_MENU_CURSOR, processDataIdentifiers, out byte[] byteArray))
-						{
-							if (serviceHandler.GetDataFromByteArray(byteArray, 0x80, out List<Data> processDataList))
-							{
-								if (i == 5) foreach (byte b in byteArray) Console.Write($"{b:X2} ");
-								Console.WriteLine();
-								tempProcessDataList.AddRange(processDataList);
-							}
-							else
-							{
-								Console.WriteLine("Failed to parse data");
-								break;
-							}
-						}
-						else Console.WriteLine("Failed to get parameters");
-					}
-					menuContents.Add(menuStrings[i], tempProcessDataList);
-				}
-			}
+			DATA_IDENTIFIER[] controllerInformationIdentifiers = {
+				DATA_IDENTIFIER.GET_SYSTEM_VOLTAGE,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWNDID,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSIDDID,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADIDID,
+				DATA_IDENTIFIER.GET_UNKNOWN_DATA,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ASFPDID,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWVNDID,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUSNDID,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_BSIDID,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_BSFPDID,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUMDDID,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID,
+				DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID };
 
-			foreach (var pair in menuContents)
-			{
-				Console.WriteLine($"{pair.Key}");
+			//if (serviceHandler.GetControllerInformation(controllerInformationIdentifiers, out List<string> dataList)) foreach(string str in dataList) Console.WriteLine(str);
 
-				foreach (Data data in pair.Value.Where(x => x.isAccessible)) Console.WriteLine($"  |__ {data}, DID: {data.dataIdentifier:X4}");
-			}
-
-
-			//       Dictionary<string, Dictionary<string, List<Data>>> menuStructure = new();
-			//if (serviceHandler.GetMenus(0xFE00, out List<string> menuStrings))
+			//Dictionary<string, List<Data>> menuContents = new();
+			//if (serviceHandler.GetMenus(DATA_IDENTIFIER.GET_PROCESSDATA_MENUS, out List<string> menuStrings))
 			//{
 			//	for (byte i = 0; i < menuStrings.Count; i++)
 			//	{
-			//		if (menuStrings[i].Equals(string.Empty)) continue;
-			//		Dictionary<string, List<Data>> menuContents = new();
-			//		if (serviceHandler.GetSubMenus(i, out List<string> subMenuStringsList))
+			//		List<Data> tempProcessDataList = new();
+			//		while (tempProcessDataList.Count < processDataIdentifiers.Length)
 			//		{
-			//			for (byte y = 0; y < subMenuStringsList.Count; y++)
+			//			if (serviceHandler.GetDataByIdentifiers(i, null, DATA_IDENTIFIER.SET_PROCESSDATA_MENU_CURSOR, processDataIdentifiers, out byte[] byteArray))
 			//			{
-			//				if (subMenuStringsList[y].Equals(string.Empty)) continue;
-			//				List<Data> tempDataList = new();
-			//				while (tempDataList.Count < dataIdentifiers.Count)
+			//				if (serviceHandler.GetDataFromByteArray(byteArray, 0x80, out List<Data> processDataList)) tempProcessDataList.AddRange(processDataList);
+			//				else
 			//				{
-			//					if (serviceHandler.GetDataByIdentifiers(i, y, dataIdentifiers.Cast<UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER>().ToArray(), out byte[] byteArray))
-			//						if (serviceHandler.GetDataFromByteArray(byteArray, 0x00, out List<Data> dataList)) tempDataList.AddRange(dataList);
-			//						else
-			//						{
-			//							Console.WriteLine("Failed to parse data");
-			//							break;
-			//						}
-			//					else Console.WriteLine("Failed to get parameters");
+			//					Console.WriteLine("Failed to parse data");
+			//					break;
 			//				}
-			//				menuContents.Add(subMenuStringsList[y], tempDataList);
 			//			}
+			//			else Console.WriteLine("Failed to get parameters");
 			//		}
-			//		else Console.WriteLine("Failed to get sub-menus");
-			//		menuStructure.Add(menuStrings[i], menuContents);
+			//		menuContents.Add(menuStrings[i], tempProcessDataList);
 			//	}
 			//}
-			//else Console.WriteLine("Failed to get menus");
 
-			//       foreach (KeyValuePair<string, Dictionary<string, List<Data>>> menu in menuStructure)
-			//       {
-			//           Console.WriteLine(menu.Key);
-			//           foreach (KeyValuePair<string, List<Data>> subMenu in menu.Value)
-			//           {
-			//               Console.WriteLine($"  |__ {subMenu.Key}");
-			//               foreach (Data data in subMenu.Value.Where(x => x.isAccessible)) Console.WriteLine($"  |  |__ {data}, DID: {data.dataIdentifier:X4}");
-			//           }
-			//       }
+			//foreach (var pair in menuContents)
+			//{
+			//	Console.WriteLine($"{pair.Key}");
+
+			//	foreach (Data data in pair.Value.Where(x => x.isAccessible)) Console.WriteLine($"  |__ {data}, DID: {data.dataIdentifier:X4}");
+			//}
+
+
+			Dictionary<string, Dictionary<string, List<Data>>> menuStructure = new();
+			if (serviceHandler.GetMenus(DATA_IDENTIFIER.GET_PARAMETERS_MENUS, out List<string> menuStrings))
+			{
+				for (byte i = 0; i < menuStrings.Count; i++)
+				{
+					if (menuStrings[i].Equals(string.Empty)) continue;
+					Dictionary<string, List<Data>> menuContents = new();
+					if (serviceHandler.GetSubMenus(i, out List<string> subMenuStringsList))
+					{
+						for (byte y = 0; y < subMenuStringsList.Count; y++)
+						{
+							if (subMenuStringsList[y].Equals(string.Empty)) continue;
+							List<Data> tempDataList = new();
+							while (tempDataList.Count < dataIdentifiers.Length)
+							{
+								if (serviceHandler.GetDataByIdentifiers(i, y, DATA_IDENTIFIER.SET_PARAMETERS_SUBMENU_CURSOR, dataIdentifiers, out byte[] byteArray))
+									if (serviceHandler.GetDataFromByteArray(byteArray, 0x00, out List<Data> dataList)) tempDataList.AddRange(dataList);
+									else
+									{
+										Console.WriteLine("Failed to parse data");
+										break;
+									}
+								else Console.WriteLine("Failed to get parameters");
+							}
+							menuContents.Add(subMenuStringsList[y], tempDataList);
+						}
+					}
+					else Console.WriteLine("Failed to get sub-menus");
+					menuStructure.Add(menuStrings[i], menuContents);
+				}
+			}
+			else Console.WriteLine("Failed to get menus");
+
+			foreach (KeyValuePair<string, Dictionary<string, List<Data>>> menu in menuStructure)
+			{
+				Console.WriteLine(menu.Key);
+				foreach (KeyValuePair<string, List<Data>> subMenu in menu.Value)
+				{
+					Console.WriteLine($"  |__ {subMenu.Key}");
+                    foreach (Data data in subMenu.Value.Where(x => x.isAccessible)) Console.WriteLine($"  |  |__ {data}, DID: {data.dataIdentifier:X4}");
+                }
+			}
 
 			Uninitialize(handle);
         }
