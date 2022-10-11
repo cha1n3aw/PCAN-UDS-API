@@ -62,10 +62,34 @@ namespace PCAN_UDS_TEST
             responseConfig.NAI.SOURCE_ADDRESS = NAI.DESTINATION_ADDRESS;
             responseConfig.NAI.DESTINATION_ADDRESS = NAI.SOURCE_ADDRESS;
         }
-        #endregion
+		#endregion
 
-        #region HighLevelServices
-        public byte[] GetSequence(byte offset, byte length) //A004446, self-inverse permutation of the natural numbers: a(n) = Nimsum n + 5.
+		#region HighLevelServices
+
+		public bool GetControllerInformation(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
+		{
+            List<string> strings = new();
+			dataArray = SendReadDataByIdentifier(dataIdentifiers);
+            int y = 4;
+            for (; y < dataArray.Length; y++)
+            {
+                ushort tempDataIdentifier;
+                switch ((dataArray[y], dataArray[y+1]))
+                {
+                    case (0xFE, 0x09):
+                        y += 2;
+                        strings.Add($"{(char)dataArray[y]}");
+                        break;
+                    case (0xF1, 0x92):
+                        y += 2;
+                        break;
+                }
+                y++;
+            }
+			return true;
+		}
+
+		public byte[] GetSequence(byte offset, byte length) //A004446, self-inverse permutation of the natural numbers: a(n) = Nimsum n + 5.
         {
             byte[] sequence = new byte[length];
             for (byte i = 0; i < length; i++) sequence[i] = (byte)((i ^ 5) + offset);
