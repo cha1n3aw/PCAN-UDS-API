@@ -81,7 +81,6 @@ namespace PCAN_UDS_TEST
                         strings.Add($"{(char)dataArray[y]}");
                         break;
                     case (0xF1, 0x92):
-
                         y += 2;
                         break;
                 }
