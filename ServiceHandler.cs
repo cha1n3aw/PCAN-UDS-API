@@ -4,6 +4,19 @@ using System.Text;
 
 namespace PCAN_UDS_TEST
 {
+    public enum UDS_SERVICE_PARAMETER_DATA_IDENTIFIER : ushort
+    {
+        /// <summary>
+        /// bootSoftwareIdentificationDataIdentifier
+        /// </summary>
+        PUDS_SVC_PARAM_DI_BSIDID = 0xF180,
+        /// <summary>
+        /// applicationSoftwareIdentificationDataIdentifier
+        /// </summary>
+        PUDS_SVC_PARAM_DI_ASIDID = 0xF181
+
+    }
+
     public struct Data
     {
         public ushort dataIdentifier;
