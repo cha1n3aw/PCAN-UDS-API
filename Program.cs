@@ -1,6 +1,7 @@
 ﻿using PCAN_UDS_TEST;
 using Peak.Can.IsoTp;
 using Peak.Can.Uds;
+using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
 //TODO: basic info & errors
 
@@ -18,18 +19,34 @@ namespace BodAss
 		{
             Initialize(handle, baudrate);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-            List<ushort> dataIdentifiers = new() { 0xFD0E, 0xFD1E,0xFD2E, 0xFD3E, 0xFD4E, 0xFD5E, 0xFD6E, 0xFD7E };
-			List<ushort> processDataIdentifiers = new() { 0xFD8E, 0xFD9E, 0xFDAE, 0xFDBE, 0xFDCE, 0xFDDE, 0xFDEE, 0xFDFE };
+            DATA_IDENTIFIER[] dataIdentifiers = {
+                DATA_IDENTIFIER.GET_PARAMETER_0,
+                DATA_IDENTIFIER.GET_PARAMETER_1,
+                DATA_IDENTIFIER.GET_PARAMETER_2,
+                DATA_IDENTIFIER.GET_PARAMETER_3,
+                DATA_IDENTIFIER.GET_PARAMETER_4,
+                DATA_IDENTIFIER.GET_PARAMETER_5,
+                DATA_IDENTIFIER.GET_PARAMETER_6,
+				DATA_IDENTIFIER.GET_PARAMETER_7 };
+			DATA_IDENTIFIER[] processDataIdentifiers = {
+                DATA_IDENTIFIER.GET_PROCESSDATA_0,
+                DATA_IDENTIFIER.GET_PROCESSDATA_1,
+                DATA_IDENTIFIER.GET_PROCESSDATA_2,
+                DATA_IDENTIFIER.GET_PROCESSDATA_3,
+                DATA_IDENTIFIER.GET_PROCESSDATA_4,
+                DATA_IDENTIFIER.GET_PROCESSDATA_5,
+                DATA_IDENTIFIER.GET_PROCESSDATA_6,
+                DATA_IDENTIFIER.GET_PROCESSDATA_7 };
 
 			Dictionary<string, List<Data>> menuContents = new();
-			if (serviceHandler.GetMenus(0xFE04, out List<string> menuStrings))
+			if (serviceHandler.GetMenus(DATA_IDENTIFIER.GET_PROCESSDATA_MENUS, out List<string> menuStrings))
 			{
 				for (byte i = 0; i < menuStrings.Count; i++)
 				{
 					List<Data> tempProcessDataList = new();
-					while (tempProcessDataList.Count < processDataIdentifiers.Count)
+					while (tempProcessDataList.Count < processDataIdentifiers.Length)
 					{
-						if (serviceHandler.GetDataByIdentifiers(i, null, 0xFE05, processDataIdentifiers.Cast<UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER>().ToArray(), out byte[] byteArray))
+						if (serviceHandler.GetDataByIdentifiers(i, null, DATA_IDENTIFIER.SET_PROCESSDATA_MENU_CURSOR, processDataIdentifiers, out byte[] byteArray))
 						{
 							if (serviceHandler.GetDataFromByteArray(byteArray, 0x80, out List<Data> processDataList))
 							{

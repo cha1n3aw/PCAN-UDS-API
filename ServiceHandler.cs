@@ -1,9 +1,66 @@
 ﻿using Peak.Can.IsoTp;
 using Peak.Can.Uds;
 using System.Text;
+using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
 namespace PCAN_UDS_TEST
 {
+    public enum BOSCH_UDS_PARAMETER_TYPES : byte
+    {
+        /// <summary>
+        /// The parameter type NUMBER can be used to input any 16-Bit value.
+        /// The value can be used in any way within the application.
+        /// </summary>
+        TYPE_NUMBER = 0x00,
+        /// <summary>
+        /// A Switch can distinguish between states "On" (1) and "Off" (0).
+        /// The value can be used in any way within the application. 
+        /// </summary>
+        TYPE_SWITCH = 0x01,
+        /// <summary>
+        /// The comparison of an analog input (e.g. of a potentiometer)
+        /// or a frequency input is possible with this parameter type.
+        /// </summary>
+        TYPE_ADJUSTMENT = 0xFF,
+        /// <summary>
+        /// Learning curves can be recorded in a controller
+        /// e.g. to linearize characteristic curve or e pedal.
+        /// It depends on the controller how much of these lerning curves can be recorded.
+        /// Further details are available in the documentation of the controller. 
+        /// </summary>
+        TYPE_LEARNING_CURVE = 0xFF,
+        /// <summary>
+        /// With the help of lists the user can use comboboxes instead of simple values to make settings.
+        /// This makes the handling easier for the user.
+        /// The list elements must be defined in the global settings.
+        /// </summary>
+        TYPE_LIST = 0xFF,
+        /// <summary>
+        /// The parameter type ANALOG can be used to input any analog value
+        /// from an analog channel of the controller.
+        /// The value can be used in any way within the application.
+        /// </summary>
+        TYPE_ANALOG = 0xFF,
+        /// <summary>
+        /// A callback function can be defined within the application which can be actived
+        /// by button pressure in the diagnosis.
+        /// The contents of the callback can be fixed by the programmer of the application.
+        /// It is possible to pass up to 8 parameters (32-Bit) to the callback function.
+        /// This number is reduced to the maximum of 4 parameters with BODAS-design.
+        /// </summary>
+        TYPE_FUNCTION = 0xFF,
+        /// <summary>
+        /// The parameter type HEX NUMBER can be used to input any 16-Bit hexadecimal value.
+        /// The type can be used like the type NUMBER within the application. 
+        /// </summary>
+        TYPE_HEX_NUMBER = 0xFF,
+        /// <summary>
+        /// The parameter type UNSIGNED NUMBER can be used to input any 16-Bit unsigned number.
+        /// The type can be used like the type NUMBER within the application.
+        /// </summary>
+        TYPE_UNSIGNED_NUMBER = 0xFF
+    }
+
     public struct Data
     {
         public ushort dataIdentifier;
@@ -15,7 +72,7 @@ namespace PCAN_UDS_TEST
         public byte step;
         public string dimension;
         public ushort multiplier;
-        public ushort divider;
+        public ushort divisor;
         public ushort precision;
         public byte accessLevel;
         public short defaultValue;
@@ -66,7 +123,7 @@ namespace PCAN_UDS_TEST
 
 		#region HighLevelServices
 
-		public bool GetControllerInformation(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
+		public bool GetControllerInformation(DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
 		{
             List<string> strings = new();
 			dataArray = SendReadDataByIdentifier(dataIdentifiers);
@@ -133,7 +190,7 @@ namespace PCAN_UDS_TEST
                     y++;
                     data.multiplier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                     y += 2;
-					data.divider = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+					data.divisor = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                     y += 2;
 					data.precision = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                     y += 2;
@@ -162,7 +219,7 @@ namespace PCAN_UDS_TEST
             }
 		}
 
-		public bool GetDataByIdentifiers(byte menuNumber, byte? subMenuNumber, ushort regionIdentifier, UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
+		public bool GetDataByIdentifiers(byte menuNumber, byte? subMenuNumber, DATA_IDENTIFIER regionIdentifier, DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
         {
             if (SetCursor(menuNumber, subMenuNumber, regionIdentifier))
             {
@@ -177,14 +234,14 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool GetMenus(ushort regionIdentifier, out List<string> menuStrings)
+        public bool GetMenus(DATA_IDENTIFIER regionIdentifier, out List<string> menuStrings)
         {
             menuStrings = new();
             int menuCount = 0;
             bool run = true;
             while (run)
             {
-                byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)regionIdentifier });
+                byte[] byteArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { regionIdentifier });
                 if (byteArray != null && byteArray != Array.Empty<byte>())
                 {
                     for (int i = 8; i < byteArray.Length; i++)
@@ -216,8 +273,8 @@ namespace PCAN_UDS_TEST
         public bool GetSubMenus(byte menuNumber, out List<string> subMenuStrings)
         {
             subMenuStrings = new();
-            if (!SetCursor(menuNumber, 0x00, 0xFE01)) return false;
-            byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { (UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)0xFE02 });
+            if (!SetCursor(menuNumber, 0x00, DATA_IDENTIFIER.SET_PARAMETERS_SUBMENU_CURSOR)) return false;
+            byte[] byteArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { DATA_IDENTIFIER.GET_PARAMETERS_SUBMENUS });
             if (byteArray != null && byteArray != Array.Empty<byte>())
                 for (int i = 8; i < byteArray.Length; i++)
                     if (i == 8)
@@ -235,7 +292,7 @@ namespace PCAN_UDS_TEST
             return true;
         }
 
-        public bool SetCursor(byte menuNumber, byte? subMenuNumber, ushort regionIdentifier)
+        public bool SetCursor(byte menuNumber, byte? subMenuNumber, DATA_IDENTIFIER regionIdentifier)
         {
             byte[] response;
             if (subMenuNumber == null)
@@ -243,10 +300,10 @@ namespace PCAN_UDS_TEST
                 byte menuAddress;
                 if (menuNumber < 16) menuAddress = GetSequence(0xB0, 16)[menuNumber];
                 else menuAddress = GetSequence(0xA0, 16)[menuNumber - 16];
-				response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(0xAC00 | menuAddress), new byte[] { (byte)(regionIdentifier >> 8), (byte)(regionIdentifier & 0x00FF), 0x00, 0x00, 0x00, menuNumber });
+				response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(0xAC00 | menuAddress), new byte[] { (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF), 0x00, 0x00, 0x00, menuNumber });
             }
-            else response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] { (byte)(regionIdentifier >> 8), (byte)(regionIdentifier & 0x00FF), 0x00, 0x00, menuNumber, (byte)subMenuNumber });
-            if (response.SequenceEqual(new byte[] { 0x6E, (byte)(regionIdentifier >> 8), (byte)(regionIdentifier & 0x00FF) })) return true;
+            else response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] { (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF), 0x00, 0x00, menuNumber, (byte)subMenuNumber });
+            if (response.SequenceEqual(new byte[] { 0x6E, (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF) })) return true;
             return false;
         }
         #endregion
@@ -365,7 +422,7 @@ namespace PCAN_UDS_TEST
         /// </summary>
         /// <param name="dataIdentifiers">buffer containing a list of two-byte Data Identifiers (see PUDS_SVC_PARAM_DI_xxx)</param>
         /// <returns>Byte array that contains response message</returns>
-        public byte[] SendReadDataByIdentifier(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers)
+        public byte[] SendReadDataByIdentifier(DATA_IDENTIFIER[] dataIdentifiers)
         {
             Console.WriteLine($"Service: {UDSApi.SvcReadDataByIdentifier_2013(handle, requestConfig, out UdsMessage outMessage, dataIdentifiers, (ushort)dataIdentifiers.Length)}");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
@@ -421,7 +478,7 @@ namespace PCAN_UDS_TEST
         /// <param name="dataIdentifier">a two-byte Data Identifier (see PUDS_SVC_PARAM_DI_xxx)</param>
         /// <param name="dataBuffer">buffer containing the data to write</param>
         /// <returns>Byte array that contains response message</returns>
-        public byte[] SendWriteDataByIdentifier(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER dataIdentifier, byte[] dataBuffer)
+        public byte[] SendWriteDataByIdentifier(DATA_IDENTIFIER dataIdentifier, byte[] dataBuffer)
         {
             Console.WriteLine($"Service: {UDSApi.SvcWriteDataByIdentifier_2013(handle, requestConfig, out UdsMessage outMessage, dataIdentifier, dataBuffer, (uint)dataBuffer.Length)}");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
