@@ -1,6 +1,7 @@
 ﻿using Peak.Can.IsoTp;
 using Peak.Can.Uds;
 using System.Text;
+using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
 namespace PCAN_UDS_TEST
 {
@@ -122,7 +123,7 @@ namespace PCAN_UDS_TEST
 
 		#region HighLevelServices
 
-		public bool GetControllerInformation(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
+		public bool GetControllerInformation(DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
 		{
             List<string> strings = new();
 			dataArray = SendReadDataByIdentifier(dataIdentifiers);
@@ -219,7 +220,7 @@ namespace PCAN_UDS_TEST
             }
 		}
 
-		public bool GetDataByIdentifiers(byte menuNumber, byte? subMenuNumber, UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER regionIdentifier, UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
+		public bool GetDataByIdentifiers(byte menuNumber, byte? subMenuNumber, DATA_IDENTIFIER regionIdentifier, DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
         {
             if (SetCursor(menuNumber, subMenuNumber, regionIdentifier))
             {
@@ -234,14 +235,14 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool GetMenus(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER regionIdentifier, out List<string> menuStrings)
+        public bool GetMenus(DATA_IDENTIFIER regionIdentifier, out List<string> menuStrings)
         {
             menuStrings = new();
             int menuCount = 0;
             bool run = true;
             while (run)
             {
-                byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { regionIdentifier });
+                byte[] byteArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { regionIdentifier });
                 if (byteArray != null && byteArray != Array.Empty<byte>())
                 {
                     for (int i = 8; i < byteArray.Length; i++)
@@ -273,8 +274,8 @@ namespace PCAN_UDS_TEST
         public bool GetSubMenus(byte menuNumber, out List<string> subMenuStrings)
         {
             subMenuStrings = new();
-            if (!SetCursor(menuNumber, 0x00, UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER.SET_PARAMETERS_SUBMENU_CURSOR)) return false;
-            byte[] byteArray = SendReadDataByIdentifier(new UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] { UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER.GET_PARAMETERS_SUBMENUS });
+            if (!SetCursor(menuNumber, 0x00, DATA_IDENTIFIER.SET_PARAMETERS_SUBMENU_CURSOR)) return false;
+            byte[] byteArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { DATA_IDENTIFIER.GET_PARAMETERS_SUBMENUS });
             if (byteArray != null && byteArray != Array.Empty<byte>())
                 for (int i = 8; i < byteArray.Length; i++)
                     if (i == 8)
@@ -292,7 +293,7 @@ namespace PCAN_UDS_TEST
             return true;
         }
 
-        public bool SetCursor(byte menuNumber, byte? subMenuNumber, UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER regionIdentifier)
+        public bool SetCursor(byte menuNumber, byte? subMenuNumber, DATA_IDENTIFIER regionIdentifier)
         {
             byte[] response;
             if (subMenuNumber == null)
@@ -300,9 +301,9 @@ namespace PCAN_UDS_TEST
                 byte menuAddress;
                 if (menuNumber < 16) menuAddress = GetSequence(0xB0, 16)[menuNumber];
                 else menuAddress = GetSequence(0xA0, 16)[menuNumber - 16];
-				response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(0xAC00 | menuAddress), new byte[] { (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF), 0x00, 0x00, 0x00, menuNumber });
+				response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(0xAC00 | menuAddress), new byte[] { (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF), 0x00, 0x00, 0x00, menuNumber });
             }
-            else response = SendWriteDataByIdentifier((UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] { (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF), 0x00, 0x00, menuNumber, (byte)subMenuNumber });
+            else response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] { (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF), 0x00, 0x00, menuNumber, (byte)subMenuNumber });
             if (response.SequenceEqual(new byte[] { 0x6E, (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF) })) return true;
             return false;
         }
@@ -422,7 +423,7 @@ namespace PCAN_UDS_TEST
         /// </summary>
         /// <param name="dataIdentifiers">buffer containing a list of two-byte Data Identifiers (see PUDS_SVC_PARAM_DI_xxx)</param>
         /// <returns>Byte array that contains response message</returns>
-        public byte[] SendReadDataByIdentifier(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER[] dataIdentifiers)
+        public byte[] SendReadDataByIdentifier(DATA_IDENTIFIER[] dataIdentifiers)
         {
             Console.WriteLine($"Service: {UDSApi.SvcReadDataByIdentifier_2013(handle, requestConfig, out UdsMessage outMessage, dataIdentifiers, (ushort)dataIdentifiers.Length)}");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
@@ -478,7 +479,7 @@ namespace PCAN_UDS_TEST
         /// <param name="dataIdentifier">a two-byte Data Identifier (see PUDS_SVC_PARAM_DI_xxx)</param>
         /// <param name="dataBuffer">buffer containing the data to write</param>
         /// <returns>Byte array that contains response message</returns>
-        public byte[] SendWriteDataByIdentifier(UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER dataIdentifier, byte[] dataBuffer)
+        public byte[] SendWriteDataByIdentifier(DATA_IDENTIFIER dataIdentifier, byte[] dataBuffer)
         {
             Console.WriteLine($"Service: {UDSApi.SvcWriteDataByIdentifier_2013(handle, requestConfig, out UdsMessage outMessage, dataIdentifier, dataBuffer, (uint)dataBuffer.Length)}");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
