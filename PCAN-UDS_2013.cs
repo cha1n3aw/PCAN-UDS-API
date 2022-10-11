@@ -2939,6 +2939,102 @@ namespace Peak.Can.Uds
         public enum UDS_SERVICE_PARAMETER_DATA_IDENTIFIER : ushort
         {
             /// <summary>
+            /// Fetch all menu names in parameters
+            /// </summary>
+            GET_PARAMETERS_MENUS = 0xFE00,
+            /// <summary>
+            /// Set cursor on menu and submenu in parameters
+            /// </summary>
+            SET_PARAMETERS_SUBMENU_CURSOR = 0xFE01,
+            /// <summary>
+            /// Fetch all submenu names in parameters
+            /// </summary>
+            GET_PARAMETERS_SUBMENUS = 0xFE02,
+            /// <summary>
+            /// Fetch all menu names in processdata
+            /// </summary>
+            GET_PROCESSDATA_MENUS = 0xFE04,
+            /// <summary>
+            /// Set cursor on menu in processdata
+            /// </summary>
+            SET_PROCESSDATA_MENU_CURSOR = 0xFE05,
+            /// <summary>
+            /// Set controller language
+            /// </summary>
+            SET_CONTROLLER_LANGUAGE = 0xFE08,
+            /// <summary>
+            /// Fetch parameter 0
+            /// </summary>
+            GET_PARAMETER_0 = 0xFD0E,
+            /// <summary>
+            /// Fetch parameter 1
+            /// </summary>
+            GET_PARAMETER_1 = 0xFD1E,
+            /// <summary>
+            /// Fetch parameter 2
+            /// </summary>
+            GET_PARAMETER_2 = 0xFD2E,
+            /// <summary>
+            /// Fetch parameter 3
+            /// </summary>
+            GET_PARAMETER_3 = 0xFD3E,
+            /// <summary>
+            /// Fetch parameter 4
+            /// </summary>
+            GET_PARAMETER_4 = 0xFD4E,
+            /// <summary>
+            /// Fetch parameter 5
+            /// </summary>
+            GET_PARAMETER_5 = 0xFD5E,
+            /// <summary>
+            /// Fetch parameter 6
+            /// </summary>
+            GET_PARAMETER_6 = 0xFD6E,
+            /// <summary>
+            /// Fetch parameter 7
+            /// </summary>
+            GET_PARAMETER_7 = 0xFD7E,
+            /// <summary>
+            /// Fetch processdata 0
+            /// </summary>
+            GET_PROCESSDATA_0 = 0xFD8E,
+            /// <summary>
+            /// Fetch processdata 1
+            /// </summary>
+            GET_PROCESSDATA_1 = 0xFD9E,
+            /// <summary>
+            /// Fetch processdata 2
+            /// </summary>
+            GET_PROCESSDATA_2 = 0xFDAE,
+            /// <summary>
+            /// Fetch processdata 3
+            /// </summary>
+            GET_PROCESSDATA_3 = 0xFDBE,
+            /// <summary>
+            /// Fetch processdata 4
+            /// </summary>
+            GET_PROCESSDATA_4 = 0xFDCE,
+            /// <summary>
+            /// Fetch processdata 5
+            /// </summary>
+            GET_PROCESSDATA_5 = 0xFDDE,
+            /// <summary>
+            /// Fetch processdata 6
+            /// </summary>
+            GET_PROCESSDATA_6 = 0xFDEE,
+            /// <summary>
+            /// Fetch processdata 7
+            /// </summary>
+            GET_PROCESSDATA_7 = 0xFDFE,
+            /// <summary>
+            /// Fetch system voltage (e.g. 24V)
+            /// </summary>
+            GET_SYSTEM_VOLTAGE = 0xFE09,
+            /// <summary>
+            /// ?
+            /// </summary>
+            GET_UNKNOWN_DATA = 0xFE0B,
+            /// <summary>
             /// bootSoftwareIdentificationDataIdentifier
             /// </summary>
             PUDS_SVC_PARAM_DI_BSIDID = 0xF180,
