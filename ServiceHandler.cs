@@ -130,7 +130,7 @@ namespace PCAN_UDS_TEST
             int y = 4;
             for (; y < dataArray.Length; y++)
             {
-                ushort tempDataIdentifier;
+                DATA_IDENTIFIER tempDataIdentifier = ()dataArray[y] << 8 | dataArray[y+1];
                 switch ((dataArray[y], dataArray[y+1]))
                 {
                     case (0xFE, 0x09):
