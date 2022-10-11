@@ -68,6 +68,7 @@ namespace BodAss
 			foreach (var pair in menuContents)
 			{
 				Console.WriteLine($"{pair.Key}");
+
 				foreach (Data data in pair.Value.Where(x => x.isAccessible)) Console.WriteLine($"  |__ {data}, DID: {data.dataIdentifier:X4}");
 			}
 
