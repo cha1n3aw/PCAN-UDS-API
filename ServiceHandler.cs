@@ -94,6 +94,9 @@ namespace PCAN_UDS_TEST
         public ushort parameter;
         public ushort timestamp; // или double? смотря где обрабатывать время тут или в main
         public string description;
+
+        public override string ToString() =>
+            $"{errorCode}: {description} at {timestamp}";
     }
 
 	public class ServiceHandler
