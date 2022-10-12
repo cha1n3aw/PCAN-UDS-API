@@ -128,16 +128,16 @@ namespace PCAN_UDS_TEST
             responseConfig.NAI.SOURCE_ADDRESS = NAI.DESTINATION_ADDRESS;
             responseConfig.NAI.DESTINATION_ADDRESS = NAI.SOURCE_ADDRESS;
         }
-		#endregion
+        #endregion
 
-		#region HighLevelServices
+        #region HighLevelServices
 
         public bool GetErrors(DATA_IDENTIFIER[] dataIdentifier, out List<Error> errorList)
         {
             errorList = new();
             byte[] dataArray = SendReadDataByIdentifier(dataIdentifier);
             int y = 8;
-            while (y < dataArray.Length)
+            for (; y < dataArray.Length; y++)
             {
                 Error error = new();
                 error.errorCode = (ushort)(dataArray[y] << 8 | dataArray[y + 1]);
