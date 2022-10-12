@@ -5,6 +5,7 @@ using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIE
 
 namespace PCAN_UDS_TEST
 {
+    #region Structs
     public enum BOSCH_UDS_PARAMETER_TYPES : byte
     {
         /// <summary>
@@ -98,8 +99,9 @@ namespace PCAN_UDS_TEST
         public override string ToString() =>
             $"{errorCode}: {description} at {timestamp}";
     }
+    #endregion
 
-	public class ServiceHandler
+    public class ServiceHandler
     {
         #region GlobalParameters
         private readonly CantpHandle handle;
@@ -131,117 +133,143 @@ namespace PCAN_UDS_TEST
             responseConfig.NAI.SOURCE_ADDRESS = NAI.DESTINATION_ADDRESS;
             responseConfig.NAI.DESTINATION_ADDRESS = NAI.SOURCE_ADDRESS;
         }
-		#endregion
+        #endregion
 
-		#region HighLevelServices
-
-        public bool GetErrors(DATA_IDENTIFIER[] dataIdentifier, out List<Error> errorList)
-        {
-            errorList = new();
-            byte[] dataArray = SendReadDataByIdentifier(dataIdentifier);
-            int y = 8;
-            while (y < dataArray.Length)
-            {
-                Error error = new();
-                error.errorCode = (ushort)(dataArray[y] << 8 | dataArray[y + 1]);
-                y += 2;
-                error.occurence = (ushort)(dataArray[y] << 8 | dataArray[y + 1]);
-                y += 2;
-				error.parameter = (ushort)(dataArray[y] << 8 | dataArray[y + 1]);
-				y += 2;
-                error.timestamp = (ushort)(dataArray[y] << 8 | dataArray[y + 1]); // (dataArray[y] << 8 | dataArray[y + 1]) / 10;
-				y += 2;
-				for (; dataArray[y] != 0x00; y++) error.description += (char)dataArray[y];
-                errorList.Add(error);
-			}
-            return true;
-        }
-
-		public bool GetControllerInformation(DATA_IDENTIFIER[] dataIdentifiers, out List<string> dataList)
-		{
-            dataList = new();
-			byte[] dataArray = SendReadDataByIdentifier(dataIdentifiers);
-            int y = 4;
-            while(y < dataArray.Length)
-            {
-                DATA_IDENTIFIER dataIdentifier = (DATA_IDENTIFIER)(dataArray[y] << 8 | dataArray[y + 1]);
-                y += 2;
-                switch (dataIdentifier)
-                {
-                    case (DATA_IDENTIFIER.GET_SYSTEM_VOLTAGE):
-                        dataList.Add($"{dataArray[y]}");
-                        y++;
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWNDID):
-                        dataList.Add(string.Empty);
-                        for (int i = 0; i < 3; i++) dataList[^1] += $"{dataArray[y + i]:X2} ";
-                        y += 3;
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSIDDID):
-                        dataList.Add(string.Empty);
-                        for (; dataArray[y] != 0xF1; y++) dataList[^1] += (char)dataArray[y];
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADIDID):
-                        dataList.Add(string.Empty);
-                        for (; dataArray[y] != 0x00; y++) dataList[^1] += (char)dataArray[y];
-                        y++;
-                        break;
-                    case (DATA_IDENTIFIER.GET_UNKNOWN_DATA):
-                        dataList.Add(string.Empty);
-                        for (int i = 0; i < 6 ; i++) dataList[^1] += $"{dataArray[y + i]:X2} ";
-                        y += 6;
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ASFPDID):
-                        dataList.Add(string.Empty);
-                        for (int i = 0; i < 7; i++) dataList[^1] += $"{dataArray[y + i]:X2} ";
-                        y += 7;
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWVNDID):
-                        dataList.Add($"{(char)dataArray[y]}{(char)dataArray[y + 1]} : ");
-                        y += 2;
-                        for (int i = 0; i < 4; i++) dataList[^1] += $"{dataArray[y + i]:X2} ";
-                        y += 4;
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUSNDID):
-                        dataList.Add(string.Empty);
-                        for (int i = 0; i < 4; i++) dataList[^1] += $"{dataArray[y + i]:X2} ";
-                        y += 4;
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_BSIDID):
-                        byte length = dataArray[y];
-                        y++;
-                        dataList.Add($"{length} : ");
-                        for (int i = 0; i < 16 * length; i++) dataList[^1] += $"{(char)dataArray[y + i]}";
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_BSFPDID):
-                        dataList.Add($"{dataArray[y]}");
-                        y++;
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUMDDID):
-                        dataList.Add(string.Empty);
-                        for (int i = 0; i < 4; i++) dataList[^1] += $"{dataArray[y + i]:X2}";
-                        y += 4;
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID):
-                        dataList.Add($"{dataArray[y]:X2}");
-                        y++;
-                        break;
-                    case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID):
-                        dataList.Add(string.Empty);
-                        for (; dataArray[y] != 0x00; y++) dataList[^1] += (char)dataArray[y];
-                        y++;
-                        break;
-                }
-            }
-			return true;
-		}
-
-		public byte[] GetSequence(byte offset, byte length) //A004446, self-inverse permutation of the natural numbers: a(n) = Nimsum n + 5.
+        #region HighLevelServices
+        public byte[] GetSequence(byte offset, byte length) //A004446, self-inverse permutation of the natural numbers: a(n) = Nimsum n + 5.
         {
             byte[] sequence = new byte[length];
             for (byte i = 0; i < length; i++) sequence[i] = (byte)((i ^ 5) + offset);
             return sequence;
         }
+
+        public bool GetErrors(DATA_IDENTIFIER dataIdentifier, out List<Error> errorList)
+        {
+            errorList = new();
+            try
+            {
+                byte errorsCount = 1;
+                while (errorList.Count < errorsCount)
+                {
+                    byte[] byteArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { dataIdentifier });
+                    if (byteArray != null && byteArray != Array.Empty<byte>())
+                    {
+                        int y = 7;
+                        errorsCount = byteArray[y++];
+                        for (; y < byteArray.Length; y++)
+                        {
+                            Error error = new();
+                            error.errorCode = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                            y += 2;
+                            error.occurence = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                            y += 2;
+                            error.parameter = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                            y += 2;
+                            error.timestamp = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                            y += 2;
+                            for (; byteArray[y] != 0x00; y++) error.description += (char)byteArray[y];
+                            errorList.Add(error);
+                        }
+                    }
+                    else return false;
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public bool GetControllerInformation(DATA_IDENTIFIER[] dataIdentifiers, out List<string> dataList)
+		{
+            dataList = new();
+            try
+            {
+                byte[] byteArray = SendReadDataByIdentifier(dataIdentifiers);
+                if (byteArray != null && byteArray != Array.Empty<byte>())
+                {
+                    int y = 4;
+                    while (y < byteArray.Length)
+                    {
+                        DATA_IDENTIFIER dataIdentifier = (DATA_IDENTIFIER)(byteArray[y] << 8 | byteArray[y + 1]);
+                        y += 2;
+                        switch (dataIdentifier)
+                        {
+                            case (DATA_IDENTIFIER.GET_SYSTEM_VOLTAGE):
+                                dataList.Add($"{byteArray[y]}");
+                                y++;
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWNDID):
+                                dataList.Add(string.Empty);
+                                for (int i = 0; i < 3; i++) dataList[^1] += $"{byteArray[y + i]:X2} ";
+                                y += 3;
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSIDDID):
+                                dataList.Add(string.Empty);
+                                for (; byteArray[y] != 0xF1; y++) dataList[^1] += (char)byteArray[y];
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADIDID):
+                                dataList.Add(string.Empty);
+                                for (; byteArray[y] != 0x00; y++) dataList[^1] += (char)byteArray[y];
+                                y++;
+                                break;
+                            case (DATA_IDENTIFIER.GET_UNKNOWN_DATA):
+                                dataList.Add(string.Empty);
+                                for (int i = 0; i < 6; i++) dataList[^1] += $"{byteArray[y + i]:X2} ";
+                                y += 6;
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ASFPDID):
+                                dataList.Add(string.Empty);
+                                for (int i = 0; i < 7; i++) dataList[^1] += $"{byteArray[y + i]:X2} ";
+                                y += 7;
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWVNDID):
+                                dataList.Add($"{(char)byteArray[y]}{(char)byteArray[y + 1]} : ");
+                                y += 2;
+                                for (int i = 0; i < 4; i++) dataList[^1] += $"{byteArray[y + i]:X2} ";
+                                y += 4;
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUSNDID):
+                                dataList.Add(string.Empty);
+                                for (int i = 0; i < 4; i++) dataList[^1] += $"{byteArray[y + i]:X2} ";
+                                y += 4;
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_BSIDID):
+                                byte length = byteArray[y];
+                                y++;
+                                dataList.Add($"{length} : ");
+                                for (int i = 0; i < 16 * length; i++) dataList[^1] += $"{(char)byteArray[y + i]}";
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_BSFPDID):
+                                dataList.Add($"{byteArray[y]}");
+                                y++;
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUMDDID):
+                                dataList.Add(string.Empty);
+                                for (int i = 0; i < 4; i++) dataList[^1] += $"{byteArray[y + i]:X2}";
+                                y += 4;
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID):
+                                dataList.Add($"{byteArray[y]:X2}");
+                                y++;
+                                break;
+                            case (DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID):
+                                dataList.Add(string.Empty);
+                                for (; byteArray[y] != 0x00; y++) dataList[^1] += (char)byteArray[y];
+                                y++;
+                                break;
+                        }
+                    }
+                    return true;
+                }
+                else return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+		}		
 
         private byte GetMenuAddress(byte menuNumber) => (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
 
@@ -304,22 +332,25 @@ namespace PCAN_UDS_TEST
             }
             catch(Exception)
             {
-                dataList = new();
                 return false;
             }
 		}
 
 		public bool GetDataByIdentifiers(byte menuNumber, byte? subMenuNumber, DATA_IDENTIFIER regionIdentifier, DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
         {
-            if (SetCursor(menuNumber, subMenuNumber, regionIdentifier))
+            dataArray = Array.Empty<byte>();
+            try
             {
-                dataArray = SendReadDataByIdentifier(dataIdentifiers);
-                if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
+                if (SetCursor(menuNumber, subMenuNumber, regionIdentifier))
+                {
+                    dataArray = SendReadDataByIdentifier(dataIdentifiers);
+                    if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
+                    else return false;
+                }
                 else return false;
             }
-            else
+            catch (Exception)
             {
-                dataArray = Array.Empty<byte>();
                 return false;
             }
         }
@@ -327,74 +358,91 @@ namespace PCAN_UDS_TEST
         public bool GetMenus(DATA_IDENTIFIER regionIdentifier, out List<string> menuStrings)
         {
             menuStrings = new();
-            int menuCount = 0;
-            bool run = true;
-            while (run)
+            try
             {
-                byte[] byteArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { regionIdentifier });
-                if (byteArray != null && byteArray != Array.Empty<byte>())
+                int menuCount = 1;
+                while (menuStrings.Count < menuCount)
                 {
-                    for (int i = 8; i < byteArray.Length; i++)
+                    byte[] byteArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { regionIdentifier });
+                    if (byteArray != null && byteArray != Array.Empty<byte>())
                     {
-                        if (i == 8)
+                        for (int i = 8; i < byteArray.Length; i++)
                         {
-                            menuCount = byteArray[7];
-                            if (byteArray[i + 1] == 0x00) menuStrings.Add(string.Empty);
-                            else menuStrings.Add($"{(byteArray[i] + 1)} ");
-                        }
-                        else if (byteArray[i] == 0x00)
-                        {
-                            i++; //jump to a next byte that contains menu number
-                            if (i + 1 < byteArray.Length) //if "out of bounds" is ok
+                            if (i == 8)
                             {
-                                if (byteArray[i + 1] == 0x00) menuStrings.Add(string.Empty); //next 0x00 represents that menu name is empty
+                                menuCount = byteArray[7];
+                                if (byteArray[i + 1] == 0x00) menuStrings.Add(string.Empty);
                                 else menuStrings.Add($"{(byteArray[i] + 1)} ");
-                                if (byteArray[i] == menuCount - 1) run = false;
                             }
+                            else if (byteArray[i] == 0x00)
+                            {
+                                i++; //jump to a next byte that contains menu number
+                                if (i + 1 < byteArray.Length) //if "out of bounds" is ok
+                                    if (byteArray[i + 1] == 0x00) menuStrings.Add(string.Empty); //next 0x00 represents that menu name is empty
+                                    else menuStrings.Add($"{(byteArray[i] + 1)} ");
+                            }
+                            else menuStrings[^1] += $"{(char)byteArray[i]}";
                         }
-                        else menuStrings[^1] += $"{(char)byteArray[i]}";
                     }
+                    else return false;
                 }
-                else return false;
+                return true;
             }
-            return true;
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public bool GetSubMenus(byte menuNumber, out List<string> subMenuStrings)
         {
             subMenuStrings = new();
-            if (!SetCursor(menuNumber, 0x00, DATA_IDENTIFIER.SET_PARAMETERS_SUBMENU_CURSOR)) return false;
-            byte[] byteArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { DATA_IDENTIFIER.GET_PARAMETERS_SUBMENUS });
-            if (byteArray != null && byteArray != Array.Empty<byte>())
-                for (int i = 8; i < byteArray.Length; i++)
-                    if (i == 8)
-                        if (byteArray[i + 1] == 0x00) subMenuStrings.Add(string.Empty); 
-                        else subMenuStrings.Add($"{(byteArray[i] + 1)} ");
-                    else if (byteArray[i] == 0x00)
-                    {
-                        i++;
-                        if (i + 1 < byteArray.Length)
+            try
+            {
+                if (!SetCursor(menuNumber, 0x00, DATA_IDENTIFIER.SET_PARAMETERS_SUBMENU_CURSOR)) return false;
+                byte[] byteArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { DATA_IDENTIFIER.GET_PARAMETERS_SUBMENUS });
+                if (byteArray != null && byteArray != Array.Empty<byte>())
+                    for (int i = 8; i < byteArray.Length; i++)
+                        if (i == 8)
                             if (byteArray[i + 1] == 0x00) subMenuStrings.Add(string.Empty);
                             else subMenuStrings.Add($"{(byteArray[i] + 1)} ");
-                    }
-                    else subMenuStrings[^1] += $"{(char)byteArray[i]}";
-            else return false;
-            return true;
+                        else if (byteArray[i] == 0x00)
+                        {
+                            i++;
+                            if (i + 1 < byteArray.Length)
+                                if (byteArray[i + 1] == 0x00) subMenuStrings.Add(string.Empty);
+                                else subMenuStrings.Add($"{(byteArray[i] + 1)} ");
+                        }
+                        else subMenuStrings[^1] += $"{(char)byteArray[i]}";
+                else return false;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public bool SetCursor(byte menuNumber, byte? subMenuNumber, DATA_IDENTIFIER regionIdentifier)
         {
-            byte[] response;
-            if (subMenuNumber == null)
+            try
             {
-                byte menuAddress;
-                if (menuNumber < 16) menuAddress = GetSequence(0xB0, 16)[menuNumber];
-                else menuAddress = GetSequence(0xA0, 16)[menuNumber - 16];
-				response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(0xAC00 | menuAddress), new byte[] { (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF), 0x00, 0x00, 0x00, menuNumber });
+                byte[] response;
+                if (subMenuNumber == null)
+                {
+                    byte menuAddress;
+                    if (menuNumber < 16) menuAddress = GetSequence(0xB0, 16)[menuNumber];
+                    else menuAddress = GetSequence(0xA0, 16)[menuNumber - 16];
+                    response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(0xAC00 | menuAddress), new byte[] { (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF), 0x00, 0x00, 0x00, menuNumber });
+                }
+                else response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] { (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF), 0x00, 0x00, menuNumber, (byte)subMenuNumber });
+                if (response.SequenceEqual(new byte[] { 0x6E, (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF) })) return true;
+                else return false;
             }
-            else response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] { (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF), 0x00, 0x00, menuNumber, (byte)subMenuNumber });
-            if (response.SequenceEqual(new byte[] { 0x6E, (byte)((ushort)regionIdentifier >> 8), (byte)((ushort)regionIdentifier & 0x00FF) })) return true;
-            return false;
+            catch (Exception)
+            {
+                return false;
+            }
         }
         #endregion
 
@@ -763,6 +811,5 @@ namespace PCAN_UDS_TEST
             }
 		}
 		#endregion
-
 	}
 }

@@ -3,13 +3,11 @@ using Peak.Can.IsoTp;
 using Peak.Can.Uds;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
-//TODO: errors
-
 namespace BodAss
 {
     internal class Program
 	{
-        private static uint tiomeoutValue = 5000;
+        private static uint timeoutValue = 5000;
         private static readonly CantpHandle handle = CantpHandle.PCANTP_HANDLE_USBBUS1;
         private static readonly CantpBaudrate baudrate = CantpBaudrate.PCANTP_BAUDRATE_250K;
 		private static readonly byte sourceAddress = 0xFA;
@@ -98,24 +96,11 @@ namespace BodAss
             }
         }
 
-        static void PrintActiveErrors(ServiceHandler serviceHandler, )
+        static void PrintErrors(ServiceHandler serviceHandler, DATA_IDENTIFIER dataIdentifier)
         {
-            DATA_IDENTIFIER[] dataIdentifier = {(DATA_IDENTIFIER) 0xFEF0};
             if (serviceHandler.GetErrors(dataIdentifier, out List<Error> errorList))
-            {
                 foreach (Error error in errorList) Console.WriteLine(error);
-            }
         }
-
-		static void PrintSavedErrors(ServiceHandler serviceHandler)
-		{
-			DATA_IDENTIFIER[] dataIdentifier = { (DATA_IDENTIFIER)0xFEF1 };
-			if (serviceHandler.GetErrors(dataIdentifier, out List<Error> errorList))
-			{
-				foreach (Error error in errorList) Console.WriteLine(error);
-			}
-		}
-
 
 		static void Main(string[] args)
 		{
@@ -154,12 +139,14 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID };
 
-            Initialize(handle, baudrate);
+            Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-			PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
-			PrintParameters(serviceHandler, dataIdentifiers);
-			PrintProcessData(serviceHandler, processDataIdentifiers);
-			Uninitialize(handle);
+            PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
+            PrintParameters(serviceHandler, dataIdentifiers);
+            PrintProcessData(serviceHandler, processDataIdentifiers);
+            PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
+            PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
+            Uninitialize(handle);
         }
 
 		private static bool Uninitialize(CantpHandle handle)
@@ -169,12 +156,12 @@ namespace BodAss
 			return UDSApi.StatusIsOk_2013(status);
         }
 
-		private static bool Initialize(CantpHandle handle, CantpBaudrate baudrate)
+		private static bool Initialize(CantpHandle handle, CantpBaudrate baudrate, uint timeoutValue)
 		{
 			UdsStatus status = UDSApi.Initialize_2013(handle, baudrate);
             Console.WriteLine($"CAN interface initialization: {status}");
-            Console.WriteLine($"Set request timeout(ms): {UDSApi.SetValue_2013(handle, UdsParameter.PUDS_PARAMETER_TIMEOUT_REQUEST, ref tiomeoutValue, sizeof(uint))}");
-            Console.WriteLine($"Set response timeout(ms): {UDSApi.SetValue_2013(handle, UdsParameter.PUDS_PARAMETER_TIMEOUT_RESPONSE, ref tiomeoutValue, sizeof(uint))}");
+            Console.WriteLine($"Set request timeout(ms): {UDSApi.SetValue_2013(handle, UdsParameter.PUDS_PARAMETER_TIMEOUT_REQUEST, ref timeoutValue, sizeof(uint))}");
+            Console.WriteLine($"Set response timeout(ms): {UDSApi.SetValue_2013(handle, UdsParameter.PUDS_PARAMETER_TIMEOUT_RESPONSE, ref timeoutValue, sizeof(uint))}");
             return UDSApi.StatusIsOk_2013(status);
 		}
 	}

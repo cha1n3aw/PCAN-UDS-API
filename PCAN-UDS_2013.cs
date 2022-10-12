@@ -2939,6 +2939,14 @@ namespace Peak.Can.Uds
         public enum UDS_SERVICE_PARAMETER_DATA_IDENTIFIER : ushort
         {
             /// <summary>
+            /// Fetch all active errors in ECU
+            /// </summary>
+            GET_ACTIVE_ERRORS = 0xFEF0,
+            /// <summary>
+            /// Fetch all saved errors in ECU
+            /// </summary>
+            GET_SAVED_ERRORS = 0xFEF1,
+            /// <summary>
             /// Fetch all menu names in parameters
             /// </summary>
             GET_PARAMETERS_MENUS = 0xFE00,
