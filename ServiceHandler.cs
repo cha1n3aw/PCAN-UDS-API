@@ -87,6 +87,15 @@ namespace PCAN_UDS_TEST
 		}
     }
 
+    public struct Error
+    {
+        public ushort errorCode;
+        public ushort occurence;
+        public ushort parameter;
+        public ushort timestamp; // или double? смотря где обрабатывать время тут или в main
+        public string description;
+    }
+
 	public class ServiceHandler
     {
         #region GlobalParameters
@@ -122,6 +131,28 @@ namespace PCAN_UDS_TEST
 		#endregion
 
 		#region HighLevelServices
+
+        public bool GetErrors(DATA_IDENTIFIER[] dataIdentifier, out List<Error> errorList)
+        {
+            errorList = new();
+            byte[] dataArray = SendReadDataByIdentifier(dataIdentifier);
+            int y = 8;
+            while (y < dataArray.Length)
+            {
+                Error error = new();
+                error.errorCode = (ushort)(dataArray[y] << 8 | dataArray[y + 1]);
+                y += 2;
+                error.occurence = (ushort)(dataArray[y] << 8 | dataArray[y + 1]);
+                y += 2;
+				error.parameter = (ushort)(dataArray[y] << 8 | dataArray[y + 1]);
+				y += 2;
+                error.timestamp = (ushort)(dataArray[y] << 8 | dataArray[y + 1]); // (dataArray[y] << 8 | dataArray[y + 1]) / 10;
+				y += 2;
+				for (; dataArray[y] != 0x00; y++) error.description += (char)dataArray[y];
+                errorList.Add(error);
+			}
+            return true;
+        }
 
 		public bool GetControllerInformation(DATA_IDENTIFIER[] dataIdentifiers, out List<string> dataList)
 		{
@@ -211,9 +242,9 @@ namespace PCAN_UDS_TEST
 
         private byte GetMenuAddress(byte menuNumber) => (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
 
-		public bool GetDataFromByteArray(byte[] byteArray, byte dataType, out List<Data> dataArray) //0x00 for parameters, 0x80 for processdata
+		public bool GetDataFromByteArray(byte[] byteArray, byte dataType, out List<Data> dataList) //0x00 for parameters, 0x80 for processdata
 		{
-			dataArray = new();
+			dataList = new();
 			int y = 4;
             try
             {
@@ -225,7 +256,7 @@ namespace PCAN_UDS_TEST
                     if (byteArray[y] == 0x00)
                     {
                         data.isAccessible = false;
-                        dataArray.Add(data);
+                        dataList.Add(data);
                         continue;
                     }
                     else data.isAccessible = true;
@@ -264,13 +295,13 @@ namespace PCAN_UDS_TEST
                     }
                     data.value = (short)(byteArray[y] << 8 | byteArray[y + 1]);
                     y++;
-					dataArray.Add(data);
+					dataList.Add(data);
                 }
                 return true;
             }
             catch(Exception)
             {
-                dataArray = new();
+                dataList = new();
                 return false;
             }
 		}
