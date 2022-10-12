@@ -98,8 +98,26 @@ namespace BodAss
             }
         }
 
+        static void PrintActiveErrors(ServiceHandler serviceHandler, )
+        {
+            DATA_IDENTIFIER[] dataIdentifier = {(DATA_IDENTIFIER) 0xFEF0};
+            if (serviceHandler.GetErrors(dataIdentifier, out List<Error> errorList))
+            {
+                foreach (Error error in errorList) Console.WriteLine(error);
+            }
+        }
 
-        static void Main(string[] args)
+		static void PrintSavedErrors(ServiceHandler serviceHandler)
+		{
+			DATA_IDENTIFIER[] dataIdentifier = { (DATA_IDENTIFIER)0xFEF1 };
+			if (serviceHandler.GetErrors(dataIdentifier, out List<Error> errorList))
+			{
+				foreach (Error error in errorList) Console.WriteLine(error);
+			}
+		}
+
+
+		static void Main(string[] args)
 		{
             DATA_IDENTIFIER[] dataIdentifiers = {
                 DATA_IDENTIFIER.GET_PARAMETER_0,
