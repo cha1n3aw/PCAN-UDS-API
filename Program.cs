@@ -129,7 +129,7 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWNDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSIDDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADIDID,
-                DATA_IDENTIFIER.GET_UNKNOWN_DATA,
+                DATA_IDENTIFIER.GET_UNKNOWN_DATA, // operation time and reset counter
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ASFPDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWVNDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUSNDID,
@@ -141,12 +141,15 @@ namespace BodAss
 
             Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-            PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
+
+            //PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
             PrintParameters(serviceHandler, dataIdentifiers);
-            PrintProcessData(serviceHandler, processDataIdentifiers);
-            PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
-            PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
-            Uninitialize(handle);
+            if (serviceHandler.SetParameter(0, 0, (DATA_IDENTIFIER)0xFD1F, 0x0001)) Console.WriteLine("Parameter set");
+			PrintParameters(serviceHandler, dataIdentifiers);
+			//PrintProcessData(serviceHandler, processDataIdentifiers);
+			//PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
+			//PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
+			Uninitialize(handle);
         }
 
 		private static bool Uninitialize(CantpHandle handle)
