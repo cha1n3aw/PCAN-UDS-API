@@ -94,7 +94,7 @@ namespace PCAN_UDS_TEST
 
 			byte[] seed = new byte[] { 0x45, 0x9F, 0xAA, 0x52, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-			byte[] passKey = Aes128_Decr(mstKey, password);
+			byte[] passKey = Decrypt(mstKey, password);
 			//Console.WriteLine('${password.map((e)=>e.toRadixString(16).padLeft(2, '0').toUpperCase()).toList().toString()} decrypt password');
 			foreach (byte b in password) Console.Write($"{b:X2} ");
 			Console.WriteLine(" password decrypt");
@@ -105,7 +105,7 @@ namespace PCAN_UDS_TEST
 			foreach (byte b in passKey) Console.Write($"{b:X2} ");
 			Console.WriteLine(" passKey decrypt\n");
 
-			byte[] aKey = Aes128_Encr(passKey, seed);
+			byte[] aKey = Encrypt(passKey, seed);
 			//Console.WriteLine('${seed.map((e)=>e.toRadixString(16).padLeft(2, '0').toUpperCase()).toList().toString()} encrypt seed');
 			foreach (byte b in seed) Console.Write($"{b:X2} ");
 			Console.WriteLine(" seed encrypt");
@@ -116,7 +116,7 @@ namespace PCAN_UDS_TEST
 			foreach (byte b in aKey) Console.Write($"{b:X2} ");
 			Console.WriteLine(" aKey encrypt\n");
 
-			byte[] aKey2 = Aes128_Encr(password, seed);
+			byte[] aKey2 = Encrypt(password, seed);
 			//Console.WriteLine('${seed.map((e)=>e.toRadixString(16).padLeft(2, '0').toUpperCase()).toList().toString()} encrypt seed');
 			foreach (byte b in seed) Console.Write($"{b:X2} ");
 			Console.WriteLine(" seed encrypt");
@@ -141,124 +141,96 @@ namespace PCAN_UDS_TEST
 			// print('${resultTest.map((e)=>e.toRadixString(16).padLeft(2, '0').toUpperCase()).toList().toString()} decrypt resultTest\n');
 		}
 
-		public void mk()
-		{
-			byte[] mk = { 0xE2, 0x4F, 0x3A, 0x2D, 0x10, 0x66, 0x44, 0xF0, 0x2F, 0x74, 0x11, 0x1F, 0xDD, 0x56, 0x78, 0x67 };
-			byte i = 0;
-			mk[i++] ^= 0xD5;
-			mk[i++] ^= 0xD2;
-			mk[i++] ^= 0x56;
-			mk[i++] ^= 0x19;
-			mk[i++] ^= 0x8D;
-			mk[i++] ^= 0x41;
-			mk[i++] ^= 0x0B;
-			mk[i++] ^= 0xED;
-			mk[i++] ^= 0x88;
-			mk[i++] ^= 0x58;
-			mk[i++] ^= 0xB9;
-			mk[i++] ^= 0xB9;
-			mk[i++] ^= 0xAA;
-			mk[i++] ^= 0xC5;
-			mk[i++] ^= 0xDC;
-			mk[i++] ^= 0x71;
-			//Console.WriteLine($"{mk.map((e)=>e.toRadixString(16).padLeft(2, '0').toUpperCase()).toList().toString()} mk");
-			//foreach (byte b in mk) Console.WriteLine($"{b:X2}");
-		}
-
-		byte[] Aes128_Encr(byte[] key, byte[] data)
+		byte[] Encrypt(byte[] key, byte[] data)
 		{
 
-			byte idxRoundU8;
+			byte indexRound;
 
-			byte[] data_au8 = data;
-
+			byte[] data_au8 = data.ToArray();
 			byte[] keys_au8 = new byte[AES128_ROUNDKEYARRAYSIZE_DU8];
 
 			// Generate round keys and store in private variable
-			keys_au8 = Aes128_GenRoundKeys(key, keys_au8);
+			keys_au8 = GenerateRoundKeys(key, keys_au8);
 
 			// Add Round Key step for round 1
-			data_au8 = Aes128_AddRoundKey(data_au8, keys_au8);
+			data_au8 = AddRoundKey(data_au8, keys_au8);
 
 			// For loop for rounds 1-9, each executing 4 calculation steps
-			for (idxRoundU8 = 1; idxRoundU8 < 10; idxRoundU8++)
+			for (indexRound = 1; indexRound < 10; indexRound++)
 			{
 				// 1. Substitute Bytes
-				data_au8 = Aes128_Sub(data_au8);
+				data_au8 = Substitute(data_au8);
 
 				// 2. Shift Rows
-				data_au8 = Aes128_ShiftRows(data_au8);
+				data_au8 = ShiftRows(data_au8);
 
 				// 3. Mix Columns
-				data_au8 = Aes128_MixCol(data_au8);
+				data_au8 = MixColumns(data_au8);
 
 				// 4. Add Round Key
-				byte[] tempRoundKey = new byte[keys_au8.Length - (idxRoundU8 * 16)];
-				Array.Copy(keys_au8, idxRoundU8 * 16, tempRoundKey, 0, keys_au8.Length - (idxRoundU8 * 16));
-				data_au8 = Aes128_AddRoundKey(data_au8, tempRoundKey);
+				byte[] tempRoundKey = new byte[keys_au8.Length - (indexRound * 16)];
+				Array.Copy(keys_au8, indexRound * 16, tempRoundKey, 0, keys_au8.Length - (indexRound * 16));
+				data_au8 = AddRoundKey(data_au8, tempRoundKey);
 			}
+
 			// Substitute Bytes last round
-			data_au8 = Aes128_Sub(data_au8);
+			data_au8 = Substitute(data_au8);
 
 			// Shift Rows last round
-			data_au8 = Aes128_ShiftRows(data_au8);
+			data_au8 = ShiftRows(data_au8);
 
 			// Add Round Key last round
 			byte[] tempLastRoundKey = new byte[keys_au8.Length - 160];
 			Array.Copy(keys_au8, 160, tempLastRoundKey, 0, keys_au8.Length - 160);
-			data_au8 = Aes128_AddRoundKey(data_au8, tempLastRoundKey);
-			foreach (byte b in data) Console.Write($"{b:X2} ");
-			Console.WriteLine(" data1");
+			data_au8 = AddRoundKey(data_au8, tempLastRoundKey);
 			return data_au8;
 		}
 
-		byte[] Aes128_Decr(byte[] key, byte[] data)
+		byte[] Decrypt(byte[] key, byte[] data)
 		{
-			byte[] roundKeysAu8 = new byte[AES128_ROUNDKEYARRAYSIZE_DU8]; // Storage for 11 round keys (11 * 16 Byte)
-
-			byte idxRoundU8;
-			byte[] data_au8 = data;
-			byte[] keys_au8 = roundKeysAu8;
+			byte indexRound;
+			byte[] data_au8 = data.ToArray();
+			byte[] keys_au8 = new byte[AES128_ROUNDKEYARRAYSIZE_DU8];
 			// Generate round keys and store in private variable
-			keys_au8 = Aes128_GenRoundKeys(key, keys_au8);
+			keys_au8 = GenerateRoundKeys(key, keys_au8);
 
 			// Add Round Key step for round 1
-			byte[] tempLastRoundKey = new byte[keys_au8.Length - 160];
-			Array.Copy(keys_au8, 160, tempLastRoundKey, 0, keys_au8.Length - 160);
-			data_au8 = Aes128_AddRoundKey(data_au8, tempLastRoundKey);
+			byte[] tempFirstRoundKey = new byte[keys_au8.Length - 160];
+			Array.Copy(keys_au8, 160, tempFirstRoundKey, 0, keys_au8.Length - 160);
+			data_au8 = AddRoundKey(data_au8, tempFirstRoundKey);
 
 			// For loop for rounds 1-9, each executing 4 calculation steps
-			for (idxRoundU8 = 1; idxRoundU8 < 10; idxRoundU8++)
+			for (indexRound = 1; indexRound < 10; indexRound++)
 			{
 				// 1. Inverse Shift Rows
-				data_au8 = Aes128_IvsShiftRows(data_au8);
+				data_au8 = InverseShiftRows(data_au8);
 
 				// 2. Inverse Substitute Bytes
-				data_au8 = Aes128_IvsSub(data_au8);
+				data_au8 = InverseSubstitute(data_au8);
 				// 3. Add Round Key
-				byte[] tempRoundKey = new byte[keys_au8.Length - ((10 - idxRoundU8) * 16)];
+				byte[] tempRoundKey = new byte[keys_au8.Length - ((10 - indexRound) * 16)];
 
-				Array.Copy(keys_au8, (10 -idxRoundU8) * 16, tempRoundKey, 0, keys_au8.Length - ((10 -idxRoundU8) * 16));
-				data_au8 = Aes128_AddRoundKey(data_au8, tempRoundKey);
+				Array.Copy(keys_au8, (10 -indexRound) * 16, tempRoundKey, 0, keys_au8.Length - ((10 -indexRound) * 16));
+				data_au8 = AddRoundKey(data_au8, tempRoundKey);
 
 				// 4. Inverse Mix Columns
-				data_au8 = Aes128_IvsMixCol(data_au8);
+				data_au8 = InverseMixColumns(data_au8);
 			}
 
 			// Inverse Shift Rows last round
-			data_au8 = Aes128_IvsShiftRows(data_au8);
+			data_au8 = InverseShiftRows(data_au8);
 
 			// Inverse Substitute Bytes last round
-			data_au8 = Aes128_IvsSub(data_au8);
+			data_au8 = InverseSubstitute(data_au8);
 
 			// Add Round Key last round
-			data_au8 = Aes128_AddRoundKey(data_au8, keys_au8);
+			data_au8 = AddRoundKey(data_au8, keys_au8);
 
 			return data_au8;
 
 		}
 
-		byte[] Aes128_GenRoundKeys(byte[] mstKey_au8, byte[] roundKeys_au8)
+		byte[] GenerateRoundKeys(byte[] mstKey_au8, byte[] roundKeys_au8)
 		{
 			byte idxColU8, idxBytU8;
 
@@ -310,7 +282,7 @@ namespace PCAN_UDS_TEST
 			return roundKeys_au8;
 		}
 
-		byte[] Aes128_AddRoundKey(byte[] data_au8, byte[] roundKey_au8)
+		byte[] AddRoundKey(byte[] data_au8, byte[] roundKey_au8)
 		{
 			byte idxBytU8;
 			for (idxBytU8 = 0; idxBytU8 < 16; idxBytU8++)
@@ -320,34 +292,34 @@ namespace PCAN_UDS_TEST
 			return data_au8;
 		}
 
-		byte[] Aes128_MixCol(byte[] data_au8)
+		byte[] MixColumns(byte[] data_au8)
 		{
 			byte[] tmpDataAu8 = new byte[4];
-			byte idxColU8, idxBytU8;
+			byte indexColumn, indexByte;
 
 			// Loop through data columns
-			for (idxColU8 = 0; idxColU8 < 4; idxColU8++)
+			for (indexColumn = 0; indexColumn < 4; indexColumn++)
 			{
 				// Calculate each byte in new column with Galois-field F(2^8) multiplication of
 				// the whole column with the mix-column-matrix row
-				for (idxBytU8 = 0; idxBytU8 < 4; idxBytU8++)
+				for (indexByte = 0; indexByte < 4; indexByte++)
 				{
-					tmpDataAu8[idxBytU8] = Aes128_BytMul(data_au8[4 * idxColU8], mixColMtrx_au8[4 * idxBytU8]);
-					tmpDataAu8[idxBytU8] ^= Aes128_BytMul(data_au8[1 + 4 * idxColU8], mixColMtrx_au8[4 * idxBytU8 + 1]);
-					tmpDataAu8[idxBytU8] ^= Aes128_BytMul(data_au8[2 + 4 * idxColU8], mixColMtrx_au8[4 * idxBytU8 + 2]);
-					tmpDataAu8[idxBytU8] ^= Aes128_BytMul(data_au8[3 + 4 * idxColU8], mixColMtrx_au8[4 * idxBytU8 + 3]);
+					tmpDataAu8[indexByte] = ByteMultiply(data_au8[4 * indexColumn], mixColMtrx_au8[4 * indexByte]);
+					tmpDataAu8[indexByte] ^= ByteMultiply(data_au8[1 + 4 * indexColumn], mixColMtrx_au8[4 * indexByte + 1]);
+					tmpDataAu8[indexByte] ^= ByteMultiply(data_au8[2 + 4 * indexColumn], mixColMtrx_au8[4 * indexByte + 2]);
+					tmpDataAu8[indexByte] ^= ByteMultiply(data_au8[3 + 4 * indexColumn], mixColMtrx_au8[4 * indexByte + 3]);
 				}
 
 				// Replace column with new column
-				data_au8[4 * idxColU8] = tmpDataAu8[0];
-				data_au8[1 + 4 * idxColU8] = tmpDataAu8[1];
-				data_au8[2 + 4 * idxColU8] = tmpDataAu8[2];
-				data_au8[3 + 4 * idxColU8] = tmpDataAu8[3];
+				data_au8[4 * indexColumn] = tmpDataAu8[0];
+				data_au8[1 + 4 * indexColumn] = tmpDataAu8[1];
+				data_au8[2 + 4 * indexColumn] = tmpDataAu8[2];
+				data_au8[3 + 4 * indexColumn] = tmpDataAu8[3];
 			}
 			return data_au8;
 		}
 
-		byte[] Aes128_IvsMixCol(byte[] data_au8)
+		byte[] InverseMixColumns(byte[] data_au8)
 		{
 			byte[] tmpDataAu8 = new byte[4];
 			byte idxColU8, idxBytU8;
@@ -359,10 +331,10 @@ namespace PCAN_UDS_TEST
 				// the whole column with the inverse-mix-column-matrix row
 				for (idxBytU8 = 0; idxBytU8 < 4; idxBytU8++)
 				{
-					tmpDataAu8[idxBytU8] = Aes128_BytMul(data_au8[4 * idxColU8], ivsMixColMtrx_au8[4 * idxBytU8]);
-					tmpDataAu8[idxBytU8] ^= Aes128_BytMul(data_au8[1 + 4 * idxColU8], ivsMixColMtrx_au8[4 * idxBytU8 + 1]);
-					tmpDataAu8[idxBytU8] ^= Aes128_BytMul(data_au8[2 + 4 * idxColU8], ivsMixColMtrx_au8[4 * idxBytU8 + 2]);
-					tmpDataAu8[idxBytU8] ^= Aes128_BytMul(data_au8[3 + 4 * idxColU8], ivsMixColMtrx_au8[4 * idxBytU8 + 3]);
+					tmpDataAu8[idxBytU8] = ByteMultiply(data_au8[4 * idxColU8], ivsMixColMtrx_au8[4 * idxBytU8]);
+					tmpDataAu8[idxBytU8] ^= ByteMultiply(data_au8[1 + 4 * idxColU8], ivsMixColMtrx_au8[4 * idxBytU8 + 1]);
+					tmpDataAu8[idxBytU8] ^= ByteMultiply(data_au8[2 + 4 * idxColU8], ivsMixColMtrx_au8[4 * idxBytU8 + 2]);
+					tmpDataAu8[idxBytU8] ^= ByteMultiply(data_au8[3 + 4 * idxColU8], ivsMixColMtrx_au8[4 * idxBytU8 + 3]);
 				}
 
 				// Replace column with new column
@@ -374,7 +346,7 @@ namespace PCAN_UDS_TEST
 			return data_au8;
 		}
 
-		byte Aes128_BytMul(byte fac1U8, byte fac2U8)
+		byte ByteMultiply(byte fac1U8, byte fac2U8)
 		{
 			int tmpFacU16;
 			int productU16 = 0x0000;
@@ -450,78 +422,78 @@ namespace PCAN_UDS_TEST
 			return (byte)(productU16 & 0xFF);
 		}
 
-		byte[] Aes128_Sub(byte[] data_au8)
+		byte[] Substitute(byte[] data_au8)
 		{
-			byte idxBytU8;
-			for (idxBytU8 = 0; idxBytU8 < 16; idxBytU8++)
+			byte indexByte;
+			for (indexByte = 0; indexByte < 16; indexByte++)
 			{
-				data_au8[idxBytU8] = subBox_au8[data_au8[idxBytU8]];
+				data_au8[indexByte] = subBox_au8[data_au8[indexByte]];
 			}
 			return data_au8;
 		}
 
-		byte[] Aes128_IvsSub(byte[] data_au8)
+		byte[] InverseSubstitute(byte[] data_au8)
 		{
-			byte idxBytU8;
-			for (idxBytU8 = 0; idxBytU8 < 16; idxBytU8++)
+			byte indexByte;
+			for (indexByte = 0; indexByte < 16; indexByte++)
 			{
-				data_au8[idxBytU8] = ivsSubBox_au8[data_au8[idxBytU8]];
+				data_au8[indexByte] = ivsSubBox_au8[data_au8[indexByte]];
 			}
 			return data_au8;
 		}
 
-		byte[] Aes128_ShiftRows(byte[] data_au8)
+		byte[] ShiftRows(byte[] data_au8)
 		{
-			byte[] tmpDataAu8 = new byte[16];
-			byte idxBytU8;
+			byte[] tempData = new byte[16];
+			byte indexByte;
 
 			// Copy original data
-			for (idxBytU8 = 0; idxBytU8 < 16; idxBytU8++)
+			for (indexByte = 0; indexByte < 16; indexByte++)
 			{
-				tmpDataAu8[idxBytU8] = data_au8[idxBytU8];
+				tempData[indexByte] = data_au8[indexByte];
 			}
 
 			// Shift data
-			data_au8[9] = tmpDataAu8[13];
-			data_au8[5] = tmpDataAu8[9];
-			data_au8[1] = tmpDataAu8[5];
-			data_au8[13] = tmpDataAu8[1];
-			data_au8[6] = tmpDataAu8[14];
-			data_au8[2] = tmpDataAu8[10];
-			data_au8[14] = tmpDataAu8[6];
-			data_au8[10] = tmpDataAu8[2];
-			data_au8[7] = tmpDataAu8[3];
-			data_au8[11] = tmpDataAu8[7];
-			data_au8[15] = tmpDataAu8[11];
-			data_au8[3] = tmpDataAu8[15];
+			data_au8[9] = tempData[13];
+			data_au8[5] = tempData[9];
+			data_au8[1] = tempData[5];
+			data_au8[13] = tempData[1];
+			data_au8[6] = tempData[14];
+			data_au8[2] = tempData[10];
+			data_au8[14] = tempData[6];
+			data_au8[10] = tempData[2];
+			data_au8[7] = tempData[3];
+			data_au8[11] = tempData[7];
+			data_au8[15] = tempData[11];
+			data_au8[3] = tempData[15];
 
 			return data_au8;
 		}
 
-		byte[] Aes128_IvsShiftRows(byte[] data_au8)
+		byte[] InverseShiftRows(byte[] data_au8)
 		{
-			byte[] tmpDataAu8 = new byte[16];
-			byte idxBytU8;
+			byte[] tempData = new byte[16];
+			byte indexByte;
 
 			// Copy original data
-			for (idxBytU8 = 0; idxBytU8 < 16; idxBytU8++)
+			for (indexByte = 0; indexByte < 16; indexByte++)
 			{
-				tmpDataAu8[idxBytU8] = data_au8[idxBytU8];
+				tempData[indexByte] = data_au8[indexByte];
 			}
 
 			// Shift data
-			data_au8[13] = tmpDataAu8[9];
-			data_au8[9] = tmpDataAu8[5];
-			data_au8[5] = tmpDataAu8[1];
-			data_au8[1] = tmpDataAu8[13];
-			data_au8[14] = tmpDataAu8[6];
-			data_au8[10] = tmpDataAu8[2];
-			data_au8[6] = tmpDataAu8[14];
-			data_au8[2] = tmpDataAu8[10];
-			data_au8[3] = tmpDataAu8[7];
-			data_au8[7] = tmpDataAu8[11];
-			data_au8[11] = tmpDataAu8[15];
-			data_au8[15] = tmpDataAu8[3];
+			data_au8[13] = tempData[9];
+			data_au8[9] = tempData[5];
+			data_au8[5] = tempData[1];
+			data_au8[1] = tempData[13];
+			data_au8[14] = tempData[6];
+			data_au8[10] = tempData[2];
+			data_au8[6] = tempData[14];
+			data_au8[2] = tempData[10];
+			data_au8[3] = tempData[7];
+			data_au8[7] = tempData[11];
+			data_au8[11] = tempData[15];
+			data_au8[15] = tempData[3];
 
 			return data_au8;
 		}
