@@ -1,5 +1,6 @@
 ﻿using Peak.Can.IsoTp;
 using Peak.Can.Uds;
+using System.Linq.Expressions;
 using System.Text;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
@@ -35,7 +36,7 @@ namespace PCAN_UDS_TEST
         /// This makes the handling easier for the user.
         /// The list elements must be defined in the global settings.
         /// </summary>
-        TYPE_LIST = 0xFF,
+        TYPE_LIST = 0x07,
         /// <summary>
         /// The parameter type ANALOG can be used to input any analog value
         /// from an analog channel of the controller.
@@ -136,6 +137,21 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region HighLevelServices
+        public bool SetParameter(byte menuNumber, byte subMenuNumber, DATA_IDENTIFIER parameterNumber, ushort value)
+        {
+            try
+            {
+                if (!SetCursor(menuNumber, subMenuNumber, DATA_IDENTIFIER.SET_PARAMETERS_SUBMENU_CURSOR)) return false;
+				byte[] response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] {(byte)((ushort)parameterNumber >> 8), (byte)((ushort)parameterNumber & 0x00FF), 0x00, 0x00, (byte)(value >> 8 ), (byte)(value & 0x00FF)});
+                if (response.SequenceEqual(new byte[] { 0x6E, (byte)((ushort)parameterNumber >> 8), (byte)((ushort)parameterNumber & 0x00FF) })) return true;
+                else return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public byte[] GetSequence(byte offset, byte length) //A004446, self-inverse permutation of the natural numbers: a(n) = Nimsum n + 5.
         {
             byte[] sequence = new byte[length];
@@ -156,6 +172,7 @@ namespace PCAN_UDS_TEST
                     {
                         int y = 7;
                         errorsCount = byteArray[y++];
+                        foreach (byte b in byteArray) Console.Write($"{b:X2} ");
                         for (; y < byteArray.Length; y++)
                         {
                             Error error = new();
@@ -167,7 +184,7 @@ namespace PCAN_UDS_TEST
                             y += 2;
                             error.timestamp = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                             y += 2;
-                            for (; byteArray[y] != 0x00; y++) error.description += (char)byteArray[y];
+                            for (; y < byteArray.Length && byteArray[y] != 0x00; y++) error.description += (char)byteArray[y];
                             errorList.Add(error);
                         }
                     }
@@ -175,8 +192,9 @@ namespace PCAN_UDS_TEST
                 }
                 return true;
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 return false;
             }
         }
