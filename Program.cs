@@ -139,17 +139,19 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID };
 
-            Initialize(handle, baudrate, timeoutValue);
-            ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+            //Initialize(handle, baudrate, timeoutValue);
+            //ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
 
-            //PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
-            PrintParameters(serviceHandler, dataIdentifiers);
-            if (serviceHandler.SetParameter(0, 0, (DATA_IDENTIFIER)0xFD1F, 0x0001)) Console.WriteLine("Parameter set");
-			PrintParameters(serviceHandler, dataIdentifiers);
-			//PrintProcessData(serviceHandler, processDataIdentifiers);
-			//PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
-			//PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
-			Uninitialize(handle);
+            ////PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
+            //PrintParameters(serviceHandler, dataIdentifiers);
+            ////if (serviceHandler.SetParameter(0, 0, (DATA_IDENTIFIER)0xFD1F, 0x0001)) Console.WriteLine("Parameter set");
+            ////PrintParameters(serviceHandler, dataIdentifiers);
+            ////PrintProcessData(serviceHandler, processDataIdentifiers);
+            ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
+            ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
+            //Uninitialize(handle);
+            SecurityAccess securityAccess = new();
+            securityAccess.GetSeed();
         }
 
 		private static bool Uninitialize(CantpHandle handle)

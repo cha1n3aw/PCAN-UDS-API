@@ -293,6 +293,8 @@ namespace PCAN_UDS_TEST
 
 		public bool GetDataFromByteArray(byte[] byteArray, byte dataType, out List<Data> dataList) //0x00 for parameters, 0x80 for processdata
 		{
+            foreach (byte b in byteArray) Console.Write($"{b:X2} ");
+            Console.WriteLine();
 			dataList = new();
 			int y = 4;
             try
