@@ -150,8 +150,12 @@ namespace BodAss
             ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
             ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
             //Uninitialize(handle);
-            SecurityAccess securityAccess = new();
-            securityAccess.GetSeed();
+            byte[] asd = new byte[] { 0, 1, 2 };
+			foreach (byte b in asd) Console.Write($"{b} ");
+            Console.WriteLine();
+			Array.Resize(ref asd, 5);
+            foreach (byte b in asd) Console.Write($"{b} ");
+
         }
 
 		private static bool Uninitialize(CantpHandle handle)
