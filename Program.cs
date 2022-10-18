@@ -150,11 +150,11 @@ namespace BodAss
             ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
             ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
             //Uninitialize(handle);
-            byte[] asd = new byte[] { 0, 1, 2 };
-			foreach (byte b in asd) Console.Write($"{b} ");
-            Console.WriteLine();
-			Array.Resize(ref asd, 5);
-            foreach (byte b in asd) Console.Write($"{b} ");
+            SecurityAccess securityAccess = new();
+            byte[] seed = new byte[] { 0x99, 0xE5, 0x19, 0x1F };
+            Array.Resize(ref seed, 16);
+            byte[] key = securityAccess.GetKey(seed);
+            foreach (byte b in key) Console.Write($"{b:X2} ");
 
         }
 
