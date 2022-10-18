@@ -129,7 +129,7 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWNDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSIDDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADIDID,
-                DATA_IDENTIFIER.GET_UNKNOWN_DATA,
+                DATA_IDENTIFIER.GET_UNKNOWN_DATA, // operation time and reset counter
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ASFPDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWVNDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUSNDID,
@@ -139,14 +139,23 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID };
 
-            Initialize(handle, baudrate, timeoutValue);
-            ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-            PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
-            PrintParameters(serviceHandler, dataIdentifiers);
-            PrintProcessData(serviceHandler, processDataIdentifiers);
-            PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
-            PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
-            Uninitialize(handle);
+            //Initialize(handle, baudrate, timeoutValue);
+            //ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+
+            ////PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
+            //PrintParameters(serviceHandler, dataIdentifiers);
+            ////if (serviceHandler.SetParameter(0, 0, (DATA_IDENTIFIER)0xFD1F, 0x0001)) Console.WriteLine("Parameter set");
+            ////PrintParameters(serviceHandler, dataIdentifiers);
+            ////PrintProcessData(serviceHandler, processDataIdentifiers);
+            ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
+            ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
+            //Uninitialize(handle);
+            byte[] asd = new byte[] { 0, 1, 2 };
+			foreach (byte b in asd) Console.Write($"{b} ");
+            Console.WriteLine();
+			Array.Resize(ref asd, 5);
+            foreach (byte b in asd) Console.Write($"{b} ");
+
         }
 
 		private static bool Uninitialize(CantpHandle handle)
