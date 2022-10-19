@@ -160,14 +160,14 @@ namespace PCAN_UDS_TEST
                         liveData.value = (short)(response[y] << 8 | response[y + 1]);
                         y += 2;
                         dataList.Add(liveData);
-					}
+                    }
                 }
+                return true;
             }
             catch (Exception)
             {
                 return false;
             }
-            return true;
         }
 
 
