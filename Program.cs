@@ -1,6 +1,7 @@
 ﻿using PCAN_UDS_TEST;
 using Peak.Can.IsoTp;
 using Peak.Can.Uds;
+using System.Runtime.ConstrainedExecution;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
 namespace BodAss
@@ -10,8 +11,8 @@ namespace BodAss
         private static uint timeoutValue = 5000;
         private static readonly CantpHandle handle = CantpHandle.PCANTP_HANDLE_USBBUS1;
         private static readonly CantpBaudrate baudrate = CantpBaudrate.PCANTP_BAUDRATE_250K;
-		private static readonly byte sourceAddress = 0xFA;
-		private static readonly byte destinationAddress = 0x01;
+		private static readonly byte sourceAddress = 0xF8;
+		private static readonly byte destinationAddress = 0x03;
 
 		static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
@@ -139,9 +140,17 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID };
 
-            //Initialize(handle, baudrate, timeoutValue);
-            //ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+            Initialize(handle, baudrate, timeoutValue);
 
+
+            ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+            //serviceHandler.ChangeControllerLanguage(0x01);
+            //serviceHandler.SetSecurityAccessLevel(0x07);
+			PrintParameters(serviceHandler, dataIdentifiers);
+            //PrintProcessData(serviceHandler, processDataIdentifiers);
+
+
+            Console.WriteLine(serviceHandler.SetParameter(0, 0, (DATA_IDENTIFIER)0xFD0F, 2));
             ////PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
             //PrintParameters(serviceHandler, dataIdentifiers);
             ////if (serviceHandler.SetParameter(0, 0, (DATA_IDENTIFIER)0xFD1F, 0x0001)) Console.WriteLine("Parameter set");
@@ -149,12 +158,12 @@ namespace BodAss
             ////PrintProcessData(serviceHandler, processDataIdentifiers);
             ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
             ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
-            //Uninitialize(handle);
-            byte[] asd = new byte[] { 0, 1, 2 };
-			foreach (byte b in asd) Console.Write($"{b} ");
-            Console.WriteLine();
-			Array.Resize(ref asd, 5);
-            foreach (byte b in asd) Console.Write($"{b} ");
+            Uninitialize(handle);
+            //SecurityAccess securityAccess = new();
+            //byte[] seed = new byte[] { 0x99, 0xE5, 0x19, 0x1F };
+            //Array.Resize(ref seed, 16);
+            //byte[] key = securityAccess.GetKey(seed);
+            //foreach (byte b in key) Console.Write($"{b:X2} ");
 
         }
 
