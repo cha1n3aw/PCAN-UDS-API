@@ -155,7 +155,19 @@ namespace BodAss
             Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
 
-            PrintLiveData(serviceHandler);
+            byte value = 0x50;
+			//Console.WriteLine($"{0xA0 + (value ^ 8):X2} "); //*.*.1 !
+			Console.WriteLine($"{0xC0 + (value ^ 11):X2} "); //*.*.2  ?
+			Console.WriteLine($"{0x60 + (value ^ 14):X2} "); //*.*.3  ?
+			Console.WriteLine($"{0x00 + (value ^ 13):X2} "); //*.*.4  !
+            Console.WriteLine($"{0x00 + (value ^ 5):X2} "); //*.*.5   !
+            Console.WriteLine($"{0x60 + (value ^ 6):X2} "); //*.*.6   ?
+
+
+			Console.WriteLine(serviceHandler.ChangeControllerLanguage(0x01));
+            //PrintParameters(serviceHandler, dataIdentifiers);
+            //PrintLiveData(serviceHandler);
+
             ////PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
             ////PrintParameters(serviceHandler, dataIdentifiers);
             ////PrintProcessData(serviceHandler, processDataIdentifiers);
