@@ -100,6 +100,12 @@ namespace PCAN_UDS_TEST
         public override string ToString() =>
             $"{errorCode}: {description} at {timestamp}";
     }
+
+    public struct LiveData
+    {
+        public ushort dataIdentifier;
+        public short value;
+    }
     #endregion
 
     public class ServiceHandler
@@ -137,6 +143,34 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region HighLevelServices
+        public bool LiveUpdateParameters(out List<LiveData> dataList)
+        {
+            dataList = new();
+            try
+            {
+                for (byte i = 0x00; i < 0x06; i++)
+                {
+                    byte[] response = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0xFE00 + i) });
+                    int y = 4;
+                    for (; y < response.Length; y++)
+                    {
+                        LiveData liveData = new();
+                        liveData.dataIdentifier = (ushort)(response[y] << 8 | response[y + 1]);
+                        y += 4;
+                        liveData.value = (short)(response[y] << 8 | response[y + 1]);
+                        y += 2;
+                        dataList.Add(liveData);
+					}
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+            return true;
+        }
+
+
         public bool SetSecurityAccessLevel(byte accessLevel)
         {
             try
