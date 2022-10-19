@@ -11,8 +11,8 @@ namespace BodAss
         private static uint timeoutValue = 5000;
         private static readonly CantpHandle handle = CantpHandle.PCANTP_HANDLE_USBBUS1;
         private static readonly CantpBaudrate baudrate = CantpBaudrate.PCANTP_BAUDRATE_250K;
-		private static readonly byte sourceAddress = 0xF8;
-		private static readonly byte destinationAddress = 0x03;
+		private static readonly byte sourceAddress = 0xFA;
+		private static readonly byte destinationAddress = 0x01;
 
 		static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
@@ -103,6 +103,18 @@ namespace BodAss
                 foreach (Error error in errorList) Console.WriteLine(error);
         }
 
+        static void PrintLiveData(ServiceHandler serviceHandler)
+        {
+			while (!Console.KeyAvailable)
+			{
+				serviceHandler.LiveUpdateParameters(out List<LiveData> dataList);
+				foreach (LiveData data in dataList)
+				{
+					Console.WriteLine($"{data.dataIdentifier:X4}: {data.value:X4}");
+				}
+			}
+		}
+
 		static void Main(string[] args)
 		{
             DATA_IDENTIFIER[] dataIdentifiers = {
@@ -141,29 +153,27 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID };
 
             Initialize(handle, baudrate, timeoutValue);
-
-
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-            //serviceHandler.ChangeControllerLanguage(0x01);
-            //serviceHandler.SetSecurityAccessLevel(0x07);
-			PrintParameters(serviceHandler, dataIdentifiers);
-            //PrintProcessData(serviceHandler, processDataIdentifiers);
+
+            byte value = 0x50;
+			//Console.WriteLine($"{0xA0 + (value ^ 8):X2} "); //*.*.1 !
+			Console.WriteLine($"{0xC0 + (value ^ 11):X2} "); //*.*.2  ?
+			Console.WriteLine($"{0x60 + (value ^ 14):X2} "); //*.*.3  ?
+			Console.WriteLine($"{0x00 + (value ^ 13):X2} "); //*.*.4  !
+            Console.WriteLine($"{0x00 + (value ^ 5):X2} "); //*.*.5   !
+            Console.WriteLine($"{0x60 + (value ^ 6):X2} "); //*.*.6   ?
 
 
-            Console.WriteLine(serviceHandler.SetParameter(0, 0, (DATA_IDENTIFIER)0xFD0F, 2));
-            ////PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
+			Console.WriteLine(serviceHandler.ChangeControllerLanguage(0x01));
             //PrintParameters(serviceHandler, dataIdentifiers);
-            ////if (serviceHandler.SetParameter(0, 0, (DATA_IDENTIFIER)0xFD1F, 0x0001)) Console.WriteLine("Parameter set");
+            //PrintLiveData(serviceHandler);
+
+            ////PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
             ////PrintParameters(serviceHandler, dataIdentifiers);
             ////PrintProcessData(serviceHandler, processDataIdentifiers);
             ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
             ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
             Uninitialize(handle);
-            //SecurityAccess securityAccess = new();
-            //byte[] seed = new byte[] { 0x99, 0xE5, 0x19, 0x1F };
-            //Array.Resize(ref seed, 16);
-            //byte[] key = securityAccess.GetKey(seed);
-            //foreach (byte b in key) Console.Write($"{b:X2} ");
 
         }
 
