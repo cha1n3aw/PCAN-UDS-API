@@ -201,16 +201,13 @@ namespace PCAN_UDS_TEST
             try
             {
                 if (!SetCursor(menuNumber, subMenuNumber, DATA_IDENTIFIER.SET_PARAMETERS_SUBMENU_CURSOR)) return false;
-				//byte[] response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] {(byte)((ushort)parameterNumber >> 8), (byte)((ushort)parameterNumber & 0x00FF), 0x00, 0x00, (byte)(value >> 8 ), (byte)(value & 0x00FF)});
 				byte[] response = SendWriteDataByIdentifier((DATA_IDENTIFIER)0xF0AA, new byte[] {(byte)((ushort)parameterNumber >> 8), (byte)((ushort)parameterNumber & 0x00FF), 0x00, 0x00, (byte)(value >> 8 ), (byte)(value & 0x00FF)});
-
 				if (response.SequenceEqual(new byte[] { 0x6E, (byte)((ushort)parameterNumber >> 8), (byte)((ushort)parameterNumber & 0x00FF) })) return true;
                 else return false;
             }
             catch (Exception)
             {
                 return false;
-				byte[] response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] {(byte)((ushort)parameterNumber >> 8), (byte)((ushort)parameterNumber & 0x00FF), 0x00, 0x00, (byte)(value >> 8 ), (byte)(value & 0x00FF)});
 			}
 		}
 
