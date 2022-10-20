@@ -1,6 +1,5 @@
 ﻿using Peak.Can.IsoTp;
 using Peak.Can.Uds;
-using System.Linq.Expressions;
 using System.Text;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
@@ -160,14 +159,14 @@ namespace PCAN_UDS_TEST
                         liveData.value = (short)(response[y] << 8 | response[y + 1]);
                         y += 2;
                         dataList.Add(liveData);
-					}
+                    }
                 }
+                return true;
             }
             catch (Exception)
             {
                 return false;
             }
-            return true;
         }
 
 
@@ -189,32 +188,45 @@ namespace PCAN_UDS_TEST
             }
         }
         
-        public bool ChangeControllerLanguage(byte languageId) //0x00 - German, 0x01 - English
+        public bool ChangeControllerLanguage(DATA_IDENTIFIER languageIdentifier) //0x00 - German, 0x01 - English
         {
-            byte[] response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(0xEEE4 + languageId), new byte[] { 0xFE, 0x08, 0x00, 0x00, 0x00, languageId });
+            byte[] response = SendWriteDataByIdentifier((0xEEE4 + languageIdentifier), new byte[] { 0xFE, 0x08, 0x00, 0x00, 0x00, (byte)languageIdentifier });
             if (response.SequenceEqual(new byte[] { 0x6E, 0xFE, 0x08 })) return true;
             else return false;
         }
 
-        public bool SetParameter(byte menuNumber, byte subMenuNumber, DATA_IDENTIFIER parameterNumber, ushort value)
+        public bool SetParameter(byte menuNumber, byte subMenuNumber, byte parameterNumber, short value)
         {
             try
             {
                 if (!SetCursor(menuNumber, subMenuNumber, DATA_IDENTIFIER.SET_PARAMETERS_SUBMENU_CURSOR)) return false;
-				//byte[] response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] {(byte)((ushort)parameterNumber >> 8), (byte)((ushort)parameterNumber & 0x00FF), 0x00, 0x00, (byte)(value >> 8 ), (byte)(value & 0x00FF)});
-				byte[] response = SendWriteDataByIdentifier((DATA_IDENTIFIER)0xF0AA, new byte[] {(byte)((ushort)parameterNumber >> 8), (byte)((ushort)parameterNumber & 0x00FF), 0x00, 0x00, (byte)(value >> 8 ), (byte)(value & 0x00FF)});
-
-				if (response.SequenceEqual(new byte[] { 0x6E, (byte)((ushort)parameterNumber >> 8), (byte)((ushort)parameterNumber & 0x00FF) })) return true;
+				byte[] response = SendWriteDataByIdentifier((DATA_IDENTIFIER)GetParameterXor(parameterNumber, value), new byte[] {0xFD, (byte)(0x0F + (parameterNumber << 4)), 0x00, 0x00, (byte)(value >> 8 ), (byte)(value & 0x00FF)});
+				if (response.SequenceEqual(new byte[] { 0x6E, 0xFD, (byte)(0x0F + (parameterNumber << 4)) })) return true;
                 else return false;
             }
             catch (Exception)
             {
                 return false;
-				byte[] response = SendWriteDataByIdentifier((DATA_IDENTIFIER)(GetMenuAddress(menuNumber) << 8 | GetSequence(0x70, 8)[(byte)subMenuNumber]), new byte[] {(byte)((ushort)parameterNumber >> 8), (byte)((ushort)parameterNumber & 0x00FF), 0x00, 0x00, (byte)(value >> 8 ), (byte)(value & 0x00FF)});
 			}
 		}
 
-        public byte[] GetSequence(byte offset, byte length) //A004446, self-inverse permutation of the natural numbers: a(n) = Nimsum n + 5.
+        private ushort GetParameterXor(byte parameterNumber, short value)
+        {
+            switch (parameterNumber)
+            {
+                case 0: return (ushort)(value ^ 0xF0A8);
+                case 1: return (ushort)(value ^ 0xB3CB);
+                case 2: return (ushort)(value ^ 0x766E);
+                case 3: return (ushort)(value ^ 0x350D);
+                case 4: return (ushort)(value ^ 0xED05);
+                case 5: return (ushort)(value ^ 0xAE66);
+                case 6: return (ushort)(value ^ 0x6BC3);
+                case 7: return (ushort)(value ^ 0x28A0);
+                default: return 0;
+            }
+        }
+
+        private byte[] GetSequence(byte offset, byte length) //A004446, self-inverse permutation of the natural numbers: a(n) = Nimsum n + 5.
         {
             byte[] sequence = new byte[length];
             for (byte i = 0; i < length; i++) sequence[i] = (byte)((i ^ 5) + offset);
@@ -294,7 +306,7 @@ namespace PCAN_UDS_TEST
                                 for (; byteArray[y] != 0x00; y++) dataList[^1] += (char)byteArray[y];
                                 y++;
                                 break;
-                            case (DATA_IDENTIFIER.GET_UNKNOWN_DATA):
+                            case (DATA_IDENTIFIER.GET_OPERATION_TIME_AND_RESET_COUNTER):
                                 dataList.Add(string.Empty);
                                 for (int i = 0; i < 6; i++) dataList[^1] += $"{byteArray[y + i]:X2} ";
                                 y += 6;
@@ -920,6 +932,6 @@ namespace PCAN_UDS_TEST
                 return false;
             }
 		}
-		#endregion
-	}
+        #endregion
+    }
 }
