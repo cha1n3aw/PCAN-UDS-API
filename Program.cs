@@ -1,7 +1,6 @@
 ﻿using PCAN_UDS_TEST;
 using Peak.Can.IsoTp;
 using Peak.Can.Uds;
-using System.Runtime.ConstrainedExecution;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
 namespace BodAss
@@ -115,7 +114,17 @@ namespace BodAss
 			}
 		}
 
-		static void Main(string[] args)
+        static void ChangeControllerLanguage(ServiceHandler serviceHandler, DATA_IDENTIFIER languageIdentifier)
+        {
+            serviceHandler.ChangeControllerLanguage(languageIdentifier);
+        }
+
+        static void SetParameter(ServiceHandler serviceHandler, byte menuNumber, byte subMenuNumber, byte parameterNumber, short value)
+        {
+            serviceHandler.SetParameter(menuNumber, subMenuNumber, parameterNumber, value);
+        }
+
+        static void Main(string[] args)
 		{
             DATA_IDENTIFIER[] dataIdentifiers = {
                 DATA_IDENTIFIER.GET_PARAMETER_0,
@@ -142,7 +151,7 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWNDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSIDDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADIDID,
-                DATA_IDENTIFIER.GET_UNKNOWN_DATA, // operation time and reset counter
+                DATA_IDENTIFIER.GET_OPERATION_TIME_AND_RESET_COUNTER,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ASFPDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWVNDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUSNDID,
@@ -154,30 +163,20 @@ namespace BodAss
 
             Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+            short value = 0x00;
+            SetParameter(serviceHandler, 0, 0, 0, value);
 
-            byte value = 0x50;
-			//Console.WriteLine($"{0xA0 + (value ^ 8):X2} "); //*.*.1 !
-			Console.WriteLine($"{0xC0 + (value ^ 11):X2} "); //*.*.2  ?
-			Console.WriteLine($"{0x60 + (value ^ 14):X2} "); //*.*.3  ?
-			Console.WriteLine($"{0x00 + (value ^ 13):X2} "); //*.*.4  !
-            Console.WriteLine($"{0x00 + (value ^ 5):X2} "); //*.*.5   !
-            Console.WriteLine($"{0x60 + (value ^ 6):X2} "); //*.*.6   ?
-
-
-			//Console.WriteLine(serviceHandler.ChangeControllerLanguage(0x01));
+            //ChangeControllerLanguage(serviceHandler, DATA_IDENTIFIER.LANGUAGE_SECOND);
+            //PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
             //PrintParameters(serviceHandler, dataIdentifiers);
+            //PrintProcessData(serviceHandler, processDataIdentifiers);
+            //PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
+            //PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
             //PrintLiveData(serviceHandler);
-
-            ////PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
-            ////PrintParameters(serviceHandler, dataIdentifiers);
-            ////PrintProcessData(serviceHandler, processDataIdentifiers);
-            ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
-            ////PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
             Uninitialize(handle);
-
         }
 
-		private static bool Uninitialize(CantpHandle handle)
+        private static bool Uninitialize(CantpHandle handle)
 		{
 			UdsStatus status = UDSApi.Uninitialize_2013(handle);
             Console.WriteLine($"CAN interface uninitialization: {status}");
