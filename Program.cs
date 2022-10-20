@@ -163,9 +163,12 @@ namespace BodAss
 
             Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-            short value = 0x00;
-            SetParameter(serviceHandler, 0, 0, 0, value);
-
+            //         short value = 0x00;
+            //SetParameter(serviceHandler, 0, 0, 0, value);
+            PrintParameters(serviceHandler, dataIdentifiers);
+            //         value = 0x01;
+            //         SetParameter(serviceHandler, 0, 0, 0, value);
+            //         PrintParameters(serviceHandler, dataIdentifiers);
             //ChangeControllerLanguage(serviceHandler, DATA_IDENTIFIER.LANGUAGE_SECOND);
             //PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
             //PrintParameters(serviceHandler, dataIdentifiers);
