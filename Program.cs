@@ -164,7 +164,7 @@ namespace BodAss
             Console.WriteLine($"{0x60 + (value ^ 6):X2} "); //*.*.6   ?
 
 
-			Console.WriteLine(serviceHandler.ChangeControllerLanguage(0x01));
+			//Console.WriteLine(serviceHandler.ChangeControllerLanguage(0x01));
             //PrintParameters(serviceHandler, dataIdentifiers);
             //PrintLiveData(serviceHandler);
 
