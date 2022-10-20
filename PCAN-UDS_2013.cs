@@ -2939,6 +2939,22 @@ namespace Peak.Can.Uds
         public enum UDS_SERVICE_PARAMETER_DATA_IDENTIFIER : ushort
         {
             /// <summary>
+            /// Select first language in controller
+            /// </summary>
+            LANGUAGE_FIRST = 0x00,
+            /// <summary>
+            /// Select second language in controller
+            /// </summary>
+            LANGUAGE_SECOND = 0x01,
+            /// <summary>
+            /// Select third language in controller
+            /// </summary>
+            LANGUAGE_THIRD = 0x02,
+            /// <summary>
+            /// Select fourth language in controller
+            /// </summary>
+            LANGUAGE_FOURTH = 0x03,
+            /// <summary>
             /// Fetch all active errors in ECU
             /// </summary>
             GET_ACTIVE_ERRORS = 0xFEF0,
@@ -3041,7 +3057,7 @@ namespace Peak.Can.Uds
             /// <summary>
             /// ?
             /// </summary>
-            GET_UNKNOWN_DATA = 0xFE0B,
+            GET_OPERATION_TIME_AND_RESET_COUNTER = 0xFE0B,
             /// <summary>
             /// bootSoftwareIdentificationDataIdentifier
             /// </summary>
