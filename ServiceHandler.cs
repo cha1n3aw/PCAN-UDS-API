@@ -149,9 +149,9 @@ namespace PCAN_UDS_TEST
             {
                 for (byte i = 0x00; i < 0x06; i++)
                 {
-                    byte[] response = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0xFE00 + i) });
+                    byte[] response = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0xF300 + i) });
                     int y = 4;
-                    for (; y < response.Length; y++)
+                    while(y < response.Length)
                     {
                         LiveData liveData = new();
                         liveData.dataIdentifier = (ushort)(response[y] << 8 | response[y + 1]);
@@ -168,7 +168,6 @@ namespace PCAN_UDS_TEST
                 return false;
             }
         }
-
 
         public bool SetSecurityAccessLevel(byte accessLevel)
         {
@@ -246,7 +245,6 @@ namespace PCAN_UDS_TEST
                     {
                         int y = 7;
                         errorsCount = byteArray[y++];
-                        foreach (byte b in byteArray) Console.Write($"{b:X2} ");
                         for (; y < byteArray.Length; y++)
                         {
                             Error error = new();
@@ -367,8 +365,6 @@ namespace PCAN_UDS_TEST
 
 		public bool GetDataFromByteArray(byte[] byteArray, byte dataType, out List<Data> dataList) //0x00 for parameters, 0x80 for processdata
 		{
-            foreach (byte b in byteArray) Console.Write($"{b:X2} ");
-            Console.WriteLine();
 			dataList = new();
 			int y = 4;
             try
