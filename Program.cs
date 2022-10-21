@@ -166,7 +166,7 @@ namespace BodAss
 				foreach (byte b in serviceHandler.SendDiagnosticSessionControl()) Console.Write($"{b:X2} ");
 				Console.WriteLine();
 
-			if (serviceHandler.GetUdsDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x030E }, out byte[] byteArray))
+			if (serviceHandler.UdsGetDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x030E }, out byte[] byteArray))
             { // мне стремно просить катю залить их прошивку чтоб мы еще потыкались
                 foreach (byte b in byteArray) Console.Write($"{b:X2} ");
                 Console.WriteLine();
