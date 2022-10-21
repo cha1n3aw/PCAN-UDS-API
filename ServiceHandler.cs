@@ -100,10 +100,16 @@ namespace PCAN_UDS_TEST
             $"{errorCode}: {description} at {timestamp}";
     }
 
-    public struct LiveData
+    public struct ProcessData
     {
         public ushort dataIdentifier;
         public short value;
+    }
+
+    public struct ProcessDataGroup
+    {
+        public string groupName;
+        public List<ProcessData> processData;
     }
     #endregion
 
@@ -142,7 +148,7 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region HighLevelServices
-        public bool LiveUpdateParameters(out List<LiveData> dataList)
+        public bool LiveUpdateParameters(out List<ProcessData> dataList)
         {
             dataList = new();
             try
@@ -153,7 +159,7 @@ namespace PCAN_UDS_TEST
                     int y = 4;
                     while(y < response.Length)
                     {
-                        LiveData liveData = new();
+                        ProcessData liveData = new();
                         liveData.dataIdentifier = (ushort)(response[y] << 8 | response[y + 1]);
                         y += 4;
                         liveData.value = (short)(response[y] << 8 | response[y + 1]);
@@ -177,7 +183,7 @@ namespace PCAN_UDS_TEST
                 Array.Resize(ref responseSeed, 16);
                 SecurityAccess securityAccess = new();
                 byte[] key = securityAccess.GetKey(responseSeed);
-                byte [] response = SendSecurityAccessWithData(UDSApi.PUDS_SVC_PARAM_SA_SK_MIN, key); // rework number of bytes in byte[] key after debug
+                byte [] response = SendSecurityAccessWithData((byte)(accessLevel + 1), key); // rework number of bytes in byte[] key after debug
                 foreach (byte b in response) Console.Write($"{b:X2} ");
 				return true;
 			}
@@ -424,6 +430,21 @@ namespace PCAN_UDS_TEST
             {
                 return false;
             }
+		}
+
+        public bool GetUdsDataByIdentifiers(DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
+        {
+			dataArray = Array.Empty<byte>();
+			try
+			{
+				dataArray = SendReadDataByIdentifier(dataIdentifiers);
+				if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
+				else return false;
+			}
+			catch (Exception)
+			{
+				return false;
+			}
 		}
 
 		public bool GetDataByIdentifiers(byte menuNumber, byte? subMenuNumber, DATA_IDENTIFIER regionIdentifier, DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)

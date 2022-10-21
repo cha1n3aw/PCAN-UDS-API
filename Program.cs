@@ -10,8 +10,8 @@ namespace BodAss
         private static uint timeoutValue = 5000;
         private static readonly CantpHandle handle = CantpHandle.PCANTP_HANDLE_USBBUS1;
         private static readonly CantpBaudrate baudrate = CantpBaudrate.PCANTP_BAUDRATE_250K;
-		private static readonly byte sourceAddress = 0xFA;
-		private static readonly byte destinationAddress = 0x01;
+		private static readonly byte sourceAddress = 0xF8;
+		private static readonly byte destinationAddress = 0x03;
 
 		static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
@@ -106,8 +106,8 @@ namespace BodAss
         {
 			while (!Console.KeyAvailable)
 			{
-				serviceHandler.LiveUpdateParameters(out List<LiveData> dataList);
-				foreach (LiveData data in dataList)
+				serviceHandler.LiveUpdateParameters(out List<ProcessData> dataList);
+				foreach (ProcessData data in dataList)
 				{
 					Console.WriteLine($"{data.dataIdentifier:X4}: {data.value:X4}");
 				}
@@ -163,9 +163,18 @@ namespace BodAss
 
             Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+				foreach (byte b in serviceHandler.SendDiagnosticSessionControl()) Console.Write($"{b:X2} ");
+				Console.WriteLine();
+
+			if (serviceHandler.GetUdsDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x030E }, out byte[] byteArray))
+            { // мне стремно просить катю залить их прошивку чтоб мы еще потыкались
+                foreach (byte b in byteArray) Console.Write($"{b:X2} ");
+                Console.WriteLine();
+            }
+
             //         short value = 0x00;
             //SetParameter(serviceHandler, 0, 0, 0, value);
-            PrintParameters(serviceHandler, dataIdentifiers);
+            //PrintParameters(serviceHandler, dataIdentifiers);
             //         value = 0x01;
             //         SetParameter(serviceHandler, 0, 0, 0, value);
             //         PrintParameters(serviceHandler, dataIdentifiers);
