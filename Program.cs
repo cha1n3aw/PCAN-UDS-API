@@ -106,8 +106,8 @@ namespace BodAss
         {
 			while (!Console.KeyAvailable)
 			{
-				serviceHandler.LiveUpdateParameters(out List<LiveData> dataList);
-				foreach (LiveData data in dataList)
+				serviceHandler.LiveUpdateParameters(out List<ProcessData> dataList);
+				foreach (ProcessData data in dataList)
 				{
 					Console.WriteLine($"{data.dataIdentifier:X4}: {data.value:X4}");
 				}

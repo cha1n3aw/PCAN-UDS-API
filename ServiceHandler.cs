@@ -100,10 +100,16 @@ namespace PCAN_UDS_TEST
             $"{errorCode}: {description} at {timestamp}";
     }
 
-    public struct LiveData
+    public struct ProcessData
     {
         public ushort dataIdentifier;
         public short value;
+    }
+
+    public struct ProcessDataGroup
+    {
+        public string groupName;
+        public List<ProcessData> processData;
     }
     #endregion
 
@@ -142,7 +148,7 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region HighLevelServices
-        public bool LiveUpdateParameters(out List<LiveData> dataList)
+        public bool LiveUpdateParameters(out List<ProcessData> dataList)
         {
             dataList = new();
             try
@@ -153,7 +159,7 @@ namespace PCAN_UDS_TEST
                     int y = 4;
                     while(y < response.Length)
                     {
-                        LiveData liveData = new();
+                        ProcessData liveData = new();
                         liveData.dataIdentifier = (ushort)(response[y] << 8 | response[y + 1]);
                         y += 4;
                         liveData.value = (short)(response[y] << 8 | response[y + 1]);
