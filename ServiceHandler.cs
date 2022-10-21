@@ -169,7 +169,7 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool SetSecurityAccessLevel(byte accessLevel)
+        public bool SetSecurityAccessLevel(byte accessLevel) // access level - only odd numbers
         {
             try
             {
@@ -177,7 +177,7 @@ namespace PCAN_UDS_TEST
                 Array.Resize(ref responseSeed, 16);
                 SecurityAccess securityAccess = new();
                 byte[] key = securityAccess.GetKey(responseSeed);
-                byte [] response = SendSecurityAccessWithData((byte)(accessLevel + 1), key); // rework number of bytes in byte[] key after debug
+                byte [] response = SendSecurityAccessWithData((byte)(accessLevel + 1), key);
                 foreach (byte b in response) Console.Write($"{b:X2} ");
 				return true;
 			}
