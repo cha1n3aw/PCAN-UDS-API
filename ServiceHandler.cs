@@ -100,10 +100,16 @@ namespace PCAN_UDS_TEST
             $"{errorCode}: {description} at {timestamp}";
     }
 
-    public struct LiveData
+    public struct ProcessData
     {
         public ushort dataIdentifier;
         public short value;
+    }
+
+    public struct ProcessDataGroup
+    {
+        public string groupName;
+        public List<ProcessData> processData;
     }
     #endregion
 
@@ -141,8 +147,67 @@ namespace PCAN_UDS_TEST
         }
         #endregion
 
-        #region HighLevelServices
-        public bool LiveUpdateParameters(out List<LiveData> dataList)
+        #region UdsServiceWrappers
+        public bool UdsSetSecurityAccessLevel(byte accessLevel) //access level - only odd numbers
+        {
+            try
+            {
+                byte[] response = SendSecurityAccess(accessLevel);
+                byte[] responseSeed = new byte[response.Length - 2];
+                foreach (byte b in responseSeed) Console.Write($"{b:X2} ");
+                Console.WriteLine();
+                Array.Copy(response, 2, responseSeed, 0, response.Length - 2);
+                Array.Resize(ref responseSeed, 16);
+                SecurityAccess securityAccess = new();
+                byte[] key = securityAccess.GetKey(responseSeed);
+                response = SendSecurityAccessWithData((byte)(accessLevel + 1), key);
+                foreach (byte b in response) Console.Write($"{b:X2} ");
+                Console.WriteLine();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public bool UdsGetDataByIdentifiers(DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
+        {
+            dataArray = Array.Empty<byte>();
+            try
+            {
+                dataArray = SendReadDataByIdentifier(dataIdentifiers);
+                if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
+                else return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        private DATA_IDENTIFIER UdsGetParameterIdentifier(byte menuNumber, byte subMenuNumber, byte parameterNumber) => (DATA_IDENTIFIER)(10000 + 100 * menuNumber + 10 * subMenuNumber + parameterNumber);
+
+        private ushort UdsGetProcessDataIdentifier(byte groupNumber, byte parameterNumber) => (ushort)(20000 + 10 * groupNumber + parameterNumber);
+
+        public bool GetDataByIdentifiers(byte menuNumber, byte subMenuNumber, byte parameterNumber, out byte[] dataArray)
+        {
+            dataArray = Array.Empty<byte>();
+            try
+            {
+                dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { UdsGetParameterIdentifier(menuNumber, subMenuNumber, parameterNumber) });
+                if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
+                else return false;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+        #endregion
+
+        #region BodasServiceWrappers
+        public bool LiveUpdateParameters(out List<ProcessData> dataList)
         {
             dataList = new();
             try
@@ -153,7 +218,7 @@ namespace PCAN_UDS_TEST
                     int y = 4;
                     while(y < response.Length)
                     {
-                        LiveData liveData = new();
+                        ProcessData liveData = new();
                         liveData.dataIdentifier = (ushort)(response[y] << 8 | response[y + 1]);
                         y += 4;
                         liveData.value = (short)(response[y] << 8 | response[y + 1]);
@@ -169,24 +234,6 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool SetSecurityAccessLevel(byte accessLevel)
-        {
-            try
-            {
-                byte[] responseSeed = SendSecurityAccess(accessLevel);
-                Array.Resize(ref responseSeed, 16);
-                SecurityAccess securityAccess = new();
-                byte[] key = securityAccess.GetKey(responseSeed);
-                byte [] response = SendSecurityAccessWithData((byte)(accessLevel + 1), key); // rework number of bytes in byte[] key after debug
-                foreach (byte b in response) Console.Write($"{b:X2} ");
-				return true;
-			}
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-        
         public bool ChangeControllerLanguage(DATA_IDENTIFIER languageIdentifier) //0x00 - German, 0x01 - English
         {
             byte[] response = SendWriteDataByIdentifier((0xEEE4 + languageIdentifier), new byte[] { 0xFE, 0x08, 0x00, 0x00, 0x00, (byte)languageIdentifier });
@@ -231,6 +278,8 @@ namespace PCAN_UDS_TEST
             for (byte i = 0; i < length; i++) sequence[i] = (byte)((i ^ 5) + offset);
             return sequence;
         }
+
+        private byte GetMenuAddress(byte menuNumber) => (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
 
         public bool GetErrors(DATA_IDENTIFIER dataIdentifier, out List<Error> errorList)
         {
@@ -361,19 +410,17 @@ namespace PCAN_UDS_TEST
             }
 		}		
 
-        private byte GetMenuAddress(byte menuNumber) => (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
-
-		public bool GetDataFromByteArray(byte[] byteArray, byte dataType, out List<Data> dataList) //0x00 for parameters, 0x80 for processdata
-		{
-			dataList = new();
-			int y = 4;
+        public bool GetDataFromByteArray(byte[] byteArray, byte dataType, out List<Data> dataList) //0x00 for parameters, 0x80 for processdata
+        {
+            dataList = new();
+            int y = 4;
             try
             {
                 for (; y < byteArray.Length; y++)
                 {
-					Data data = new();
-					data.dataIdentifier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
-					y += 2;
+                    Data data = new();
+                    data.dataIdentifier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                    y += 2;
                     if (byteArray[y] == 0x00)
                     {
                         data.isAccessible = false;
@@ -398,16 +445,16 @@ namespace PCAN_UDS_TEST
                     y++;
                     data.multiplier = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                     y += 2;
-					data.divisor = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                    data.divisor = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                     y += 2;
-					data.precision = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
+                    data.precision = (ushort)(byteArray[y] << 8 | byteArray[y + 1]);
                     y += 2;
                     data.accessLevel = byteArray[y];
                     if (dataType == 0x00) y++;
                     else y += 3;
-					if (dataType == 0x00)
-					{
-						data.defaultValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
+                    if (dataType == 0x00)
+                    {
+                        data.defaultValue = (short)(byteArray[y] << 8 | byteArray[y + 1]);
                         y += 2;
                         data.eepromPage = byteArray[y];
                         y++;
@@ -416,30 +463,15 @@ namespace PCAN_UDS_TEST
                     }
                     data.value = (short)(byteArray[y] << 8 | byteArray[y + 1]);
                     y++;
-					dataList.Add(data);
+                    dataList.Add(data);
                 }
                 return true;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return false;
             }
-		}
-
-        public bool GetUdsDataByIdentifiers(DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
-        {
-			dataArray = Array.Empty<byte>();
-			try
-			{
-				dataArray = SendReadDataByIdentifier(dataIdentifiers);
-				if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
-				else return false;
-			}
-			catch (Exception)
-			{
-				return false;
-			}
-		}
+        }
 
 		public bool GetDataByIdentifiers(byte menuNumber, byte? subMenuNumber, DATA_IDENTIFIER regionIdentifier, DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
         {
@@ -892,7 +924,31 @@ namespace PCAN_UDS_TEST
         }
         #endregion
 
-        #region ReceiveService
+        #region ManualUds
+        public bool SendUSDT(byte[] message)
+        {
+            uint MSG_SIZE = (uint)message.Length;
+            UdsStatus status = UDSApi.MsgAlloc_2013(out UdsMessage udsMessage, requestConfig, MSG_SIZE);
+            bool result = false;
+            if (UDSApi.StatusIsOk_2013(status))
+            {
+                byte[] txByteArray = new byte[MSG_SIZE];
+                for (int i = 0; i < MSG_SIZE; i++) txByteArray[i] = message[i];
+                result = CanTpApi.setData_2016(ref udsMessage.message, 0, txByteArray, (int)MSG_SIZE);
+            }
+            Console.WriteLine($"Allocate TX message: {UDSApi.StatusIsOk_2013(status) && result}");
+
+            UdsStatus resultStatus = UDSApi.Write_2013(handle, ref udsMessage);
+            if (UDSApi.StatusIsOk_2013(resultStatus))
+            {
+                //Thread.Sleep(100);
+                Console.WriteLine("Write succeeded");
+            }
+            else Console.WriteLine("Write error: " + result, "Error");
+            Console.WriteLine($"Free TX message: {UDSApi.MsgFree_2013(ref udsMessage)}");
+            return true;
+        }
+
         public byte[] ReceiveService()
         {
             uint destinationAddress = NAI.DESTINATION_ADDRESS;
@@ -925,10 +981,10 @@ namespace PCAN_UDS_TEST
             }
             return Array.Empty<byte>();
         }
-		#endregion
+        #endregion
 
-		#region DiagnosticService
-		public bool GetVersionInformation(out string versionString)
+        #region PcanDiagnosticService
+        public bool GetVersionInformation(out string versionString)
 		{
 			const int BUFFER_SIZE = 256;
             StringBuilder stringBuilder = new();
