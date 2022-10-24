@@ -147,7 +147,7 @@ namespace PCAN_UDS_TEST
         }
         #endregion
 
-        #region UdsHighLevelServices
+        #region UdsServiceWrappers
         public bool UdsSetSecurityAccessLevel(byte accessLevel) //access level - only odd numbers
         {
             try
@@ -206,7 +206,7 @@ namespace PCAN_UDS_TEST
         }
         #endregion
 
-        #region HighLevelServices
+        #region BodasServiceWrappers
         public bool LiveUpdateParameters(out List<ProcessData> dataList)
         {
             dataList = new();
@@ -278,6 +278,8 @@ namespace PCAN_UDS_TEST
             for (byte i = 0; i < length; i++) sequence[i] = (byte)((i ^ 5) + offset);
             return sequence;
         }
+
+        private byte GetMenuAddress(byte menuNumber) => (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
 
         public bool GetErrors(DATA_IDENTIFIER dataIdentifier, out List<Error> errorList)
         {
@@ -407,8 +409,6 @@ namespace PCAN_UDS_TEST
                 return false;
             }
 		}		
-
-        private byte GetMenuAddress(byte menuNumber) => (byte)((0x7F - menuNumber & 0xF0) | (menuNumber & 0x0F));
 
         public bool GetDataFromByteArray(byte[] byteArray, byte dataType, out List<Data> dataList) //0x00 for parameters, 0x80 for processdata
         {
@@ -924,7 +924,31 @@ namespace PCAN_UDS_TEST
         }
         #endregion
 
-        #region ReceiveService
+        #region ManualUds
+        public bool SendUSDT(byte[] message)
+        {
+            uint MSG_SIZE = (uint)message.Length;
+            UdsStatus status = UDSApi.MsgAlloc_2013(out UdsMessage udsMessage, requestConfig, MSG_SIZE);
+            bool result = false;
+            if (UDSApi.StatusIsOk_2013(status))
+            {
+                byte[] txByteArray = new byte[MSG_SIZE];
+                for (int i = 0; i < MSG_SIZE; i++) txByteArray[i] = message[i];
+                result = CanTpApi.setData_2016(ref udsMessage.message, 0, txByteArray, (int)MSG_SIZE);
+            }
+            Console.WriteLine($"Allocate TX message: {UDSApi.StatusIsOk_2013(status) && result}");
+
+            UdsStatus resultStatus = UDSApi.Write_2013(handle, ref udsMessage);
+            if (UDSApi.StatusIsOk_2013(resultStatus))
+            {
+                //Thread.Sleep(100);
+                Console.WriteLine("Write succeeded");
+            }
+            else Console.WriteLine("Write error: " + result, "Error");
+            Console.WriteLine($"Free TX message: {UDSApi.MsgFree_2013(ref udsMessage)}");
+            return true;
+        }
+
         public byte[] ReceiveService()
         {
             uint destinationAddress = NAI.DESTINATION_ADDRESS;
@@ -957,10 +981,10 @@ namespace PCAN_UDS_TEST
             }
             return Array.Empty<byte>();
         }
-		#endregion
+        #endregion
 
-		#region DiagnosticService
-		public bool GetVersionInformation(out string versionString)
+        #region PcanDiagnosticService
+        public bool GetVersionInformation(out string versionString)
 		{
 			const int BUFFER_SIZE = 256;
             StringBuilder stringBuilder = new();
