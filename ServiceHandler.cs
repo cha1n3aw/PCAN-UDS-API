@@ -6,6 +6,12 @@ using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIE
 namespace PCAN_UDS_TEST
 {
     #region Structs
+    public struct MenuParameterMapping
+    {
+        public byte menuNumber;
+        public byte parameterNumber;
+    }
+
     public enum BOSCH_UDS_PARAMETER_TYPES : byte
     {
         /// <summary>
@@ -207,35 +213,34 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region BodasServiceWrappers
-        public bool SetCustomView(Dictionary<byte, List<DATA_IDENTIFIER>> requestParameters)
+        public bool SetCustomView(List<MenuParameterMapping> requestMapping, out Dictionary<ushort, List<MenuParameterMapping>> responseMapping)
         {
-            int count = 0;
-			foreach (KeyValuePair<byte, List<DATA_IDENTIFIER>> requestParameter in requestParameters)
-				count += requestParameter.Value.Count;
-            byte[] menuDataPairs = new byte[count];
-			for (int i = 0; i < requestParameters.Count; i++)
+            responseMapping = new();
+            try
             {
-				for (int y = 0; y < requestParameters[i].Value.Count)
-                    menuDataPairs[count]
-			}
-				//List <Object> menuDidPairs = new();
-				foreach (KeyValuePair<byte, List<DATA_IDENTIFIER>> requestParameter in requestParameters)
-            {
-                count += requestParameter.Value.Count;
-                foreach (DATA_IDENTIFIER dataIdentifier in requestParameter.Value)
+                int count = requestMapping.Count;
+                for (ushort i = 0xF300; i < 0xF300 + Math.Ceiling(count / 16.0); i++)
                 {
-                    byte[] pair = new byte[4] { (byte)((ushort)dataIdentifier >> 8), (byte)((ushort)dataIdentifier & 0xFF), 0x00, requestParameter.Key };
-					menuDidPairs.Add(pair);
-				}
+                    List<byte> customViewArray = new() { 0xBB, 0x01, (byte)(i >> 8), (byte)(i & 0x00FF) };
+
+                    List<MenuParameterMapping> tempMapping = requestMapping.Take(16).ToList();
+                    if (requestMapping.Count >= 16) requestMapping.RemoveRange(0, 16);
+                    foreach (MenuParameterMapping requestParameter in tempMapping)
+                    {
+                        customViewArray.Add(0xFD);
+                        customViewArray.Add((byte)((requestParameter.parameterNumber << 4) + 0x8F));
+                        customViewArray.Add(0x00);
+                        customViewArray.Add(requestParameter.menuNumber);
+                    }
+                    responseMapping.Add(i, tempMapping);
+                    if (!SendUSDT(customViewArray.ToArray())) return false;
+                }
+                return true;
             }
-            for (ushort i = 0xFE00; i < 0xFE00 + (count / 16) + 1; i++)
+            catch(Exception)
             {
-				List<byte> customViewArray = new() { 0xBB, 0x01, (byte)(i >> 8), (byte)(i & 0x00FF) };
-                for (int y = 0; y < 16; y++)
-                    customViewArray.Add(menuDidPairs[]);
-				SendUSDT();
-			}
-            return true;
+                return false;
+            }
         }
 
         public bool LiveUpdateParameters(List<DATA_IDENTIFIER> requestIdentifiers, out Dictionary<DATA_IDENTIFIER, List<ProcessData>> responseList) //byte parametersCount, 

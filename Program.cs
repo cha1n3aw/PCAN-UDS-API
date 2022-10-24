@@ -161,32 +161,46 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID };
 
-            Initialize(handle, baudrate, timeoutValue);
+            //Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-            PrintProcessData(serviceHandler, processDataIdentifiers);
-            List<DATA_IDENTIFIER> requestIdentifiers = new() { (DATA_IDENTIFIER)0xF300 };
-            serviceHandler.SendUSDT(new byte[] { 0xBB, 0x01, (byte)((ushort)requestIdentifiers[0] >> 8), (byte)((ushort)requestIdentifiers[0] & 0x00FF),
-				0xFD, 0xEF, 0x00, 0x01,
-				0xFD, 0x9F, 0x00, 0x01,
-				0xFD, 0xEF, 0x00, 0x01,
-				0xFD, 0x9F, 0x00, 0x01,
-				0xFD, 0x9F, 0x00, 0x01,
-				0xFD, 0x9F, 0x00, 0x01,
-				0xFD, 0xEF, 0x00, 0x01,
-				0xFD, 0x9F, 0x00, 0x01,
-				0xFD, 0xEF, 0x00, 0x01,
-				0xFD, 0x9F, 0x00, 0x01,
-				0xFD, 0xEF, 0x00, 0x01,
-			    0xFD, 0x9F, 0x00, 0x01,
-			    0xFD, 0xAF, 0x00, 0x01,
-			    0xFD, 0x8F, 0x00, 0x02,
-				0xFD, 0x9F, 0x00, 0x02,
-			    0xFD, 0xBF, 0x00, 0x14});
-            serviceHandler.LiveUpdateParameters(requestIdentifiers, out Dictionary<DATA_IDENTIFIER, List<ProcessData>> responseList);
-            foreach (KeyValuePair<DATA_IDENTIFIER, List<ProcessData>> response in responseList) 
-                foreach (ProcessData processData in response.Value)
-                    Console.WriteLine($"{((ushort)(response.Key)):X4} - {processData.dataIdentifier:X4} - {processData.value}");
-            //ПИШУ(СМОТРЮ)
+
+            List<MenuParameterMapping> menuParameterMappings = new()
+            {
+                new MenuParameterMapping { menuNumber = 0, parameterNumber = 0 },
+                new MenuParameterMapping { menuNumber = 0, parameterNumber = 1 },
+                new MenuParameterMapping { menuNumber = 0, parameterNumber = 2 },
+                new MenuParameterMapping { menuNumber = 0, parameterNumber = 3 },
+                new MenuParameterMapping { menuNumber = 0, parameterNumber = 4 },
+                new MenuParameterMapping { menuNumber = 0, parameterNumber = 5 },
+                new MenuParameterMapping { menuNumber = 0, parameterNumber = 6 },
+                new MenuParameterMapping { menuNumber = 0, parameterNumber = 7 },
+                new MenuParameterMapping { menuNumber = 1, parameterNumber = 0 },
+                new MenuParameterMapping { menuNumber = 1, parameterNumber = 1 },
+                new MenuParameterMapping { menuNumber = 1, parameterNumber = 2 },
+                new MenuParameterMapping { menuNumber = 1, parameterNumber = 3 },
+                new MenuParameterMapping { menuNumber = 1, parameterNumber = 4 },
+                new MenuParameterMapping { menuNumber = 1, parameterNumber = 5 },
+                new MenuParameterMapping { menuNumber = 1, parameterNumber = 6 },
+                new MenuParameterMapping { menuNumber = 1, parameterNumber = 7 },
+                new MenuParameterMapping { menuNumber = 2, parameterNumber = 0 },
+                new MenuParameterMapping { menuNumber = 2, parameterNumber = 1 },
+                new MenuParameterMapping { menuNumber = 2, parameterNumber = 2 },
+                new MenuParameterMapping { menuNumber = 2, parameterNumber = 3 },
+                new MenuParameterMapping { menuNumber = 2, parameterNumber = 4 },
+                new MenuParameterMapping { menuNumber = 2, parameterNumber = 5 },
+                new MenuParameterMapping { menuNumber = 2, parameterNumber = 6 },
+                new MenuParameterMapping { menuNumber = 2, parameterNumber = 7 },
+                new MenuParameterMapping { menuNumber = 3, parameterNumber = 0 },
+                new MenuParameterMapping { menuNumber = 3, parameterNumber = 1 }
+            };
+            serviceHandler.SetCustomView(menuParameterMappings, out Dictionary<ushort, List<MenuParameterMapping>> responseMapping);
+
+
+            //serviceHandler.LiveUpdateParameters(requestIdentifiers, out Dictionary<DATA_IDENTIFIER, List<ProcessData>> responseList);
+            //foreach (KeyValuePair<DATA_IDENTIFIER, List<ProcessData>> response in responseList) 
+            //    foreach (ProcessData processData in response.Value)
+            //        Console.WriteLine($"{((ushort)(response.Key)):X4} - {processData.dataIdentifier:X4} - {processData.value}");
+            
 
             //serviceHandler.SendDiagnosticSessionControl();
             //serviceHandler.UdsGetDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x030E }, out byte[] byteArray);
@@ -199,7 +213,7 @@ namespace BodAss
             //PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
             //PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
             //PrintLiveData(serviceHandler);
-            Uninitialize(handle);
+            //Uninitialize(handle);
         }
 
         private static bool Uninitialize(CantpHandle handle)
