@@ -10,8 +10,8 @@ namespace BodAss
         private static uint timeoutValue = 5000;
         private static readonly CantpHandle handle = CantpHandle.PCANTP_HANDLE_USBBUS1;
         private static readonly CantpBaudrate baudrate = CantpBaudrate.PCANTP_BAUDRATE_250K;
-		private static readonly byte sourceAddress = 0xF8;
-		private static readonly byte destinationAddress = 0x03;
+		private static readonly byte sourceAddress = 0xFA;
+		private static readonly byte destinationAddress = 0x01;
 
 		static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
@@ -163,6 +163,20 @@ namespace BodAss
 
             Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+            List<DATA_IDENTIFIER> requestIdentifiers = new() { (DATA_IDENTIFIER)0xF300 };
+            serviceHandler.SendUSDT(new byte[] { 0xBB, 0x01, (byte)((ushort)requestIdentifiers[0] >> 8), (byte)((ushort)requestIdentifiers[0] & 0x00FF), 0xFD, 0x8F, 0x00, 0x00, 0xFD, 0x9F, 0x00, 0x00 });
+            serviceHandler.LiveUpdateParameters(requestIdentifiers, out Dictionary<DATA_IDENTIFIER, List<ProcessData>> responseList);
+            foreach (KeyValuePair<DATA_IDENTIFIER, List<ProcessData>> response in responseList) 
+                foreach (ProcessData processData in response.Value)
+                    Console.WriteLine($"{response.Key} - {processData.dataIdentifier:X4} - {processData.value}");
+
+            //тхэквондист
+            //aKey
+            //Дубрик
+            //сеньор
+            //150кг
+            //дотер еблан
+            //суетолог 
 
             //serviceHandler.SendDiagnosticSessionControl();
             //serviceHandler.UdsGetDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x030E }, out byte[] byteArray);
