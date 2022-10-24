@@ -10,6 +10,7 @@ namespace PCAN_UDS_TEST
     {
         public byte menuNumber;
         public byte parameterNumber;
+        public short value;
     }
 
     public enum BOSCH_UDS_PARAMETER_TYPES : byte
@@ -106,17 +107,11 @@ namespace PCAN_UDS_TEST
             $"{errorCode}: {description} at {timestamp}";
     }
 
-    public struct ProcessData
-    {
-        public ushort dataIdentifier;
-        public short value;
-    }
-
-    public struct ProcessDataGroup
-    {
-        public string groupName;
-        public List<ProcessData> processData;
-    }
+    //public struct LiveUpdate
+    //{
+    //    public ushort dataIdentifier;
+    //    public short value;
+    //}
     #endregion
 
     public class ServiceHandler
@@ -243,26 +238,27 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool LiveUpdateParameters(List<DATA_IDENTIFIER> requestIdentifiers, out Dictionary<DATA_IDENTIFIER, List<ProcessData>> responseList) //byte parametersCount, 
+        public bool LiveUpdateParameters(Dictionary<ushort, List<MenuParameterMapping>> responseMapping, out List<MenuParameterMapping> responseWithValuesMapping)
         {
-            responseList = new();
+            responseWithValuesMapping = new();
             try
             {
-                foreach (DATA_IDENTIFIER requestidentifier in requestIdentifiers)
+                foreach (KeyValuePair<ushort, List<MenuParameterMapping>> mapping in responseMapping)
                 {
-                    byte[] response = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { requestidentifier });
+                    byte[] response = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)mapping.Key });
                     int y = 4;
-                    List<ProcessData> responseData = new();
+                    List<MenuParameterMapping> responseData = new();
                     while (y < response.Length)
                     {
-                        ProcessData liveData = new();
-                        liveData.dataIdentifier = (ushort)(response[y] << 8 | response[y + 1]);
-                        y += 4;
-                        liveData.value = (short)(response[y] << 8 | response[y + 1]);
-                        y += 2;
-                        responseData.Add(liveData);
+                        responseData.Add(new MenuParameterMapping
+                        {
+                            menuNumber = mapping.Value[responseData.Count].menuNumber,
+                            parameterNumber = mapping.Value[responseData.Count].parameterNumber,
+                            value = (short)(response[y + 4] << 8 | response[y + 5]),
+                        });
+                        y += 6;
                     }
-                    responseList.Add(requestidentifier, responseData);
+                    responseWithValuesMapping.AddRange(responseData);
                 }
                 return true;
             }

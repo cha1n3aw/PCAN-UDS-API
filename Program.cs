@@ -161,7 +161,7 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID };
 
-            //Initialize(handle, baudrate, timeoutValue);
+            Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
 
             List<MenuParameterMapping> menuParameterMappings = new()
@@ -193,13 +193,12 @@ namespace BodAss
                 new MenuParameterMapping { menuNumber = 3, parameterNumber = 0 },
                 new MenuParameterMapping { menuNumber = 3, parameterNumber = 1 }
             };
+
             serviceHandler.SetCustomView(menuParameterMappings, out Dictionary<ushort, List<MenuParameterMapping>> responseMapping);
 
-
-            //serviceHandler.LiveUpdateParameters(requestIdentifiers, out Dictionary<DATA_IDENTIFIER, List<ProcessData>> responseList);
-            //foreach (KeyValuePair<DATA_IDENTIFIER, List<ProcessData>> response in responseList) 
-            //    foreach (ProcessData processData in response.Value)
-            //        Console.WriteLine($"{((ushort)(response.Key)):X4} - {processData.dataIdentifier:X4} - {processData.value}");
+            serviceHandler.LiveUpdateParameters(responseMapping, out List<MenuParameterMapping> responseWithValuesMapping);
+            foreach (MenuParameterMapping menuParameter in responseWithValuesMapping)
+                Console.WriteLine($"{menuParameter.menuNumber} - {menuParameter.parameterNumber} - {menuParameter.value}");
             
 
             //serviceHandler.SendDiagnosticSessionControl();
