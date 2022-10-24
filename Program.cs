@@ -163,12 +163,11 @@ namespace BodAss
 
             Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-            //         short value = 0x00;
+
+            //serviceHandler.SendDiagnosticSessionControl();
+            //serviceHandler.UdsGetDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x030E }, out byte[] byteArray);
+            //short value = 0x01;
             //SetParameter(serviceHandler, 0, 0, 0, value);
-            PrintParameters(serviceHandler, dataIdentifiers);
-            //         value = 0x01;
-            //         SetParameter(serviceHandler, 0, 0, 0, value);
-            //         PrintParameters(serviceHandler, dataIdentifiers);
             //ChangeControllerLanguage(serviceHandler, DATA_IDENTIFIER.LANGUAGE_SECOND);
             //PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
             //PrintParameters(serviceHandler, dataIdentifiers);
