@@ -6,6 +6,12 @@ using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIE
 namespace PCAN_UDS_TEST
 {
     #region Structs
+    public struct MenuParameterMapping
+    {
+        public byte menuNumber;
+        public byte parameterNumber;
+    }
+
     public enum BOSCH_UDS_PARAMETER_TYPES : byte
     {
         /// <summary>
@@ -207,6 +213,36 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region BodasServiceWrappers
+        public bool SetCustomView(List<MenuParameterMapping> requestMapping, out Dictionary<ushort, List<MenuParameterMapping>> responseMapping)
+        {
+            responseMapping = new();
+            try
+            {
+                int count = requestMapping.Count;
+                for (ushort i = 0xF300; i < 0xF300 + Math.Ceiling(count / 16.0); i++)
+                {
+                    List<byte> customViewArray = new() { 0xBB, 0x01, (byte)(i >> 8), (byte)(i & 0x00FF) };
+
+                    List<MenuParameterMapping> tempMapping = requestMapping.Take(16).ToList();
+                    if (requestMapping.Count >= 16) requestMapping.RemoveRange(0, 16);
+                    foreach (MenuParameterMapping requestParameter in tempMapping)
+                    {
+                        customViewArray.Add(0xFD);
+                        customViewArray.Add((byte)((requestParameter.parameterNumber << 4) + 0x8F));
+                        customViewArray.Add(0x00);
+                        customViewArray.Add(requestParameter.menuNumber);
+                    }
+                    responseMapping.Add(i, tempMapping);
+                    if (!SendUSDT(customViewArray.ToArray())) return false;
+                }
+                return true;
+            }
+            catch(Exception)
+            {
+                return false;
+            }
+        }
+
         public bool LiveUpdateParameters(List<DATA_IDENTIFIER> requestIdentifiers, out Dictionary<DATA_IDENTIFIER, List<ProcessData>> responseList) //byte parametersCount, 
         {
             responseList = new();
@@ -959,11 +995,7 @@ namespace PCAN_UDS_TEST
             Console.WriteLine($"Allocate TX message: {UDSApi.StatusIsOk_2013(status) && result}");
 
             UdsStatus resultStatus = UDSApi.Write_2013(handle, ref udsMessage);
-            if (UDSApi.StatusIsOk_2013(resultStatus))
-            {
-                Thread.Sleep(200);
-                Console.WriteLine("Write succeeded");
-            }
+            if (UDSApi.StatusIsOk_2013(resultStatus)) Console.WriteLine("Write succeeded");
             else Console.WriteLine("Write error: " + result, "Error");
             Console.WriteLine($"Free TX message: {UDSApi.MsgFree_2013(ref udsMessage)}");
             return true;
