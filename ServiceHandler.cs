@@ -207,24 +207,26 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region BodasServiceWrappers
-        public bool LiveUpdateParameters(out List<ProcessData> dataList)
+        public bool LiveUpdateParameters(List<DATA_IDENTIFIER> requestIdentifiers, out Dictionary<DATA_IDENTIFIER, List<ProcessData>> responseList) //byte parametersCount, 
         {
-            dataList = new();
+            responseList = new();
             try
             {
-                for (byte i = 0x00; i < 0x06; i++)
+                foreach (DATA_IDENTIFIER requestidentifier in requestIdentifiers)
                 {
-                    byte[] response = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0xF300 + i) });
+                    byte[] response = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { requestidentifier });
                     int y = 4;
-                    while(y < response.Length)
+                    List<ProcessData> responseData = new();
+                    while (y < response.Length)
                     {
                         ProcessData liveData = new();
                         liveData.dataIdentifier = (ushort)(response[y] << 8 | response[y + 1]);
                         y += 4;
                         liveData.value = (short)(response[y] << 8 | response[y + 1]);
                         y += 2;
-                        dataList.Add(liveData);
+                        responseData.Add(liveData);
                     }
+                    responseList.Add(requestidentifier, responseData);
                 }
                 return true;
             }
@@ -959,7 +961,7 @@ namespace PCAN_UDS_TEST
             UdsStatus resultStatus = UDSApi.Write_2013(handle, ref udsMessage);
             if (UDSApi.StatusIsOk_2013(resultStatus))
             {
-                //Thread.Sleep(100);
+                Thread.Sleep(200);
                 Console.WriteLine("Write succeeded");
             }
             else Console.WriteLine("Write error: " + result, "Error");
