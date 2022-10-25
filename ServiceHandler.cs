@@ -1054,7 +1054,7 @@ namespace PCAN_UDS_TEST
             return true;
         }
 
-        public byte[] ReceiveService()
+        public byte[] ReceiveUSDT()
         {
             uint destinationAddress = NAI.DESTINATION_ADDRESS;
             AutoResetEvent receive_event = new(false);
