@@ -102,18 +102,6 @@ namespace BodAss
                 foreach (Error error in errorList) Console.WriteLine(error);
         }
 
-  //      static void PrintLiveData(ServiceHandler serviceHandler)
-  //      {
-		//	while (!Console.KeyAvailable)
-		//	{
-		//		serviceHandler.LiveUpdateParameters(out List<ProcessData> dataList);
-		//		foreach (ProcessData data in dataList)
-		//		{
-		//			Console.WriteLine($"{data.dataIdentifier:X4}: {data.value:X4}");
-		//		}
-		//	}
-		//}
-
         static void ChangeControllerLanguage(ServiceHandler serviceHandler, DATA_IDENTIFIER languageIdentifier)
         {
             serviceHandler.ChangeControllerLanguage(languageIdentifier);
@@ -122,6 +110,21 @@ namespace BodAss
         static void SetParameter(ServiceHandler serviceHandler, byte menuNumber, byte subMenuNumber, byte parameterNumber, short value)
         {
             serviceHandler.SetParameter(menuNumber, subMenuNumber, parameterNumber, value);
+        }
+
+        static void SoftResetECU(ServiceHandler serviceHandler)
+        {
+            serviceHandler.SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.PUDS_SVC_PARAM_ER_SR);
+        }
+
+        static void DiagnosticSessionControl(ServiceHandler serviceHandler, UDSApi.uds_svc_param_dsc sessionType)
+        {
+            serviceHandler.SendDiagnosticSessionControl(sessionType);
+        }
+
+        static void SecurityAccessLevel(ServiceHandler serviceHandler, byte accesslevel)
+        {
+            serviceHandler.UdsSetSecurityAccessLevel(accesslevel);
         }
 
         static void Main(string[] args)
@@ -163,11 +166,7 @@ namespace BodAss
 
             Initialize(handle, baudrate, timeoutValue);
             ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-            foreach (byte b in serviceHandler.SendReadDataByIdentifier(new DATA_IDENTIFIER[] {(DATA_IDENTIFIER)0xFE19 })) Console.Write($"{b:X2} ");
-			//serviceHandler.SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.PUDS_SVC_PARAM_ER_SR);
-			//foreach (byte b in serviceHandler.SendDiagnosticSessionControl(0x03)) Console.Write($"{b:X2} ");
 
-			//serviceHandler.UdsSetSecurityAccessLevel(0x07);
 			List<MenuParameterMapping> menuParameterMappings = new()
             {
 				//new MenuParameterMapping { menuNumber = 0, parameterNumber = 0 },
@@ -199,6 +198,8 @@ namespace BodAss
                 //new MenuParameterMapping { menuNumber = 3, parameterNumber = 1 }
             };
 
+            DiagnosticSessionControl(serviceHandler, UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_ECUEDS);
+            SecurityAccessLevel(serviceHandler, 0x07);
             //serviceHandler.SetCustomView(menuParameterMappings, out Dictionary<ushort, List<MenuParameterMapping>> responseMapping);
             //serviceHandler.LiveUpdateParameters(responseMapping, out List<MenuParameterMapping> responseWithValuesMapping);
             //foreach (MenuParameterMapping menuParameter in responseWithValuesMapping)
