@@ -241,13 +241,14 @@ namespace PCAN_UDS_TEST
             }
         }
 
-		public bool GetIO()
+		public bool GetIO(out byte[] inputsArray, out byte[] outsArray) // naming... 
 		{
+            inputsArray = Array.Empty<byte>();
+			outsArray = Array.Empty<byte>();
 			try
 			{
-                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0xFE18 }); // IN
-				SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0xFE19 }); // OUT
-
+				inputsArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0xFE18 }); // IN
+				outsArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0xFE19 }); // OUT
 				return true;
 			}
 			catch (Exception)
