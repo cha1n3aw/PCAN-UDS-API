@@ -10,10 +10,12 @@ namespace BodAss
         private static uint timeoutValue = 5000;
         private static readonly CantpHandle handle = CantpHandle.PCANTP_HANDLE_USBBUS1;
         private static readonly CantpBaudrate baudrate = CantpBaudrate.PCANTP_BAUDRATE_250K;
-		private static readonly byte sourceAddress = 0xFA;
-		private static readonly byte destinationAddress = 0x03;
+		private static readonly byte bodasSourceAddress = 0xFA;
+		private static readonly byte bodasDestinationAddress = 0x01;
+        private static readonly byte udsSourceAddress = 0xFA;
+        private static readonly byte udsDestinationAddress = 0x03;
 
-		static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
+        static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
 			if (serviceHandler.GetControllerInformation(controllerInformationIdentifiers, out List<string> dataList)) foreach (string str in dataList) Console.WriteLine(str);
 		}
@@ -165,9 +167,35 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID };
 
             Initialize(handle, baudrate, timeoutValue);
-            ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+            UdsServiceHandler udsServiceHandler = new(handle, udsSourceAddress, udsDestinationAddress);
+            udsServiceHandler.UdsSendDiagnosticSessionControl(UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_ECUEDS);
+            udsServiceHandler.UdsSetSecurityAccessLevel(0x0D);
+            udsServiceHandler.UdsGetMenus(out Dictionary<byte, string> menuNames);
+            Dictionary<byte, string> subMenuNames = new();
+            Dictionary<byte, Dictionary<byte, Data>> parameters = new();
+            foreach (KeyValuePair<byte, string> menu in menuNames)
+            {
+                udsServiceHandler.UdsGetSubMenus(menu.Key, out subMenuNames);
+                Dictionary<byte, Data> tempParameters = new();
+                foreach (KeyValuePair<byte, string> subMenu in subMenuNames)
+                {
+                    udsServiceHandler.UdsGetParameters(menu.Key, subMenu.Key, out tempParameters);
+                    parameters[subMenu.Key] = tempParameters;
+                }
+            }
+            foreach (KeyValuePair<byte, string> menu in menuNames)
+            {
+                Console.WriteLine($"{menu.Key + 1} - {menu.Value}");
+                foreach (KeyValuePair<byte, string> subMenu in subMenuNames)
+                {
+                    Console.WriteLine($"   {menu.Key + 1}.{subMenu.Key + 1} - {subMenu.Value}");
+                    foreach (KeyValuePair<byte, Data> parameter in parameters[subMenu.Key])
+                        Console.WriteLine($"        {menu.Key + 1}.{subMenu.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
+                }
+            }
 
-			List<MenuParameterMapping> menuParameterMappings = new()
+                //ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
+            List<MenuParameterMapping> menuParameterMappings = new()
             {
 				//new MenuParameterMapping { menuNumber = 0, parameterNumber = 0 },
 				//new MenuParameterMapping { menuNumber = 1, parameterNumber = 0 },
@@ -198,8 +226,8 @@ namespace BodAss
                 //new MenuParameterMapping { menuNumber = 3, parameterNumber = 1 }
             };
             
-            DiagnosticSessionControl(serviceHandler, UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_ECUEDS);
-            SecurityAccessLevel(serviceHandler, 0x0D);
+            //DiagnosticSessionControl(serviceHandler, UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_ECUEDS);
+            //SecurityAccessLevel(serviceHandler, 0x0D);
             //serviceHandler.SetCustomView(menuParameterMappings, out Dictionary<ushort, List<MenuParameterMapping>> responseMapping);
             //serviceHandler.LiveUpdateParameters(responseMapping, out List<MenuParameterMapping> responseWithValuesMapping);
             //foreach (MenuParameterMapping menuParameter in responseWithValuesMapping)
@@ -207,9 +235,9 @@ namespace BodAss
             //SoftResetECU(serviceHandler);
             //serviceHandler.SendDiagnosticSessionControl();
 
-            serviceHandler.UdsGetDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 }, out byte[] byteArray);
-            foreach (byte b in byteArray) Console.Write($"{b:X2} ");
-            Console.WriteLine($"\n{byteArray.Length}");
+            //serviceHandler.UdsGetDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 }, out byte[] byteArray);
+            //foreach (byte b in byteArray) Console.Write($"{b:X2} ");
+            //Console.WriteLine($"\n{byteArray.Length}");
 
 
             //short value = 0x01;
