@@ -149,6 +149,20 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region UdsServiceWrappers
+        public bool UdsGetErrorsList(UDSApi.UDS_SERVICE_PARAMETER_READ_DTC_INFORMATION_TYPE dtcType, byte statusMask, out byte[] response)
+        {
+            response = Array.Empty<byte>();
+            try
+            {
+                response = SendReadDTCInformation(dtcType, statusMask);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public bool UdsSetSecurityAccessLevel(byte accessLevel) //access level - only odd numbers
         {
             try
