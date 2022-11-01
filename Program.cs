@@ -11,7 +11,7 @@ namespace BodAss
         private static readonly CantpHandle handle = CantpHandle.PCANTP_HANDLE_USBBUS1;
         private static readonly CantpBaudrate baudrate = CantpBaudrate.PCANTP_BAUDRATE_250K;
 		private static readonly byte sourceAddress = 0xFA;
-		private static readonly byte destinationAddress = 0x01;
+		private static readonly byte destinationAddress = 0x03;
 
 		static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
@@ -197,17 +197,21 @@ namespace BodAss
                 //new MenuParameterMapping { menuNumber = 3, parameterNumber = 0 },
                 //new MenuParameterMapping { menuNumber = 3, parameterNumber = 1 }
             };
-
+            
             DiagnosticSessionControl(serviceHandler, UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_ECUEDS);
-            SecurityAccessLevel(serviceHandler, 0x07);
+            SecurityAccessLevel(serviceHandler, 0x0D);
             //serviceHandler.SetCustomView(menuParameterMappings, out Dictionary<ushort, List<MenuParameterMapping>> responseMapping);
             //serviceHandler.LiveUpdateParameters(responseMapping, out List<MenuParameterMapping> responseWithValuesMapping);
             //foreach (MenuParameterMapping menuParameter in responseWithValuesMapping)
             //    Console.WriteLine($"{menuParameter.menuNumber} - {menuParameter.parameterNumber} - {menuParameter.value}");
-            
-
+            //SoftResetECU(serviceHandler);
             //serviceHandler.SendDiagnosticSessionControl();
-            //serviceHandler.UdsGetDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x030E }, out byte[] byteArray);
+
+            serviceHandler.UdsGetDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 }, out byte[] byteArray);
+            foreach (byte b in byteArray) Console.Write($"{b:X2} ");
+            Console.WriteLine($"\n{byteArray.Length}");
+
+
             //short value = 0x01;
             //SetParameter(serviceHandler, 0, 0, 0, value);
             //ChangeControllerLanguage(serviceHandler, DATA_IDENTIFIER.LANGUAGE_SECOND);
