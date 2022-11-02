@@ -130,7 +130,7 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool UdsGetSubMenus(byte menuAddress, out Dictionary<byte, string> subMenuList)
+        public bool UdsGetParameterSubMenus(byte menuAddress, out Dictionary<byte, string> subMenuList)
         {
             subMenuList = new();
             try
@@ -158,15 +158,79 @@ namespace PCAN_UDS_TEST
             }
         }
 
+        public bool UdsGetProcessDataGroups(out Dictionary<byte, string> groupList)
+        {
+            groupList = new();
+            try
+            {
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1261 });
+                byte numberOfGroups = dataArray[3];
+                for (int i = 4; ; i++)
+                {
+                    byte address = dataArray[i++];
+                    string groupName = string.Empty;
+                    while (dataArray[i] != 0x00) groupName += (char)dataArray[i++];
+                    groupList.Add(address, groupName);
+                    if (groupList.Count == numberOfGroups) break;
+                    if (i == dataArray.Length - 1)
+                    {
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1261 });
+                        i = 3;
+                    }
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public bool UdsGetProcessData(byte groupAddress, out Dictionary<byte, Data> parameterList)
+        {
+            parameterList = new();
+            try
+            {
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1200 + groupAddress) });
+                byte numberOfParameters = dataArray[3];
+                for (int i = 4; ;)
+                {
+                    byte address = dataArray[i++];
+                    if (dataArray[i] != 0x00)
+                    {
+                        Data data = new();
+                        while (dataArray[i] != 0x00) data.name += (char)dataArray[i++];
+                        i++;
+                        data.multiplier = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                        data.divisor = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                        data.valueType = dataArray[i++];
+                        data.digits = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                        data.unitCode = dataArray[i++];
+                        data.accessLevel = dataArray[i++];
+                        parameterList.Add(address, data);
+                        if (parameterList.Count == numberOfParameters) break;
+                    }
+                    else i++;
+                    if (i == dataArray.Length - 1)
+                    {
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1200 + groupAddress) });
+                        i = 4;
+                    }
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public bool UdsGetParameters(byte menuAddress, byte subMenuAddress, out Dictionary<byte, Data> parameterList)
         {
             parameterList = new();
             try
             {
                 byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1000 + (menuAddress << 3) + subMenuAddress) });
-                //Console.WriteLine($"{menuAddress} : {subMenuAddress}");
-                //foreach (byte b in dataArray) Console.Write($"{b:X2} ");
-                //Console.WriteLine();
                 byte numberOfParameters = dataArray[3];
                 for (int i = 4; ; i++)
                 {
@@ -236,9 +300,11 @@ namespace PCAN_UDS_TEST
         /// <returns>Byte array that contains response message</returns>
         public byte[] SendDiagnosticSessionControl(UDSApi.uds_svc_param_dsc authParameter)
         {
-            Console.WriteLine($"Service: {UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, authParameter)}");
+            Console.Write("DSC pending: ");
+            //Console.WriteLine($"Service: {
+                UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, authParameter); //}");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
-            Console.WriteLine($"WaitForService: {responseStatus}");
+            //Console.WriteLine($"WaitForService: {responseStatus}");
             if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
             {
                 byte[] udsMessageByteArray = new byte[udsMessageResponse.message.MessageDataAnyCopy.length];
@@ -246,8 +312,11 @@ namespace PCAN_UDS_TEST
                 {
                     if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
                         UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_DiagnosticSessionControl + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
-                    Console.WriteLine($"Write response message for service: {UDSApi.Write_2013(handle, ref service_response_msg)}");
-                    Console.WriteLine($"Free response message: {UDSApi.MsgFree_2013(ref service_response_msg)}");
+                    //Console.WriteLine($"Write response message for service: {
+                        UDSApi.Write_2013(handle, ref service_response_msg);//}");
+                    //Console.WriteLine($"Free response message: {
+                        UDSApi.MsgFree_2013(ref service_response_msg);//}");
+                    Console.WriteLine("OK");
                     return udsMessageByteArray;
                 }
             }
@@ -290,9 +359,11 @@ namespace PCAN_UDS_TEST
         /// <returns>Byte array that contains response message</returns>
         public byte[] SendSecurityAccess(byte securityAccessLevel)
         {
-            Console.WriteLine($"Service: {UDSApi.SvcSecurityAccess_2013(handle, requestConfig, out UdsMessage outMessage, securityAccessLevel)}");
+            Console.Write("Security access pending: ");
+            //Console.WriteLine($"Service: {
+            UDSApi.SvcSecurityAccess_2013(handle, requestConfig, out UdsMessage outMessage, securityAccessLevel);// }");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
-            Console.WriteLine($"WaitForService: {responseStatus}");
+            //Console.WriteLine($"WaitForService: {responseStatus}");
             if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
             {
                 byte[] udsMessageByteArray = new byte[udsMessageResponse.message.MessageDataAnyCopy.length];
@@ -300,8 +371,11 @@ namespace PCAN_UDS_TEST
                 {
                     if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
                         UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_SecurityAccess + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
-                    Console.WriteLine($"Write response message for service: {UDSApi.Write_2013(handle, ref service_response_msg)}");
-                    Console.WriteLine($"Free response message: {UDSApi.MsgFree_2013(ref service_response_msg)}");
+                    //Console.WriteLine($"Write response message for service: {
+                        UDSApi.Write_2013(handle, ref service_response_msg);//}");
+                    //Console.WriteLine($"Free response message: {
+                        UDSApi.MsgFree_2013(ref service_response_msg);//}");
+                    Console.WriteLine("OK");
                     return udsMessageByteArray;
                 }
             }
@@ -319,9 +393,11 @@ namespace PCAN_UDS_TEST
         /// <returns>Byte array that contains response message</returns>
         public byte[] SendSecurityAccessWithData(byte securityAccessType, byte[] securityAccessData)
         {
-            Console.WriteLine($"Service: {UDSApi.SvcSecurityAccess_2013(handle, requestConfig, out UdsMessage outMessage, securityAccessType, securityAccessData, (uint)securityAccessData.Length)}");
+            Console.Write("Security access w/data pending: ");
+            //Console.WriteLine($"Service: {
+            UDSApi.SvcSecurityAccess_2013(handle, requestConfig, out UdsMessage outMessage, securityAccessType, securityAccessData, (uint)securityAccessData.Length);// }");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
-            Console.WriteLine($"WaitForService: {responseStatus}");
+            //Console.WriteLine($"WaitForService: {responseStatus}");
             if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
             {
                 byte[] udsMessageByteArray = new byte[udsMessageResponse.message.MessageDataAnyCopy.length];
@@ -329,8 +405,11 @@ namespace PCAN_UDS_TEST
                 {
                     if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
                         UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_SecurityAccess + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
-                    Console.WriteLine($"Write response message for service: {UDSApi.Write_2013(handle, ref service_response_msg)}");
-                    Console.WriteLine($"Free response message: {UDSApi.MsgFree_2013(ref service_response_msg)}");
+                    //Console.WriteLine($"Write response message for service: {
+                        UDSApi.Write_2013(handle, ref service_response_msg);//}");
+                    //Console.WriteLine($"Free response message: {
+                        UDSApi.MsgFree_2013(ref service_response_msg);//}");
+                    Console.WriteLine("OK");
                     return udsMessageByteArray;
                 }
             }
@@ -373,9 +452,11 @@ namespace PCAN_UDS_TEST
         /// <returns>Byte array that contains response message</returns>
         public byte[] SendReadDataByIdentifier(DATA_IDENTIFIER[] dataIdentifiers)
         {
-            Console.WriteLine($"Service: {UDSApi.SvcReadDataByIdentifier_2013(handle, requestConfig, out UdsMessage outMessage, dataIdentifiers, (ushort)dataIdentifiers.Length)}");
+            Console.Write("Read data service pending: ");
+            //Console.WriteLine($"Service: {
+            UDSApi.SvcReadDataByIdentifier_2013(handle, requestConfig, out UdsMessage outMessage, dataIdentifiers, (ushort)dataIdentifiers.Length);// }");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
-            Console.WriteLine($"WaitForService: {responseStatus}");
+            //Console.WriteLine($"WaitForService: {responseStatus}");
             if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
             {
                 byte[] udsMessageByteArray = new byte[udsMessageResponse.message.MessageDataAnyCopy.length];
@@ -383,8 +464,11 @@ namespace PCAN_UDS_TEST
                 {
                     if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
                         UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_ReadDataByIdentifier + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
-                    Console.WriteLine($"Write response message for service: {UDSApi.Write_2013(handle, ref service_response_msg)}");
-                    Console.WriteLine($"Free response message: {UDSApi.MsgFree_2013(ref service_response_msg)}");
+                    //Console.WriteLine($"Write response message for service: {
+                    UDSApi.Write_2013(handle, ref service_response_msg);//}");
+                    //Console.WriteLine($"Free response message: {
+                    UDSApi.MsgFree_2013(ref service_response_msg);//}");
+                    Console.WriteLine("OK");
                     return udsMessageByteArray;
                 }
             }
