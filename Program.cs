@@ -225,16 +225,20 @@ namespace BodAss
             //    foreach (KeyValuePair<byte, Data> parameter in group.Value)
             //        Console.WriteLine($"    {group.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
             //}
+
+
+
             int i = 0;
             udsServiceHandler.UdsGetParameterMenus(out Dictionary<byte, string> menuNames);
-            Dictionary<byte, string> subMenuNames = new();
+            Dictionary<byte, Dictionary<byte, string>> subMenuNames = new();
             Dictionary<byte, Dictionary<byte, Dictionary<byte, Data>>> parameters = new();
             foreach (KeyValuePair<byte, string> menu in menuNames)
             {
                 if (i > 5) break;
-                udsServiceHandler.UdsGetParameterSubmenus(menu.Key, out subMenuNames);
+                udsServiceHandler.UdsGetParameterSubmenus(menu.Key, out Dictionary<byte, string> tempSubMenuNames);
+                subMenuNames.Add(menu.Key, tempSubMenuNames);
                 parameters.Add(menu.Key, new Dictionary<byte, Dictionary<byte, Data>>());
-                foreach (KeyValuePair<byte, string> subMenu in subMenuNames)
+                foreach (KeyValuePair<byte, string> subMenu in tempSubMenuNames)
                 {
                     udsServiceHandler.UdsGetParameters(menu.Key, subMenu.Key, out Dictionary<byte, Data> tempParameters);
                     parameters[menu.Key].Add(subMenu.Key, tempParameters);
@@ -246,11 +250,15 @@ namespace BodAss
                 Console.WriteLine($"{menu.Key + 1} - {menuNames[menu.Key]}");
                 foreach (KeyValuePair<byte, Dictionary<byte, Data>> subMenu in menu.Value)
                 {
-                    Console.WriteLine($"   {menu.Key + 1}.{subMenu.Key + 1} - {subMenuNames[subMenu.Key]}");
+                    Console.WriteLine($"   {menu.Key + 1}.{subMenu.Key + 1} - {subMenuNames[menu.Key][subMenu.Key]}");
                     foreach (KeyValuePair<byte, Data> parameter in subMenu.Value)
                         Console.WriteLine($"        {menu.Key + 1}.{subMenu.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
                 }
             }
+
+
+
+
             //var watch = System.Diagnostics.Stopwatch.StartNew();
             //foreach (KeyValuePair<byte, Dictionary<byte, Dictionary<byte, Data>>> menu in parameters)
             //    foreach (KeyValuePair<byte, Dictionary<byte, Data>> subMenu in menu.Value)

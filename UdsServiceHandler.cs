@@ -165,7 +165,7 @@ namespace PCAN_UDS_TEST
                 int i = 3;
                 byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1221 + menuAddress) });
                 byte numberOfSubmenus = dataArray[i++];
-                if (dataArray[i + 1] == 0x00) return true;
+                if (dataArray.Length < 5) return true;
                 for (;; i++)
                 {
                     byte address = dataArray[i++];
@@ -223,14 +223,13 @@ namespace PCAN_UDS_TEST
                 int i = 3;
                 byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1200 + groupAddress) });
                 byte numberOfParameters = dataArray[i++];
-                if (dataArray[i + 1] == 0x00) return true;
+                if (dataArray.Length < 5) return true;
                 for (; ; i++)
                 {
                     byte address = dataArray[i++];
-                    if (dataArray[i + 1] == 0x00)
+                    if (dataArray[i] == 0x00)
                     {
                         parameterList.Add(address, new Data());
-                        i++;
                         continue;
                     }
                     Data data = new();
@@ -265,17 +264,14 @@ namespace PCAN_UDS_TEST
             {
                 int i = 3;
                 byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1000 + (menuAddress << 3) + subMenuAddress) });
-                foreach (byte b in dataArray) Console.Write($"{b:X2} ");
-                Console.WriteLine();
                 byte numberOfParameters = dataArray[i++];
-                if (dataArray[i + 1] == 0x00) return true;
+                if (dataArray.Length < 5) return true;
                 for (; ; i++)
                 {
                     byte address = dataArray[i++];
-                    if (dataArray[i + 1] == 0x00)
+                    if (dataArray[i] == 0x00)
                     {
                         parameterList.Add(address, new Data());
-                        i++;
                         continue;
                     }
                     Data data = new();
