@@ -1,6 +1,7 @@
 ﻿using PCAN_UDS_TEST;
 using Peak.Can.IsoTp;
 using Peak.Can.Uds;
+using System.Collections.Generic;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
 namespace BodAss
@@ -14,6 +15,22 @@ namespace BodAss
 		private static readonly byte bodasDestinationAddress = 0x01;
         private static readonly byte udsSourceAddress = 0xFA;
         private static readonly byte udsDestinationAddress = 0x03;
+
+        private static bool Uninitialize(CantpHandle handle)
+        {
+            UdsStatus status = UDSApi.Uninitialize_2013(handle);
+            Console.WriteLine($"CAN interface uninitialization: {status}");
+            return UDSApi.StatusIsOk_2013(status);
+        }
+
+        private static bool Initialize(CantpHandle handle, CantpBaudrate baudrate, uint timeoutValue)
+        {
+            UdsStatus status = UDSApi.Initialize_2013(handle, baudrate);
+            Console.WriteLine($"CAN interface initialization: {status}");
+            Console.WriteLine($"Set request timeout(ms): {UDSApi.SetValue_2013(handle, UdsParameter.PUDS_PARAMETER_TIMEOUT_REQUEST, ref timeoutValue, sizeof(uint))}");
+            Console.WriteLine($"Set response timeout(ms): {UDSApi.SetValue_2013(handle, UdsParameter.PUDS_PARAMETER_TIMEOUT_RESPONSE, ref timeoutValue, sizeof(uint))}");
+            return UDSApi.StatusIsOk_2013(status);
+        }
 
         static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
@@ -131,7 +148,8 @@ namespace BodAss
 
         static void Main(string[] args)
 		{
-            DATA_IDENTIFIER[] dataIdentifiers = {
+            DATA_IDENTIFIER[] dataIdentifiers =
+            {
                 DATA_IDENTIFIER.GET_PARAMETER_0,
                 DATA_IDENTIFIER.GET_PARAMETER_1,
                 DATA_IDENTIFIER.GET_PARAMETER_2,
@@ -139,9 +157,11 @@ namespace BodAss
                 DATA_IDENTIFIER.GET_PARAMETER_4,
                 DATA_IDENTIFIER.GET_PARAMETER_5,
                 DATA_IDENTIFIER.GET_PARAMETER_6,
-                DATA_IDENTIFIER.GET_PARAMETER_7 };
+                DATA_IDENTIFIER.GET_PARAMETER_7
+            };
 
-            DATA_IDENTIFIER[] processDataIdentifiers = {
+            DATA_IDENTIFIER[] processDataIdentifiers =
+            {
                 DATA_IDENTIFIER.GET_PROCESSDATA_0,
                 DATA_IDENTIFIER.GET_PROCESSDATA_1,
                 DATA_IDENTIFIER.GET_PROCESSDATA_2,
@@ -149,9 +169,11 @@ namespace BodAss
                 DATA_IDENTIFIER.GET_PROCESSDATA_4,
                 DATA_IDENTIFIER.GET_PROCESSDATA_5,
                 DATA_IDENTIFIER.GET_PROCESSDATA_6,
-                DATA_IDENTIFIER.GET_PROCESSDATA_7 };
+                DATA_IDENTIFIER.GET_PROCESSDATA_7
+            };
 
-            DATA_IDENTIFIER[] controllerInformationIdentifiers = {
+            DATA_IDENTIFIER[] controllerInformationIdentifiers =
+            {
                 DATA_IDENTIFIER.GET_SYSTEM_VOLTAGE,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSECUHWNDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SSIDDID,
@@ -164,108 +186,60 @@ namespace BodAss
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_BSFPDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ECUMDDID,
                 DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_ADSDID,
-                DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID };
+                DATA_IDENTIFIER.PUDS_SVC_PARAM_DI_SNOETDID
+            };
+
+            List<MenuParameterMapping> menuParameterMappings = new()
+            {
+                new MenuParameterMapping { menuNumber = 0, parameterNumber = 0 },
+                new MenuParameterMapping { menuNumber = 1, parameterNumber = 1 }
+            };
 
             Initialize(handle, baudrate, timeoutValue);
             UdsServiceHandler udsServiceHandler = new(handle, udsSourceAddress, udsDestinationAddress);
             udsServiceHandler.UdsSendDiagnosticSessionControl(UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_ECUEDS);
             udsServiceHandler.UdsSetSecurityAccessLevel(0x0D);
-            udsServiceHandler.UdsGetMenus(out Dictionary<byte, string> menuNames);
-            Dictionary<byte, string> subMenuNames = new();
-            Dictionary<byte, Dictionary<byte, Data>> parameters = new();
-            foreach (KeyValuePair<byte, string> menu in menuNames)
+
+            udsServiceHandler.UdsGetProcessDataGroups(out Dictionary<byte, string> groupList);
+            Dictionary<byte, Dictionary<byte, Data>> parameterList = new();
+            foreach (KeyValuePair<byte, string> group in groupList)
             {
-                udsServiceHandler.UdsGetSubMenus(menu.Key, out subMenuNames);
-                Dictionary<byte, Data> tempParameters = new();
-                foreach (KeyValuePair<byte, string> subMenu in subMenuNames)
-                {
-                    udsServiceHandler.UdsGetParameters(menu.Key, subMenu.Key, out tempParameters);
-                    parameters[subMenu.Key] = tempParameters;
-                }
-            }
-            foreach (KeyValuePair<byte, string> menu in menuNames)
-            {
-                Console.WriteLine($"{menu.Key + 1} - {menu.Value}");
-                foreach (KeyValuePair<byte, string> subMenu in subMenuNames)
-                {
-                    Console.WriteLine($"   {menu.Key + 1}.{subMenu.Key + 1} - {subMenu.Value}");
-                    foreach (KeyValuePair<byte, Data> parameter in parameters[subMenu.Key])
-                        Console.WriteLine($"        {menu.Key + 1}.{subMenu.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
-                }
+                udsServiceHandler.UdsGetProcessData(group.Key, out Dictionary<byte, Data> tempParameterList);
+                parameterList.Add(group.Key, tempParameterList);
             }
 
-                //ServiceHandler serviceHandler = new(handle, sourceAddress, destinationAddress);
-            List<MenuParameterMapping> menuParameterMappings = new()
+            foreach (KeyValuePair<byte, Dictionary<byte, Data>> group in parameterList)
             {
-				//new MenuParameterMapping { menuNumber = 0, parameterNumber = 0 },
-				//new MenuParameterMapping { menuNumber = 1, parameterNumber = 0 },
-                new MenuParameterMapping { menuNumber = 1, parameterNumber = 1 },
-                new MenuParameterMapping { menuNumber = 1, parameterNumber = 2 },
-                new MenuParameterMapping { menuNumber = 1, parameterNumber = 3 },
-                new MenuParameterMapping { menuNumber = 1, parameterNumber = 4 },
-                new MenuParameterMapping { menuNumber = 1, parameterNumber = 5 },
-                new MenuParameterMapping { menuNumber = 1, parameterNumber = 6 },
-                new MenuParameterMapping { menuNumber = 1, parameterNumber = 7 },
-                new MenuParameterMapping { menuNumber = 2, parameterNumber = 0 },
-                new MenuParameterMapping { menuNumber = 2, parameterNumber = 1 },
-                new MenuParameterMapping { menuNumber = 2, parameterNumber = 2 },
-                new MenuParameterMapping { menuNumber = 2, parameterNumber = 3 },
-                new MenuParameterMapping { menuNumber = 2, parameterNumber = 4 },
-                new MenuParameterMapping { menuNumber = 2, parameterNumber = 5 },
-                //new MenuParameterMapping { menuNumber = 1, parameterNumber = 6 },
-                //new MenuParameterMapping { menuNumber = 1, parameterNumber = 7 },
-                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 0 },
-                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 1 },
-                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 2 },
-                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 3 },
-                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 4 },
-                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 5 },
-                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 6 },
-                //new MenuParameterMapping { menuNumber = 2, parameterNumber = 7 },
-                //new MenuParameterMapping { menuNumber = 3, parameterNumber = 0 },
-                //new MenuParameterMapping { menuNumber = 3, parameterNumber = 1 }
-            };
-            
-            //DiagnosticSessionControl(serviceHandler, UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_ECUEDS);
-            //SecurityAccessLevel(serviceHandler, 0x0D);
-            //serviceHandler.SetCustomView(menuParameterMappings, out Dictionary<ushort, List<MenuParameterMapping>> responseMapping);
-            //serviceHandler.LiveUpdateParameters(responseMapping, out List<MenuParameterMapping> responseWithValuesMapping);
-            //foreach (MenuParameterMapping menuParameter in responseWithValuesMapping)
-            //    Console.WriteLine($"{menuParameter.menuNumber} - {menuParameter.parameterNumber} - {menuParameter.value}");
-            //SoftResetECU(serviceHandler);
-            //serviceHandler.SendDiagnosticSessionControl();
+                Console.WriteLine($"{group.Key + 1} - {groupList[group.Key]}");
+                foreach (KeyValuePair<byte, Data> parameter in group.Value)
+                    Console.WriteLine($"    {group.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
+            }
 
-            //serviceHandler.UdsGetDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 }, out byte[] byteArray);
-            //foreach (byte b in byteArray) Console.Write($"{b:X2} ");
-            //Console.WriteLine($"\n{byteArray.Length}");
+            //udsServiceHandler.UdsGetMenus(out Dictionary<byte, string> menuNames);
+            //Dictionary<byte, string> subMenuNames = new();
+            //Dictionary <byte, Dictionary<byte, Dictionary<byte, Data>>> parameters = new();
+            //foreach (KeyValuePair<byte, string> menu in menuNames)
+            //{
+            //    udsServiceHandler.UdsGetSubMenus(menu.Key, out subMenuNames);
+            //    parameters.Add(menu.Key, new Dictionary<byte, Dictionary<byte, Data>>());
+            //    foreach (KeyValuePair<byte, string> subMenu in subMenuNames)
+            //    {
+            //        udsServiceHandler.UdsGetParameters(menu.Key, subMenu.Key, out Dictionary<byte, Data> tempParameters);
+            //        parameters[menu.Key].Add(subMenu.Key, tempParameters);
+            //    }
+            //}
+            //foreach (KeyValuePair<byte, Dictionary<byte, Dictionary<byte, Data>>> menu in parameters)
+            //{
+            //    Console.WriteLine($"{menu.Key + 1} - {menuNames[menu.Key]}");
+            //    foreach (KeyValuePair<byte, Dictionary<byte, Data>> subMenu in menu.Value)
+            //    {
+            //        Console.WriteLine($"   {menu.Key + 1}.{subMenu.Key + 1} - {subMenuNames[subMenu.Key]}");
+            //        foreach (KeyValuePair<byte, Data> parameter in subMenu.Value)
+            //            Console.WriteLine($"        {menu.Key + 1}.{subMenu.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
+            //    }
+            //}
 
-
-            //short value = 0x01;
-            //SetParameter(serviceHandler, 0, 0, 0, value);
-            //ChangeControllerLanguage(serviceHandler, DATA_IDENTIFIER.LANGUAGE_SECOND);
-            //PrintControllerInformation(serviceHandler, controllerInformationIdentifiers);
-            //PrintParameters(serviceHandler, dataIdentifiers);
-            //PrintProcessData(serviceHandler, processDataIdentifiers);
-            //PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_ACTIVE_ERRORS);
-            //PrintErrors(serviceHandler, DATA_IDENTIFIER.GET_SAVED_ERRORS);
-            //PrintLiveData(serviceHandler);
             Uninitialize(handle);
         }
-
-        private static bool Uninitialize(CantpHandle handle)
-		{
-			UdsStatus status = UDSApi.Uninitialize_2013(handle);
-            Console.WriteLine($"CAN interface uninitialization: {status}");
-			return UDSApi.StatusIsOk_2013(status);
-        }
-
-		private static bool Initialize(CantpHandle handle, CantpBaudrate baudrate, uint timeoutValue)
-		{
-			UdsStatus status = UDSApi.Initialize_2013(handle, baudrate);
-            Console.WriteLine($"CAN interface initialization: {status}");
-            Console.WriteLine($"Set request timeout(ms): {UDSApi.SetValue_2013(handle, UdsParameter.PUDS_PARAMETER_TIMEOUT_REQUEST, ref timeoutValue, sizeof(uint))}");
-            Console.WriteLine($"Set response timeout(ms): {UDSApi.SetValue_2013(handle, UdsParameter.PUDS_PARAMETER_TIMEOUT_RESPONSE, ref timeoutValue, sizeof(uint))}");
-            return UDSApi.StatusIsOk_2013(status);
-		}
 	}
 }
