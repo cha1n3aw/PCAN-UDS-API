@@ -1,5 +1,6 @@
 ﻿using Peak.Can.IsoTp;
 using Peak.Can.Uds;
+using System.Linq.Expressions;
 using System.Text;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
@@ -44,6 +45,19 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region UdsServiceWrappers
+        public bool UdsEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
+        {
+            try
+            {
+                SendEcuReset(resetParameter);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         public bool UdsSetParameter(DATA_IDENTIFIER dataIdentifier, byte[] value)
         {
             try
