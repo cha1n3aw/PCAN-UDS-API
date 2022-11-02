@@ -100,7 +100,7 @@ namespace PCAN_UDS_TEST
         public ushort errorCode;
         public ushort occurence;
         public ushort parameter;
-        public ushort timestamp; // или double? смотря где обрабатывать время тут или в main
+        public uint timestamp;
         public string description;
 
         public override string ToString() =>
