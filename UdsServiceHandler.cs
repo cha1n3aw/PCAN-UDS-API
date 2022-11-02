@@ -130,7 +130,7 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool UdsGetSubMenus(byte menuAddress, out Dictionary<byte, string> subMenuList)
+        public bool UdsGetParameterSubMenus(byte menuAddress, out Dictionary<byte, string> subMenuList)
         {
             subMenuList = new();
             try
@@ -174,7 +174,7 @@ namespace PCAN_UDS_TEST
                     if (groupList.Count == numberOfGroups) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1220 });
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1261 });
                         i = 3;
                     }
                 }
@@ -192,11 +192,6 @@ namespace PCAN_UDS_TEST
             try
             {
                 byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1200 + groupAddress) });
-                Console.WriteLine();
-                Console.WriteLine();
-                foreach (byte b in dataArray) Console.Write($"{b:X2} ");
-                Console.WriteLine();
-                Console.WriteLine();
                 byte numberOfParameters = dataArray[3];
                 for (int i = 4; ;)
                 {
@@ -219,8 +214,6 @@ namespace PCAN_UDS_TEST
                     if (i == dataArray.Length - 1)
                     {
                         dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1200 + groupAddress) });
-                        foreach (byte b in dataArray) Console.Write($"{b:X2} ");
-                        Console.WriteLine();
                         i = 4;
                     }
                 }
