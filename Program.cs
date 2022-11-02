@@ -32,12 +32,12 @@ namespace BodAss
             return UDSApi.StatusIsOk_2013(status);
         }
 
-        static void PrintControllerInformation(ServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
+        static void PrintControllerInformation(BodasServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
 			if (serviceHandler.GetControllerInformation(controllerInformationIdentifiers, out List<string> dataList)) foreach (string str in dataList) Console.WriteLine(str);
 		}
 
-		static void PrintParameters(ServiceHandler serviceHandler, DATA_IDENTIFIER[] dataIdentifiers)
+		static void PrintParameters(BodasServiceHandler serviceHandler, DATA_IDENTIFIER[] dataIdentifiers)
 		{
             Dictionary<string, Dictionary<string, List<Data>>> menuStructure = new();
             if (serviceHandler.GetMenus(DATA_IDENTIFIER.GET_PARAMETERS_MENUS, out List<string> menuStrings))
@@ -83,7 +83,7 @@ namespace BodAss
             }
         }
 
-        static void PrintProcessData(ServiceHandler serviceHandler, DATA_IDENTIFIER[] processDataIdentifiers)
+        static void PrintProcessData(BodasServiceHandler serviceHandler, DATA_IDENTIFIER[] processDataIdentifiers)
         {
             Dictionary<string, List<Data>> menuContents = new();
             if (serviceHandler.GetMenus(DATA_IDENTIFIER.GET_PROCESSDATA_MENUS, out List<string> menuStrings))
@@ -115,33 +115,33 @@ namespace BodAss
             }
         }
 
-        static void PrintErrors(ServiceHandler serviceHandler, DATA_IDENTIFIER dataIdentifier)
+        static void PrintErrors(BodasServiceHandler serviceHandler, DATA_IDENTIFIER dataIdentifier)
         {
             if (serviceHandler.GetErrors(dataIdentifier, out List<Error> errorList))
                 foreach (Error error in errorList) Console.WriteLine(error);
         }
 
-        static void ChangeControllerLanguage(ServiceHandler serviceHandler, DATA_IDENTIFIER languageIdentifier)
+        static void ChangeControllerLanguage(BodasServiceHandler serviceHandler, DATA_IDENTIFIER languageIdentifier)
         {
             serviceHandler.ChangeControllerLanguage(languageIdentifier);
         }
 
-        static void SetParameter(ServiceHandler serviceHandler, byte menuNumber, byte subMenuNumber, byte parameterNumber, short value)
+        static void SetParameter(BodasServiceHandler serviceHandler, byte menuNumber, byte subMenuNumber, byte parameterNumber, short value)
         {
             serviceHandler.SetParameter(menuNumber, subMenuNumber, parameterNumber, value);
         }
 
-        static void SoftResetECU(ServiceHandler serviceHandler)
+        static void SoftResetECU(BodasServiceHandler serviceHandler)
         {
             serviceHandler.SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.PUDS_SVC_PARAM_ER_SR);
         }
 
-        static void DiagnosticSessionControl(ServiceHandler serviceHandler, UDSApi.uds_svc_param_dsc sessionType)
+        static void DiagnosticSessionControl(BodasServiceHandler serviceHandler, UDSApi.uds_svc_param_dsc sessionType)
         {
             serviceHandler.SendDiagnosticSessionControl(sessionType);
         }
 
-        static void SecurityAccessLevel(ServiceHandler serviceHandler, byte accesslevel)
+        static void SecurityAccessLevel(BodasServiceHandler serviceHandler, byte accesslevel)
         {
             serviceHandler.UdsSetSecurityAccessLevel(accesslevel);
         }
@@ -198,46 +198,66 @@ namespace BodAss
             Initialize(handle, baudrate, timeoutValue);
             UdsServiceHandler udsServiceHandler = new(handle, udsSourceAddress, udsDestinationAddress);
             udsServiceHandler.UdsSendDiagnosticSessionControl(UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_ECUEDS);
-            udsServiceHandler.UdsSetSecurityAccessLevel(0x0D);
+            udsServiceHandler.UdsSetSecurityAccessLevel(0x03);
 
-            udsServiceHandler.UdsGetProcessDataGroups(out Dictionary<byte, string> groupList);
-            Dictionary<byte, Dictionary<byte, Data>> parameterList = new();
-            foreach (KeyValuePair<byte, string> group in groupList)
-            {
-                udsServiceHandler.UdsGetProcessData(group.Key, out Dictionary<byte, Data> tempParameterList);
-                parameterList.Add(group.Key, tempParameterList);
-            }
+            //udsServiceHandler.UdsGetActiveErrors(out List<Error> errorList);
+            //foreach (var err in errorList) Console.WriteLine(err.description);
 
-            foreach (KeyValuePair<byte, Dictionary<byte, Data>> group in parameterList)
-            {
-                Console.WriteLine($"{group.Key + 1} - {groupList[group.Key]}");
-                foreach (KeyValuePair<byte, Data> parameter in group.Value)
-                    Console.WriteLine($"    {group.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
-            }
+            //udsServiceHandler.UdsGetListDescriptions(out List<ListEntry> listDescriptions);
+            //foreach (var listEntry in listDescriptions)
+            //    foreach (var listtext in listEntry.listEntries)
+            //        Console.WriteLine($"{listEntry.address} - {listtext.Key} - {listtext.Value}");
 
-            //udsServiceHandler.UdsGetMenus(out Dictionary<byte, string> menuNames);
-            //Dictionary<byte, string> subMenuNames = new();
-            //Dictionary <byte, Dictionary<byte, Dictionary<byte, Data>>> parameters = new();
-            //foreach (KeyValuePair<byte, string> menu in menuNames)
+            //udsServiceHandler.UdsGetUnitcodes(out Dictionary<byte, string> unitcodesList);
+            //foreach (var unicode in unitcodesList) Console.WriteLine($"{unicode.Key} - {unicode.Value}");
+
+            //udsServiceHandler.UdsGetProcessDataGroups(out Dictionary<byte, string> groupList);
+            //Dictionary<byte, Dictionary<byte, Data>> parameterList = new();
+            //foreach (KeyValuePair<byte, string> group in groupList)
             //{
-            //    udsServiceHandler.UdsGetSubMenus(menu.Key, out subMenuNames);
-            //    parameters.Add(menu.Key, new Dictionary<byte, Dictionary<byte, Data>>());
-            //    foreach (KeyValuePair<byte, string> subMenu in subMenuNames)
-            //    {
-            //        udsServiceHandler.UdsGetParameters(menu.Key, subMenu.Key, out Dictionary<byte, Data> tempParameters);
-            //        parameters[menu.Key].Add(subMenu.Key, tempParameters);
-            //    }
+            //    udsServiceHandler.UdsGetProcessData(group.Key, out Dictionary<byte, Data> tempParameterList);
+            //    parameterList.Add(group.Key, tempParameterList);
             //}
+
+            //foreach (KeyValuePair<byte, Dictionary<byte, Data>> group in parameterList)
+            //{
+            //    Console.WriteLine($"{group.Key + 1} - {groupList[group.Key]}");
+            //    foreach (KeyValuePair<byte, Data> parameter in group.Value)
+            //        Console.WriteLine($"    {group.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
+            //}
+            int i = 0;
+            udsServiceHandler.UdsGetParameterMenus(out Dictionary<byte, string> menuNames);
+            Dictionary<byte, string> subMenuNames = new();
+            Dictionary<byte, Dictionary<byte, Dictionary<byte, Data>>> parameters = new();
+            foreach (KeyValuePair<byte, string> menu in menuNames)
+            {
+                if (i > 5) break;
+                udsServiceHandler.UdsGetParameterSubmenus(menu.Key, out subMenuNames);
+                parameters.Add(menu.Key, new Dictionary<byte, Dictionary<byte, Data>>());
+                foreach (KeyValuePair<byte, string> subMenu in subMenuNames)
+                {
+                    udsServiceHandler.UdsGetParameters(menu.Key, subMenu.Key, out Dictionary<byte, Data> tempParameters);
+                    parameters[menu.Key].Add(subMenu.Key, tempParameters);
+                }
+                i++;
+            }
+            foreach (KeyValuePair<byte, Dictionary<byte, Dictionary<byte, Data>>> menu in parameters)
+            {
+                Console.WriteLine($"{menu.Key + 1} - {menuNames[menu.Key]}");
+                foreach (KeyValuePair<byte, Dictionary<byte, Data>> subMenu in menu.Value)
+                {
+                    Console.WriteLine($"   {menu.Key + 1}.{subMenu.Key + 1} - {subMenuNames[subMenu.Key]}");
+                    foreach (KeyValuePair<byte, Data> parameter in subMenu.Value)
+                        Console.WriteLine($"        {menu.Key + 1}.{subMenu.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
+                }
+            }
+            //var watch = System.Diagnostics.Stopwatch.StartNew();
             //foreach (KeyValuePair<byte, Dictionary<byte, Dictionary<byte, Data>>> menu in parameters)
-            //{
-            //    Console.WriteLine($"{menu.Key + 1} - {menuNames[menu.Key]}");
             //    foreach (KeyValuePair<byte, Dictionary<byte, Data>> subMenu in menu.Value)
-            //    {
-            //        Console.WriteLine($"   {menu.Key + 1}.{subMenu.Key + 1} - {subMenuNames[subMenu.Key]}");
             //        foreach (KeyValuePair<byte, Data> parameter in subMenu.Value)
-            //            Console.WriteLine($"        {menu.Key + 1}.{subMenu.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
-            //    }
-            //}
+            //            udsServiceHandler.UdsGetDataByIdentifiers(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(10000 + 100 * menu.Key + 10 * subMenu.Key + parameter.Key) }, out byte[] byteArray);
+            //watch.Stop();
+            //Console.WriteLine($"Elapsed: {watch.ElapsedMilliseconds / 1000}s");
 
             Uninitialize(handle);
         }
