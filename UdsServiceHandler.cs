@@ -7,7 +7,11 @@ using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIE
 namespace PCAN_UDS_TEST
 {
     #region Structs
-
+    public struct ListEntry
+    {
+        public byte address;
+        public Dictionary<byte, string> listEntries;
+    }
     #endregion
 
     public class UdsServiceHandler
@@ -99,13 +103,9 @@ namespace PCAN_UDS_TEST
                 byte[] responseSeed = new byte[response.Length - 2];
                 Array.Copy(response, 2, responseSeed, 0, response.Length - 2);
                 Array.Resize(ref responseSeed, 16);
-                //foreach (byte b in responseSeed) Console.Write($"{b:X2} ");
-                //Console.WriteLine();
                 SecurityAccess securityAccess = new();
-                byte[] key = securityAccess.GetKey(responseSeed);
+                byte[] key = securityAccess.GetKey(responseSeed, accessLevel);
                 response = SendSecurityAccessWithData((byte)(accessLevel + 1), key);
-                //foreach (byte b in response) Console.Write($"{b:X2} ");
-                //Console.WriteLine();
                 return true;
             }
             catch (Exception)
@@ -129,7 +129,7 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool UdsGetMenus(out Dictionary<byte, string> menuList)
+        public bool UdsGetParameterMenus(out Dictionary<byte, string> menuList)
         {
             menuList = new();
             try
@@ -157,20 +157,22 @@ namespace PCAN_UDS_TEST
             }
         }
 
-        public bool UdsGetParameterSubMenus(byte menuAddress, out Dictionary<byte, string> subMenuList)
+        public bool UdsGetParameterSubmenus(byte menuAddress, out Dictionary<byte, string> submenuList)
         {
-            subMenuList = new();
+            submenuList = new();
             try
             {
+                int i = 3;
                 byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1221 + menuAddress) });
-                byte numberOfSubMenus = dataArray[3];
-                for (int i = 4;; i++)
+                byte numberOfSubmenus = dataArray[i++];
+                if (dataArray.Length < 5) return true;
+                for (;; i++)
                 {
                     byte address = dataArray[i++];
-                    string subMenuName = string.Empty;
-                    while (dataArray[i] != 0x00) subMenuName += (char)dataArray[i++];
-                    subMenuList.Add(address, subMenuName);
-                    if (subMenuList.Count == numberOfSubMenus) break;
+                    string submenuName = string.Empty;
+                    while (dataArray[i] != 0x00) submenuName += (char)dataArray[i++];
+                    submenuList.Add(address, submenuName);
+                    if (submenuList.Count == numberOfSubmenus) break;
                     if (i == dataArray.Length - 1)
                     {
                         dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1221 + menuAddress) });
@@ -218,30 +220,33 @@ namespace PCAN_UDS_TEST
             parameterList = new();
             try
             {
+                int i = 3;
                 byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1200 + groupAddress) });
-                byte numberOfParameters = dataArray[3];
-                for (int i = 4; ;)
+                byte numberOfParameters = dataArray[i++];
+                if (dataArray.Length < 5) return true;
+                for (; ; i++)
                 {
                     byte address = dataArray[i++];
-                    if (dataArray[i] != 0x00)
+                    if (dataArray[i] == 0x00)
                     {
-                        Data data = new();
-                        while (dataArray[i] != 0x00) data.name += (char)dataArray[i++];
-                        i++;
-                        data.multiplier = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.divisor = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.valueType = dataArray[i++];
-                        data.digits = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.unitCode = dataArray[i++];
-                        data.accessLevel = dataArray[i++];
-                        parameterList.Add(address, data);
-                        if (parameterList.Count == numberOfParameters) break;
+                        parameterList.Add(address, new Data());
+                        continue;
                     }
-                    else i++;
+                    Data data = new();
+                    while (dataArray[i] != 0x00) data.name += (char)dataArray[i++];
+                    i++;
+                    data.multiplier = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.divisor = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.valueType = dataArray[i++];
+                    data.digits = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.unitCode = dataArray[i++];
+                    data.accessLevel = dataArray[i++];
+                    parameterList.Add(address, data);
+                    if (parameterList.Count == numberOfParameters) break;
                     if (i == dataArray.Length - 1)
                     {
                         dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1200 + groupAddress) });
-                        i = 4;
+                        i = 5;
                     }
                 }
                 return true;
@@ -257,34 +262,162 @@ namespace PCAN_UDS_TEST
             parameterList = new();
             try
             {
+                int i = 3;
                 byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1000 + (menuAddress << 3) + subMenuAddress) });
-                byte numberOfParameters = dataArray[3];
+                byte numberOfParameters = dataArray[i++];
+                if (dataArray.Length < 5) return true;
+                for (; ; i++)
+                {
+                    byte address = dataArray[i++];
+                    if (dataArray[i] == 0x00)
+                    {
+                        parameterList.Add(address, new Data());
+                        continue;
+                    }
+                    Data data = new();
+                    while (dataArray[i] != 0x00) data.name += (char)dataArray[i++];
+                    i++;
+                    data.value = (short)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.multiplier = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.divisor = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.digits = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.valueType = dataArray[i++];
+                    data.minValue = (short)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.maxValue = (short)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.step = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.defaultValue = (short)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.unitCode = dataArray[i++];
+                    data.eepromPage = dataArray[i++];
+                    data.eepromAddress = dataArray[i++];
+                    parameterList.Add(address, data);
+                    if (parameterList.Count == numberOfParameters) break;
+                    if (i == dataArray.Length - 1)
+                    {
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1000 + (menuAddress << 3) + subMenuAddress) });
+                        i = 3;
+                    }
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public bool UdsGetUnitcodes(out Dictionary<byte, string> unitcodesList)
+        {
+            unitcodesList = new();
+            try
+            {
+                int i = 3;
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1262 });
+                byte numberOfUnitcodes = dataArray[i++];
+                for (; ; i++)
+                {
+                    byte address = dataArray[i++];
+                    string unitcode = string.Empty;
+                    while (dataArray[i] != 0x00) unitcode += (char)dataArray[i++];
+                    unitcodesList.Add(address, unitcode);
+                    if (unitcodesList.Count == numberOfUnitcodes) break;
+                    if (i == dataArray.Length - 1)
+                    {
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1262 });
+                        i = 3;
+                    }
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public bool UdsGetListDescriptions(out List<ListEntry> listDescriptions)
+        {
+            listDescriptions = new();
+            try
+            {
+                int i = 3;
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1263 });
+                ushort numberOfListDescriptions = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
+                byte maxNumberOfListEntries = dataArray[i++];
+                for (; ; i++)
+                {
+                    ushort address = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
+                    string listEntryString = string.Empty;
+                    while (dataArray[i] != 0x00) listEntryString += (char)dataArray[i++];
+                    if (listDescriptions.Any(x => x.address == address / maxNumberOfListEntries)) listDescriptions.First(x => x.address == address / maxNumberOfListEntries).listEntries.Add((byte)(address % maxNumberOfListEntries), listEntryString);
+                    else listDescriptions.Add(new ListEntry() { address = (byte)(address / maxNumberOfListEntries), listEntries = new Dictionary<byte, string>(new[] { new KeyValuePair<byte, string>((byte)(address % maxNumberOfListEntries), listEntryString) }) });
+                    if (listDescriptions.Count == numberOfListDescriptions / maxNumberOfListEntries) break;
+                    if (i == dataArray.Length - 1)
+                    {
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1263 });
+                        i = 5;
+                    }
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public bool UdsGetSavedErrors(out List<Error> errorList)
+        {
+            errorList = new();
+            try
+            {
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                byte numberOfErrors = dataArray[3];
                 for (int i = 4; ; i++)
                 {
                     byte address = dataArray[i++];
-                    if (dataArray[i] != 0x00)
-                    {
-                        Data data = new();
-                        while (dataArray[i] != 0x00) data.name += (char)dataArray[i++];
-                        i++;
-                        data.value = (short)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.multiplier = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.divisor = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.digits = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.valueType = dataArray[i++];
-                        data.minValue = (short)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.maxValue = (short)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.step = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.defaultValue = (short)((dataArray[i++] << 8) | dataArray[i++]);
-                        data.unitCode = dataArray[i++];
-                        data.eepromPage = dataArray[i++];
-                        data.eepromAddress = dataArray[i++];
-                        parameterList.Add(address, data);
-                        if (parameterList.Count == numberOfParameters) break;
-                    }
+                    ushort code = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
+                    byte parameter = dataArray[i++];
+                    byte occurence = dataArray[i++];
+                    uint timestamp = (uint)((dataArray[i++] << 24) + (dataArray[i++] << 16) + (dataArray[i++] << 8) + dataArray[i++]);
+                    string description = string.Empty;
+                    while (dataArray[i] != 0x00) description += (char)dataArray[i++];
+                    errorList.Add(new Error() { errorCode = code, occurence = occurence, parameter = parameter, description = description, timestamp = timestamp });
+                    if (errorList.Count == numberOfErrors) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x1000 + menuAddress << 3 + subMenuAddress) });
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                        i = 3;
+                    }
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public bool UdsGetActiveErrors(out List<Error> errorList)
+        {
+            errorList = new();
+            try
+            {
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                byte numberOfErrors = dataArray[3];
+                for (int i = 4; ; i++)
+                {
+                    byte address = dataArray[i++];
+                    ushort code = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
+                    byte parameter = dataArray[i++];
+                    byte occurence = dataArray[i++];
+                    uint timestamp = (uint)((dataArray[i++] << 24) + (dataArray[i++] << 16) + (dataArray[i++] << 8) + dataArray[i++]);
+                    string description = string.Empty;
+                    while (dataArray[i] != 0x00) description += (char)dataArray[i++];
+                    errorList.Add(new Error() { errorCode = code, occurence = occurence, parameter = parameter, description = description, timestamp = timestamp });
+                    if (errorList.Count == numberOfErrors) break;
+                    if (i == dataArray.Length - 1)
+                    {
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
                         i = 3;
                     }
                 }
@@ -314,10 +447,6 @@ namespace PCAN_UDS_TEST
                 return false;
             }
         }
-        #endregion
-
-        #region BodasServiceWrappers
-        
         #endregion
 
         #region SendServices
