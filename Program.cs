@@ -215,7 +215,7 @@ namespace BodAss
             //Dictionary<byte, Dictionary<byte, Data>> parameterList = new();
             //foreach (KeyValuePair<byte, string> group in groupList)
             //{
-            //    udsServiceHandler.UdsGetProcessData(group.Key, out Dictionary<byte, Data> tempParameterList);
+            //    udsServiceHandler.UdsGetProcessData(group.Key, 0x08, out Dictionary<byte, Data> tempParameterList);
             //    parameterList.Add(group.Key, tempParameterList);
             //}
 
@@ -228,10 +228,23 @@ namespace BodAss
 
 
 
+
+
+
+
+
+
+
+
+
+
+
             int i = 0;
             udsServiceHandler.UdsGetParameterMenus(out Dictionary<byte, string> menuNames);
             Dictionary<byte, Dictionary<byte, string>> subMenuNames = new();
             Dictionary<byte, Dictionary<byte, Dictionary<byte, Data>>> parameters = new();
+
+
             foreach (KeyValuePair<byte, string> menu in menuNames)
             {
                 if (i > 5) break;
@@ -240,7 +253,7 @@ namespace BodAss
                 parameters.Add(menu.Key, new Dictionary<byte, Dictionary<byte, Data>>());
                 foreach (KeyValuePair<byte, string> subMenu in tempSubMenuNames)
                 {
-                    udsServiceHandler.UdsGetParameters(menu.Key, subMenu.Key, out Dictionary<byte, Data> tempParameters);
+                    udsServiceHandler.UdsGetParameters(menu.Key, subMenu.Key, 0x08, out Dictionary<byte, Data> tempParameters);
                     parameters[menu.Key].Add(subMenu.Key, tempParameters);
                 }
                 i++;
@@ -255,6 +268,46 @@ namespace BodAss
                         Console.WriteLine($"        {menu.Key + 1}.{subMenu.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
                 }
             }
+
+            udsServiceHandler.UdsSendDiagnosticSessionControl(UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_ECUEDS);
+            udsServiceHandler.UdsSetSecurityAccessLevel(0x0D);
+            i = 0;
+            foreach (KeyValuePair<byte, Dictionary<byte, Dictionary<byte, Data>>> menu in parameters)
+            {
+                if (i > 5) break;
+                foreach (KeyValuePair<byte, Dictionary<byte, Data>> subMenu in menu.Value)
+                {
+                    foreach (KeyValuePair<byte, Data> parameter in subMenu.Value.Where(x => x.Value.isAccessible == false))
+                    {
+                        udsServiceHandler.UdsGetParameters(menu.Key, subMenu.Key, parameter.Key, out Dictionary<byte, Data> tempParameters);
+                        parameters[menu.Key][subMenu.Key][parameter.Key] = tempParameters[parameter.Key];
+                    }
+                }
+                i++;
+            }
+            foreach (KeyValuePair<byte, Dictionary<byte, Dictionary<byte, Data>>> menu in parameters)
+            {
+                Console.WriteLine($"{menu.Key + 1} - {menuNames[menu.Key]}");
+                foreach (KeyValuePair<byte, Dictionary<byte, Data>> subMenu in menu.Value)
+                {
+                    Console.WriteLine($"   {menu.Key + 1}.{subMenu.Key + 1} - {subMenuNames[menu.Key][subMenu.Key]}");
+                    foreach (KeyValuePair<byte, Data> parameter in subMenu.Value)
+                        Console.WriteLine($"        {menu.Key + 1}.{subMenu.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
+                }
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
