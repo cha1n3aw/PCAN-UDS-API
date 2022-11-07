@@ -114,7 +114,7 @@ namespace PCAN_UDS_TEST
     //}
     #endregion
 
-    public class ServiceHandler
+    public class BodasServiceHandler
     {
         #region GlobalParameters
         private readonly CantpHandle handle;
@@ -124,7 +124,7 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region Constructor
-        public ServiceHandler(CantpHandle handle, byte sourceAddress, byte destinationAddress)
+        public BodasServiceHandler(CantpHandle handle, byte sourceAddress, byte destinationAddress)
         {
             this.handle = handle;
             NAI = new()
@@ -174,7 +174,7 @@ namespace PCAN_UDS_TEST
 				foreach (byte b in responseSeed) Console.Write($"{b:X2} ");
 				Console.WriteLine();
 				SecurityAccess securityAccess = new();
-                byte[] key = securityAccess.GetKey(responseSeed);
+                byte[] key = securityAccess.GetKey(responseSeed, accessLevel);
                 response = SendSecurityAccessWithData((byte)(accessLevel + 1), key);
                 foreach (byte b in response) Console.Write($"{b:X2} ");
                 Console.WriteLine();
@@ -341,7 +341,7 @@ namespace PCAN_UDS_TEST
                 byte[] responseSeed = SendSecurityAccess(accessLevel);
                 Array.Resize(ref responseSeed, 16);
                 SecurityAccess securityAccess = new();
-                byte[] key = securityAccess.GetKey(responseSeed);
+                byte[] key = securityAccess.GetKey(responseSeed, accessLevel);
                 byte [] response = SendSecurityAccessWithData(UDSApi.PUDS_SVC_PARAM_SA_SK_MIN, key); // rework number of bytes in byte[] key after debug
                 foreach (byte b in response) Console.Write($"{b:X2} ");
 				return true;
