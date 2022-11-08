@@ -1,6 +1,6 @@
 ﻿using System.IO.Ports;
 
-namespace PCAN_UDS_TEST
+namespace PCAN_UDS_TEST.DST_CAN_COM
 {
     internal class DstCanComComHandler
     {
