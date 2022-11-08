@@ -1,5 +1,19 @@
-﻿namespace CAN_COM
+﻿namespace PCAN_UDS_TEST
 {
+    struct CanComCanMessage
+    {
+        public byte Size;
+        public byte Type;
+        public uint Address;
+        public List<byte> Data;
+    }
+
+    struct CanComUdsMessage
+    {
+        public byte Size;
+        public byte SID;
+        public List<byte> Data;
+    }
     internal class DstCanComUdsHandler
     {
         private readonly uint sourceAddress; //32-bit address that is used to send uds packets
@@ -7,9 +21,9 @@
         private readonly DstCanComCanHandler canHandler;
         private readonly TimeSpan MaxWait = TimeSpan.FromMilliseconds(10000);
         private AutoResetEvent _consequentFramesAckFlag;
-        private UdsMessage udsMessage;
+        private CanComUdsMessage udsMessage;
 
-        public delegate void UdsReceiveHandler(UdsMessage message);
+        public delegate void UdsReceiveHandler(CanComUdsMessage message);
         private UdsReceiveHandler? _udsMessageReceived;
         public event UdsReceiveHandler UdsMessageReceived
         {
@@ -25,7 +39,7 @@
             }
         }
 
-        private void ParseConsequentFramesAck(CanMessage canMessage)
+        private void ParseConsequentFramesAck(CanComCanMessage canMessage)
         {
             if (canMessage.Type != 0x00 && canMessage.Address == destinationAddress && canMessage.Data[0] == 0x30)
             {
@@ -34,7 +48,7 @@
             }
         }
 
-        private void ParseUdsMessage(CanMessage canMessage)
+        private void ParseUdsMessage(CanComCanMessage canMessage)
         {
             if (canMessage.Type != 0x00 && canMessage.Address == destinationAddress)
             {
@@ -51,7 +65,7 @@
                         udsMessage.Size = canMessage.Data[i++];
                         udsMessage.SID = canMessage.Data[i++];
                         for (; i < canMessage.Size; i++) udsMessage.Data.Add(canMessage.Data[i]);
-                        canHandler.SendCanMessage(new CanMessage() { Address = sourceAddress, Data = new List<byte>() { 0x30, 0x0A, 0x0A } });
+                        canHandler.SendCanMessage(new CanComCanMessage() { Address = sourceAddress, Data = new List<byte>() { 0x30, 0x0A, 0x0A } });
                     }
                 }
                 else
@@ -88,7 +102,7 @@
             canHandler.Uninitialize();
         }
 
-        public bool SendUdsMessage(UdsMessage udsMessage)
+        public bool SendUdsMessage(CanComUdsMessage udsMessage)
         {
             try
             {
@@ -100,7 +114,7 @@
                     counter += 0x11;
                     buffer.AddRange(tempByteList.Take(6));
                     tempByteList.RemoveRange(0, 6);
-                    if (!canHandler.SendCanMessage(new CanMessage() { Data = buffer, Address = sourceAddress })) return false;
+                    if (!canHandler.SendCanMessage(new CanComCanMessage() { Data = buffer, Address = sourceAddress })) return false;
                     canHandler.CanMessageReceived += ParseConsequentFramesAck;
                     bool? response = _consequentFramesAckFlag?.WaitOne(MaxWait);
                     if (response == null || response == false)
@@ -122,14 +136,14 @@
                             buffer.AddRange(tempByteList);
                             tempByteList.Clear();
                         }
-                        if (!canHandler.SendCanMessage(new CanMessage() { Data = buffer, Address = sourceAddress })) return false;
+                        if (!canHandler.SendCanMessage(new CanComCanMessage() { Data = buffer, Address = sourceAddress })) return false;
                     }
                 }
                 else
                 {
                     List<byte> buffer = new() { udsMessage.Size };
                     buffer.AddRange(udsMessage.Data);
-                    if (!canHandler.SendCanMessage(new CanMessage() { Data = buffer, Address = sourceAddress })) return false;
+                    if (!canHandler.SendCanMessage(new CanComCanMessage() { Data = buffer, Address = sourceAddress })) return false;
                 }
                 return true;
             }

@@ -1,9 +1,9 @@
-﻿namespace CAN_COM
+﻿namespace PCAN_UDS_TEST
 {
     internal class DstCanComCanHandler
     {
         private DstCanComComHandler comHandler;
-        public delegate void CanReceiveHandler(CanMessage message);
+        public delegate void CanReceiveHandler(CanComCanMessage message);
         private CanReceiveHandler? _canMessageReceived;
         public event CanReceiveHandler CanMessageReceived
         {
@@ -36,7 +36,7 @@
             comHandler.Uninitialize();
         }
 
-        public bool SendCanMessage(CanMessage canMessage)
+        public bool SendCanMessage(CanComCanMessage canMessage)
         {
             try
             {
@@ -51,7 +51,7 @@
         private void ParseCanMessage(List<byte> comMessage)
         {
             byte i = 1;
-            CanMessage canMessage = new()
+            CanComCanMessage canMessage = new()
             {
                 Size = (byte)(comMessage[i] & 0x0F),
                 Type = (byte)((comMessage[i] & 0xF0) >> 4),
