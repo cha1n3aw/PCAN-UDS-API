@@ -1,10 +1,11 @@
-﻿using PCAN_UDS_TEST;
+﻿using PCAN_UDS_TEST.DST_CAN_COM;
+using PCAN_UDS_TEST.PCAN;
 using Peak.Can.IsoTp;
 using Peak.Can.Uds;
 using System.Collections.Generic;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
-namespace BodAss
+namespace PCAN_UDS_TEST
 {
     internal class Program
 	{
@@ -32,12 +33,12 @@ namespace BodAss
             return UDSApi.StatusIsOk_2013(status);
         }
 
-        static void PrintControllerInformation(BodasServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
+        static void PrintControllerInformation(PCANBodasServiceHandler serviceHandler, DATA_IDENTIFIER[] controllerInformationIdentifiers)
 		{
 			if (serviceHandler.GetControllerInformation(controllerInformationIdentifiers, out List<string> dataList)) foreach (string str in dataList) Console.WriteLine(str);
 		}
 
-		static void PrintParameters(BodasServiceHandler serviceHandler, DATA_IDENTIFIER[] dataIdentifiers)
+		static void PrintParameters(PCANBodasServiceHandler serviceHandler, DATA_IDENTIFIER[] dataIdentifiers)
 		{
             Dictionary<string, Dictionary<string, List<Data>>> menuStructure = new();
             if (serviceHandler.GetMenus(DATA_IDENTIFIER.GET_PARAMETERS_MENUS, out List<string> menuStrings))
@@ -83,7 +84,7 @@ namespace BodAss
             }
         }
 
-        static void PrintProcessData(BodasServiceHandler serviceHandler, DATA_IDENTIFIER[] processDataIdentifiers)
+        static void PrintProcessData(PCANBodasServiceHandler serviceHandler, DATA_IDENTIFIER[] processDataIdentifiers)
         {
             Dictionary<string, List<Data>> menuContents = new();
             if (serviceHandler.GetMenus(DATA_IDENTIFIER.GET_PROCESSDATA_MENUS, out List<string> menuStrings))
@@ -115,33 +116,33 @@ namespace BodAss
             }
         }
 
-        static void PrintErrors(BodasServiceHandler serviceHandler, DATA_IDENTIFIER dataIdentifier)
+        static void PrintErrors(PCANBodasServiceHandler serviceHandler, DATA_IDENTIFIER dataIdentifier)
         {
             if (serviceHandler.GetErrors(dataIdentifier, out List<Error> errorList))
                 foreach (Error error in errorList) Console.WriteLine(error);
         }
 
-        static void ChangeControllerLanguage(BodasServiceHandler serviceHandler, DATA_IDENTIFIER languageIdentifier)
+        static void ChangeControllerLanguage(PCANBodasServiceHandler serviceHandler, DATA_IDENTIFIER languageIdentifier)
         {
             serviceHandler.ChangeControllerLanguage(languageIdentifier);
         }
 
-        static void SetParameter(BodasServiceHandler serviceHandler, byte menuNumber, byte subMenuNumber, byte parameterNumber, short value)
+        static void SetParameter(PCANBodasServiceHandler serviceHandler, byte menuNumber, byte subMenuNumber, byte parameterNumber, short value)
         {
             serviceHandler.SetParameter(menuNumber, subMenuNumber, parameterNumber, value);
         }
 
-        static void SoftResetECU(BodasServiceHandler serviceHandler)
+        static void SoftResetECU(PCANBodasServiceHandler serviceHandler)
         {
             serviceHandler.SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.PUDS_SVC_PARAM_ER_SR);
         }
 
-        static void DiagnosticSessionControl(BodasServiceHandler serviceHandler, UDSApi.uds_svc_param_dsc sessionType)
+        static void DiagnosticSessionControl(PCANBodasServiceHandler serviceHandler, UDSApi.uds_svc_param_dsc sessionType)
         {
             serviceHandler.SendDiagnosticSessionControl(sessionType);
         }
 
-        static void SecurityAccessLevel(BodasServiceHandler serviceHandler, byte accesslevel)
+        static void SecurityAccessLevel(PCANBodasServiceHandler serviceHandler, byte accesslevel)
         {
             serviceHandler.UdsSetSecurityAccessLevel(accesslevel);
         }
@@ -208,7 +209,8 @@ namespace BodAss
             DstCanComUdsHandler udsHandler = new(portName, sourceAddress, destinationAddress);
             udsHandler.UdsMessageReceived += ReceiveUds;
             udsHandler.Initialize();
-            udsHandler.SendUdsMessage(new CanComUdsMessage() { Size = 5, SID = 22, Data = new List<byte>() { 0x01, 0x01, 0x01, 0x01, 0x01 } });
+            Console.WriteLine(udsHandler.SendUdsMessage(new CanComUdsMessage() { Size = 20, SID = 0x22, Data = new List<byte>() { 0x01, 0x01, 0x01, 0x01, 0x01, 0x03, 0x01, 0x01, 0x01, 0x07, 0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x01, 0x01, 0x02 } })); //size = data size + sid size
+            udsHandler.UdsMessageReceived -= ReceiveUds;
             udsHandler.Uninitialize();
 
 
