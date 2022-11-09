@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using static PCAN_UDS_TEST.DST_CAN.DstUdsServiceHandler;
+using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
 namespace PCAN_UDS_TEST.DST_CAN
 {
@@ -35,6 +36,21 @@ namespace PCAN_UDS_TEST.DST_CAN
             else return false;
         }
 
+        public bool Authenticate(byte accessLevel)
+        {
+            try
+            {
+                SendSecurityAccess(accessLevel, out List<byte> seed);
+                SecurityAccess securityAccess = new();
+                byte[] key = securityAccess.GetKey(seed.ToArray(), accessLevel);
+                return SendSecurityAccessWithData((byte)(accessLevel + 1), key.ToList());
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         private void WaitForServce(DstUdsMessage udsMessage)
         {
             if (udsMessage.Address == udsHandler.destinationAddress)
@@ -62,12 +78,12 @@ namespace PCAN_UDS_TEST.DST_CAN
             else return false;
         }
 
-        private bool SendSecurityAccessWithData(byte securityAccessLevel, byte[] securityAccessData)
+        private bool SendSecurityAccessWithData(byte securityAccessLevel, List<byte> securityAccessData)
         {
             Console.Write("Security access w/data pending: ");
-            List<byte> tempList = securityAccessData.ToList();
+            List<byte> tempList = securityAccessData;
             tempList.Insert(0, securityAccessLevel);
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(2 + securityAccessData.Length), SID = 0x27, Data = tempList });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count() + 1), SID = 0x27, Data = tempList });
             udsHandler.UdsMessageReceived += WaitForServce;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
@@ -95,6 +111,23 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         }
 
-
+        private bool SendReadDataByIdentifier(DATA_IDENTIFIER[] dataIdentifiers, out byte[] outData)
+        {
+            Console.Write("Read data service pending: ");
+            outData = Array.Empty<byte>();
+            List<byte> tempList = new();
+            foreach (DATA_IDENTIFIER d in dataIdentifiers) tempList.AddRange(BitConverter.GetBytes((ushort)d));
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x22, Data = tempList });
+            udsHandler.UdsMessageReceived += WaitForServce;
+            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+            if (response == null || response == false)
+            {
+                udsHandler.UdsMessageReceived -= WaitForServce;
+                return false;
+            }
+            outData = dstUdsServiceResponseMessage.Data.ToArray();
+            if (dstUdsServiceResponseMessage.SID == 0x62) return true;
+            else return false;
+        }
     }
 }
