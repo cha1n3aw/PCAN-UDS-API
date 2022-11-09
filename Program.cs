@@ -148,7 +148,7 @@ namespace PCAN_UDS_TEST
             serviceHandler.SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.PUDS_SVC_PARAM_ER_SR);
         }
 
-        static void DiagnosticSessionControl(PCANBodasServiceHandler serviceHandler, UDSApi.uds_svc_param_dsc sessionType)
+        static void DiagnosticSessionControl(PCANBodasServiceHandler serviceHandler, UDSApi.UDS_SERVICE_DSC sessionType)
         {
             serviceHandler.SendDiagnosticSessionControl(sessionType);
         }
@@ -225,8 +225,6 @@ namespace PCAN_UDS_TEST
 
 
             DstInitialize();
-            
-            //dstUdsHandler.SendUdsMessage(new DstUdsMessage() { Size = 20, SID = 0x22, Address = dstUdsDestinationAddress, Data = new List<byte>() { 0x01, 0x01, 0x01, 0x01, 0x01, 0x03, 0x01, 0x01, 0x01, 0x07, 0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x01, 0x01, 0x02 } }); //size = data size + sid size
             DstUdsServiceHandler udsServiceHandler = new(dstUdsHandler);
 
             //Console.WriteLine(udsServiceHandler.SendDiagnosticSessionControl(UDS_SERVICE_DSC.ECU_EXTENDED_DIAGNOSTIC_SESSION));
@@ -238,10 +236,6 @@ namespace PCAN_UDS_TEST
             //UdsServiceHandler udsServiceHandler = new(handle, udsSourceAddress, udsDestinationAddress);
             //udsServiceHandler.UdsSendDiagnosticSessionControl(UDSApi.uds_svc_param_dsc.PUDS_SVC_PARAM_DSC_ECUEDS);
             //udsServiceHandler.UdsSetSecurityAccessLevel(0x03);
-
-
-
-
             //udsServiceHandler.UdsGetActiveErrors(out List<Error> errorList);
             //foreach (var err in errorList) Console.WriteLine(err.description);
 
@@ -267,19 +261,6 @@ namespace PCAN_UDS_TEST
             //    foreach (KeyValuePair<byte, Data> parameter in group.Value)
             //        Console.WriteLine($"    {group.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
             //}
-
-
-
-
-
-
-
-
-
-
-
-
-
 
             //int i = 0;
             //    udsServiceHandler.UdsGetParameterMenus(out Dictionary<byte, string> menuNames);
@@ -337,22 +318,6 @@ namespace PCAN_UDS_TEST
             //                Console.WriteLine($"        {menu.Key + 1}.{subMenu.Key + 1}.{parameter.Key + 1} - {parameter.Value.name}");
             //        }
             //    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
             //var watch = System.Diagnostics.Stopwatch.StartNew();
             //foreach (KeyValuePair<byte, Dictionary<byte, Dictionary<byte, Data>>> menu in parameters)
