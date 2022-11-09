@@ -58,7 +58,43 @@ namespace PCAN_UDS_TEST.DST_CAN
                 return false;
             }
             securitySeed = dstUdsServiceResponseMessage.Data;
-            return true;
+            if (dstUdsServiceResponseMessage.SID == 0x67) return true;
+            else return false;
         }
+
+        private bool SendSecurityAccessWithData(byte securityAccessLevel, byte[] securityAccessData)
+        {
+            Console.Write("Security access w/data pending: ");
+            List<byte> tempList = securityAccessData.ToList();
+            tempList.Insert(0, securityAccessLevel);
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(2 + securityAccessData.Length), SID = 0x27, Data = tempList });
+            udsHandler.UdsMessageReceived += WaitForServce;
+            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+            if (response == null || response == false)
+            {
+                udsHandler.UdsMessageReceived -= WaitForServce;
+                return false;
+            }
+            if (dstUdsServiceResponseMessage.SID == 0x67) return true;
+            else return false;
+        }
+
+        private bool SendEcuReset(byte resetParameter)
+        {
+            Console.Write("ECU Reset pending: ");
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x11, Data = new() { resetParameter } });
+            udsHandler.UdsMessageReceived += WaitForServce;
+            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+            if (response == null || response == false)
+            {
+                udsHandler.UdsMessageReceived -= WaitForServce;
+                return false;
+            }
+            if (dstUdsServiceResponseMessage.SID == 0x51) return true;
+            else return false;
+
+        }
+
+
     }
 }
