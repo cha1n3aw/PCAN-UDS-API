@@ -147,6 +147,24 @@ namespace PCAN_UDS_TEST.DST_CAN
             else return false;
         }
 
+        private bool SendReadMemoryByAddress(byte[] memoryAddressBuffer, byte[] memorySizeBuffer)
+        {
+            Console.Write("Write data service pending: ");
+            List<byte> tempList = new();
+            tempList.AddRange(memoryAddressBuffer);
+            tempList.AddRange(memorySizeBuffer);
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList });
+            udsHandler.UdsMessageReceived += WaitForServce;
+            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+            if (response == null || response == false)
+            {
+                udsHandler.UdsMessageReceived -= WaitForServce;
+                return false;
+            }
+            if (dstUdsServiceResponseMessage.SID == 0x6E) return true;
+            else return false;
+        }
+
         private bool SendReadDTCInformation(byte readInformationType, byte dtcStatusMask)
         {
             Console.Write("Read DTC service pending: ");
