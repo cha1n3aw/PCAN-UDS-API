@@ -12,10 +12,7 @@ namespace PCAN_UDS_TEST.DST_CAN
     {
         private AutoResetEvent _responseFlag;
         private DstUdsHandler udsHandler;
-        private readonly TimeSpan MaxWait = TimeSpan.FromMilliseconds(60000);
-        private DstUdsMessage dstUdsMessage;
-        //private uint sourceAddress;
-        //private uint destinationAddress;
+        private DstUdsMessage dstUdsServiceResponseMessage;
 
         public DstUdsServiceHandler(DstUdsHandler udsHandler)
         {
@@ -23,35 +20,44 @@ namespace PCAN_UDS_TEST.DST_CAN
             _responseFlag = new AutoResetEvent(false);
         }
 
-        public byte[] SendDiagnosticSessionControl(UDS_SERVICE_DSC sessionType)
+        public bool SendDiagnosticSessionControl(UDS_SERVICE_DSC sessionType)
         {
-            //neebu
-            return null;
+            Console.Write("Security access pending: ");
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x10, Data = new() { (byte)sessionType } });
+            udsHandler.UdsMessageReceived += WaitForServce;
+            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+            if (response == null || response == false)
+            {
+                udsHandler.UdsMessageReceived -= WaitForServce;
+                return false;
+            }
+            if (dstUdsServiceResponseMessage.SID == 0x50) return true;
+            else return false;
         }
 
         private void WaitForServce(DstUdsMessage udsMessage)
         {
-            switch (udsMessage.SID)
+            if (udsMessage.Address == udsHandler.destinationAddress)
             {
-                case 0x67:
-                    Console.WriteLine("Security access seed received");
-                    break;
+                udsHandler.UdsMessageReceived -= WaitForServce;
+                dstUdsServiceResponseMessage = udsMessage;
+                _responseFlag.Set();
             }
-
-            _responseFlag.Set();
-            udsHandler.UdsMessageReceived -= WaitForServce;
-            dstUdsMessage = udsMessage;
         }
 
-        private bool SendSecurityAccess(byte securityAccessLevel, out List<byte> seed)
+        private bool SendSecurityAccess(byte securityAccessLevel, out List<byte> securitySeed)
         {
             Console.Write("Security access pending: ");
-            seed = new();
+            securitySeed = new();
             udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x27, Data = new() { securityAccessLevel } });
             udsHandler.UdsMessageReceived += WaitForServce;
-            bool? response = _responseFlag?.WaitOne(MaxWait);
-            if (response == null || response == false) return false;
-            seed = dstUdsMessage.Data;
+            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+            if (response == null || response == false)
+            {
+                udsHandler.UdsMessageReceived -= WaitForServce;
+                return false;
+            }
+            securitySeed = dstUdsServiceResponseMessage.Data;
             return true;
         }
     }

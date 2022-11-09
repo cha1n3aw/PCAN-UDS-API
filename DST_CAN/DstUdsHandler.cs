@@ -17,10 +17,10 @@
     }
     internal class DstUdsHandler
     {
-        private readonly uint sourceAddress; //32-bit address that is used to send uds packets
-        private readonly uint destinationAddress; //32-bit address that is used to receive uds packets
+        internal uint sourceAddress { get; private set; } //32-bit address that is used to send uds packets
+        internal uint destinationAddress { get; private set; } //32-bit address that is used to receive uds packets
         private readonly DstCanHandler canHandler;
-        private readonly TimeSpan MaxWait = TimeSpan.FromMilliseconds(60000);
+        internal readonly TimeSpan MaxWait;
         private AutoResetEvent _consequentFramesAckFlag;
         private DstUdsMessage udsMessage;
 
@@ -88,8 +88,9 @@
             }
         }
 
-        public DstUdsHandler(string portName, uint sourceAddress, uint destinationAddress)
+        public DstUdsHandler(string portName, uint sourceAddress, uint destinationAddress, int timeout)
         {
+            MaxWait = TimeSpan.FromMilliseconds(timeout);
             udsMessage = new() { Data = new(), SID = 0, Size = 0 };
             this.sourceAddress = sourceAddress;
             this.destinationAddress = destinationAddress;

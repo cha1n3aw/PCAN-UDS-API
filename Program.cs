@@ -162,7 +162,7 @@ namespace PCAN_UDS_TEST
         #region DST_CAN_WRAPPERS
         static void DstInitialize()
         {
-            dstUdsHandler = new(portName, dstUdsSourceAddress, dstUdsDestinationAddress);
+            dstUdsHandler = new(portName, dstUdsSourceAddress, dstUdsDestinationAddress, 60000);
             dstUdsHandler.UdsMessageReceived += DebugReceiveDstUds;
         }
 
@@ -225,7 +225,7 @@ namespace PCAN_UDS_TEST
 
 
             DstInitialize();
-            Console.WriteLine(dstUdsHandler.SendUdsMessage(new DstUdsMessage() { Size = 20, SID = 0x22, Address = dstUdsDestinationAddress, Data = new List<byte>() { 0x01, 0x01, 0x01, 0x01, 0x01, 0x03, 0x01, 0x01, 0x01, 0x07, 0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x01, 0x01, 0x02 } })); //size = data size + sid size
+            dstUdsHandler.SendUdsMessage(new DstUdsMessage() { Size = 20, SID = 0x22, Address = dstUdsDestinationAddress, Data = new List<byte>() { 0x01, 0x01, 0x01, 0x01, 0x01, 0x03, 0x01, 0x01, 0x01, 0x07, 0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x01, 0x01, 0x02 } }); //size = data size + sid size
             DstUdsServiceHandler udsServiceHandler = new(dstUdsHandler);
             udsServiceHandler.SendDiagnosticSessionControl(UDS_SERVICE_DSC.ECU_EXTENDED_DIAGNOSTIC_SESSION);
 
