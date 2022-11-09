@@ -117,7 +117,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             outData = Array.Empty<byte>();
             List<byte> tempList = new();
             foreach (DATA_IDENTIFIER d in dataIdentifiers) tempList.AddRange(BitConverter.GetBytes((ushort)d));
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x22, Data = tempList });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList });
             udsHandler.UdsMessageReceived += WaitForServce;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
@@ -127,6 +127,38 @@ namespace PCAN_UDS_TEST.DST_CAN
             }
             outData = dstUdsServiceResponseMessage.Data.ToArray();
             if (dstUdsServiceResponseMessage.SID == 0x62) return true;
+            else return false;
+        }
+
+        private bool SendWriteDataByIdentifier(DATA_IDENTIFIER dataIdentifier, byte[] value)
+        {
+            Console.Write("Write data service pending: ");
+            List<byte> tempList = new() { (byte)(((ushort) dataIdentifier) >> 8), (byte)(((ushort)dataIdentifier) & 0xFF) };
+            tempList.AddRange(value);
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList });
+            udsHandler.UdsMessageReceived += WaitForServce;
+            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+            if (response == null || response == false)
+            {
+                udsHandler.UdsMessageReceived -= WaitForServce;
+                return false;
+            }
+            if (dstUdsServiceResponseMessage.SID == 0x6E) return true;
+            else return false;
+        }
+
+        private bool SendReadDTCInformation(byte readInformationType, byte dtcStatusMask)
+        {
+            Console.Write("Read DTC service pending: ");
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 3, SID = 0x19, Data = new() { readInformationType, dtcStatusMask } });
+            udsHandler.UdsMessageReceived += WaitForServce;
+            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+            if (response == null || response == false)
+            {
+                udsHandler.UdsMessageReceived -= WaitForServce;
+                return false;
+            }
+            if (dstUdsServiceResponseMessage.SID == 0x6E) return true;
             else return false;
         }
     }
