@@ -1,9 +1,10 @@
 ﻿using System.IO.Ports;
 
-namespace PCAN_UDS_TEST
+namespace PCAN_UDS_TEST.DST_CAN
 {
-    internal class DstCanComComHandler
+    internal class DstComHandler
     {
+        private Thread receiveThread;
         public delegate void ComReceiveHandler(List<byte> comMessage);
         private ComReceiveHandler? _comMessageReceived;
         public event ComReceiveHandler ComMessageReceived
@@ -23,7 +24,7 @@ namespace PCAN_UDS_TEST
         private bool run;
         private string portName;
 
-        public DstCanComComHandler(string portName)
+        public DstComHandler(string portName)
         {
             this.portName = portName;
             run = false;
@@ -42,7 +43,7 @@ namespace PCAN_UDS_TEST
                 {
                     List<byte> comMessage = new();
                     while (serialPort.BytesToRead > 0) comMessage.Add((byte)serialPort.ReadByte());
-                    if (comMessage[^1] == CalculateCrc8(comMessage.Skip(1).Take(comMessage.Count - 3).ToArray())) _comMessageReceived?.Invoke(comMessage);
+                    if (comMessage[^1] == CalculateCrc8(comMessage.Skip(1).Take(comMessage.Count - 2).ToArray())) _comMessageReceived?.Invoke(comMessage);
                     Thread.Sleep(1);
                 }
             }
@@ -50,16 +51,19 @@ namespace PCAN_UDS_TEST
 
         public bool SendComMessage(List<byte> dataToSend)
         {
-            dataToSend.Insert(0, 0x24);
-            if (dataToSend.Count < 8) dataToSend.Insert(1, (byte)(dataToSend.Count - 1 + 0x10));
-            else if (dataToSend.Count == 8) dataToSend.Insert(1, 0x18);
-            else return false;
-            dataToSend.Add(CalculateCrc8(dataToSend.Skip(1).ToArray()));
-            serialPort.Write(dataToSend.ToArray(), 0, dataToSend.Count);
-            return true;
+            try
+            {
+                if (dataToSend.Count <= 12) dataToSend.Insert(0, (byte)(dataToSend.Count - 4 + 0x10));
+                else return false;
+                dataToSend.Insert(0, 0x24);
+                dataToSend.Add(CalculateCrc8(dataToSend.Skip(1).ToArray()));
+                serialPort.Write(dataToSend.ToArray(), 0, dataToSend.Count);
+                return true;
+            }
+            catch(Exception) { return false; }
         }
 
-        public byte CalculateCrc8(byte[] array)
+        private byte CalculateCrc8(byte[] array)
         {
             byte crc = 0x00;
             byte i, j, b;
@@ -84,17 +88,15 @@ namespace PCAN_UDS_TEST
             {
                 if (SerialPort.GetPortNames().Contains(portName))
                 {
+                    run = true;
                     serialPort = new() { PortName = portName, BaudRate = 115200, Parity = Parity.None, DataBits = 8, StopBits = StopBits.One, ReadTimeout = 500, WriteTimeout = 500 };
                     serialPort.Open();
-                    run = true;
-                    ComMessageReceived += DebugComReceiveMessage;
-                    new Thread(() => { ReceiveComMessage(); }).Start();
+                    //ComMessageReceived += DebugComReceiveMessage;
+                    receiveThread = new Thread(() => { ReceiveComMessage(); });
+                    receiveThread.Start();
                     return true;
                 }
-                else
-                {
-                    return false;
-                }
+                else return false;
             }
             catch { return false; }
         }
@@ -104,16 +106,16 @@ namespace PCAN_UDS_TEST
             try
             {
                 run = false;
-                ComMessageReceived -= DebugComReceiveMessage;
+                //ComMessageReceived -= DebugComReceiveMessage;
                 if (serialPort.IsOpen)
                 {
+                    while (receiveThread.ThreadState != ThreadState.Stopped) ;
                     serialPort.Close();
+                    serialPort.Dispose();
+                    GC.Collect();
                     return true;
                 }
-                else
-                {
-                    return false;
-                }
+                else return false;
             }
             catch { return false; }
         }

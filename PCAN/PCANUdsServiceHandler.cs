@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Text;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
 
-namespace PCAN_UDS_TEST
+namespace PCAN_UDS_TEST.PCAN
 {
     #region Structs
     public struct ListEntry
@@ -14,7 +14,7 @@ namespace PCAN_UDS_TEST
     }
     #endregion
 
-    public class UdsServiceHandler
+    public class PcanUdsServiceHandler
     {
         #region GlobalParameters
         private readonly CantpHandle handle;
@@ -24,7 +24,7 @@ namespace PCAN_UDS_TEST
         #endregion
 
         #region Constructor
-        public UdsServiceHandler(CantpHandle handle, byte sourceAddress, byte destinationAddress)
+        public PcanUdsServiceHandler(CantpHandle handle, byte sourceAddress, byte destinationAddress)
         {
             this.handle = handle;
             NAI = new()
@@ -67,9 +67,9 @@ namespace PCAN_UDS_TEST
             try
             {
                 SendWriteDataByIdentifier(dataIdentifier, value);
-				return true;
-			}
-			catch (Exception)
+                return true;
+            }
+            catch (Exception)
             {
                 return false;
             }
@@ -150,7 +150,7 @@ namespace PCAN_UDS_TEST
                         i = 3;
                     }
                 }
-                return true;   
+                return true;
             }
             catch (Exception)
             {
@@ -167,7 +167,7 @@ namespace PCAN_UDS_TEST
                 byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) });
                 byte numberOfSubmenus = dataArray[i++];
                 if (dataArray.Length < 5) return true;
-                for (;; i++)
+                for (; ; i++)
                 {
                     byte address = dataArray[i++];
                     string submenuName = string.Empty;
@@ -182,7 +182,7 @@ namespace PCAN_UDS_TEST
                 }
                 return true;
             }
-            catch(Exception)
+            catch (Exception)
             {
                 return false;
             }
@@ -237,10 +237,10 @@ namespace PCAN_UDS_TEST
                     Data data = new() { isAccessible = true };
                     while (dataArray[i] != 0x00) data.name += (char)dataArray[i++];
                     i++;
-                    data.multiplier = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                    data.divisor = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.multiplier = (ushort)(dataArray[i++] << 8 | dataArray[i++]);
+                    data.divisor = (ushort)(dataArray[i++] << 8 | dataArray[i++]);
                     data.valueType = dataArray[i++];
-                    data.digits = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.digits = (ushort)(dataArray[i++] << 8 | dataArray[i++]);
                     data.unitCode = dataArray[i++];
                     data.accessLevel = dataArray[i++];
                     parameterList.Add(address, data);
@@ -279,15 +279,15 @@ namespace PCAN_UDS_TEST
                     Data data = new() { isAccessible = true };
                     while (dataArray[i] != 0x00) data.name += (char)dataArray[i++];
                     i++;
-                    data.value = (short)((dataArray[i++] << 8) | dataArray[i++]);
-                    data.multiplier = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                    data.divisor = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                    data.digits = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.value = (short)(dataArray[i++] << 8 | dataArray[i++]);
+                    data.multiplier = (ushort)(dataArray[i++] << 8 | dataArray[i++]);
+                    data.divisor = (ushort)(dataArray[i++] << 8 | dataArray[i++]);
+                    data.digits = (ushort)(dataArray[i++] << 8 | dataArray[i++]);
                     data.valueType = dataArray[i++];
-                    data.minValue = (short)((dataArray[i++] << 8) | dataArray[i++]);
-                    data.maxValue = (short)((dataArray[i++] << 8) | dataArray[i++]);
-                    data.step = (ushort)((dataArray[i++] << 8) | dataArray[i++]);
-                    data.defaultValue = (short)((dataArray[i++] << 8) | dataArray[i++]);
+                    data.minValue = (short)(dataArray[i++] << 8 | dataArray[i++]);
+                    data.maxValue = (short)(dataArray[i++] << 8 | dataArray[i++]);
+                    data.step = (ushort)(dataArray[i++] << 8 | dataArray[i++]);
+                    data.defaultValue = (short)(dataArray[i++] << 8 | dataArray[i++]);
                     data.unitCode = dataArray[i++];
                     data.eepromPage = dataArray[i++];
                     data.eepromAddress = dataArray[i++];
@@ -297,7 +297,7 @@ namespace PCAN_UDS_TEST
                     {
                         dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)((menuAddress << 7) + (subMenuAddress << 4) + parameterAddress) });
                         Console.WriteLine($"{menuAddress} {subMenuAddress} {parameterAddress}");
-                        Console.WriteLine($"{((menuAddress << 7) + (subMenuAddress << 4) + parameterAddress):X4}");
+                        Console.WriteLine($"{(menuAddress << 7) + (subMenuAddress << 4) + parameterAddress:X4}");
                         foreach (byte b in dataArray) Console.Write($"{b:X2} ");
                         Console.WriteLine();
                         i = 3;
@@ -465,10 +465,8 @@ namespace PCAN_UDS_TEST
         public byte[] SendDiagnosticSessionControl(UDSApi.uds_svc_param_dsc authParameter)
         {
             Console.Write("DSC pending: ");
-            //Console.WriteLine($"Service: {
-                UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, authParameter); //}");
+            UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, authParameter);
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
-            //Console.WriteLine($"WaitForService: {responseStatus}");
             if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
             {
                 byte[] udsMessageByteArray = new byte[udsMessageResponse.message.MessageDataAnyCopy.length];
@@ -476,10 +474,8 @@ namespace PCAN_UDS_TEST
                 {
                     if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
                         UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_DiagnosticSessionControl + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
-                    //Console.WriteLine($"Write response message for service: {
-                        UDSApi.Write_2013(handle, ref service_response_msg);//}");
-                    //Console.WriteLine($"Free response message: {
-                        UDSApi.MsgFree_2013(ref service_response_msg);//}");
+                    UDSApi.Write_2013(handle, ref service_response_msg);
+                    UDSApi.MsgFree_2013(ref service_response_msg);
                     Console.WriteLine("OK");
                     return udsMessageByteArray;
                 }
@@ -536,9 +532,9 @@ namespace PCAN_UDS_TEST
                     if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
                         UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_SecurityAccess + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
                     //Console.WriteLine($"Write response message for service: {
-                        UDSApi.Write_2013(handle, ref service_response_msg);//}");
-                    //Console.WriteLine($"Free response message: {
-                        UDSApi.MsgFree_2013(ref service_response_msg);//}");
+                    UDSApi.Write_2013(handle, ref service_response_msg);//}");
+                                                                        //Console.WriteLine($"Free response message: {
+                    UDSApi.MsgFree_2013(ref service_response_msg);//}");
                     Console.WriteLine("OK");
                     return udsMessageByteArray;
                 }
@@ -570,9 +566,9 @@ namespace PCAN_UDS_TEST
                     if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
                         UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_SecurityAccess + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
                     //Console.WriteLine($"Write response message for service: {
-                        UDSApi.Write_2013(handle, ref service_response_msg);//}");
-                    //Console.WriteLine($"Free response message: {
-                        UDSApi.MsgFree_2013(ref service_response_msg);//}");
+                    UDSApi.Write_2013(handle, ref service_response_msg);//}");
+                                                                        //Console.WriteLine($"Free response message: {
+                    UDSApi.MsgFree_2013(ref service_response_msg);//}");
                     Console.WriteLine("OK");
                     return udsMessageByteArray;
                 }
@@ -853,7 +849,7 @@ namespace PCAN_UDS_TEST
             if (receive_event.WaitOne())
             {
                 UdsStatus status = UDSApi.Read_2013(handle, out UdsMessage udsMessage);
-                Console.WriteLine("Receive message: {0}", (status));
+                Console.WriteLine("Receive message: {0}", status);
                 if (UDSApi.StatusIsOk_2013(status))
                 {
                     byte[] udsMessageByteArray = new byte[udsMessage.message.MessageDataAnyCopy.length];
