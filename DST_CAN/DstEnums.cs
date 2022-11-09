@@ -27,5 +27,29 @@ namespace PCAN_UDS_TEST.DST_CAN
             /// </summary>
             SAFET_SYSTEM_DIAGNOSTIC_SESSION = 0x04
         }
+
+        public enum UDS_SERVICE_PARAMETER_ECU_RESET : Byte
+        {
+            /// <summary>
+            /// Hard Reset
+            /// </summary>
+            HARD_RESET = 0x01,
+            /// <summary>
+            /// Key Off on Reset
+            /// </summary>
+            KEY_OFF_ON_RESET = 0x02,
+            /// <summary>
+            /// Soft Reset
+            /// </summary>
+            SOFT_RESET = 0x03,
+            /// <summary>
+            /// Enable Rapid Power Shutdown
+            /// </summary>
+            EN_RAPID_POWER_SHUTDOWN = 0x04,
+            /// <summary>
+            /// Disable Rapid Power Shutdown
+            /// </summary>
+            DIS_RAPID_POWER_SHUTDOWN = 0x05,
+        }
     }
 }

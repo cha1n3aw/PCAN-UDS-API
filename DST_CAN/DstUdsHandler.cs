@@ -66,7 +66,7 @@
                         _udsMessageReceived?.Invoke(udsMessage);
                         udsMessage = new() { Data = new(), SID = 0, Size = 0, Address = 0 };
                     }
-                    else
+                    else if (canMessage.Data[i] == 0x10)
                     {
                         i++; //skip counter 0x10
                         udsMessage.Address = canMessage.Address;
