@@ -706,7 +706,7 @@ namespace PCAN_UDS_TEST.PCAN
         /// The DiagnosticSessionControl service is used to enable different diagnostic sessions in the server.
         /// </summary>
         /// <returns>Byte array that contains response message</returns>
-        public byte[] SendDiagnosticSessionControl(UDSApi.uds_svc_param_dsc authParameter)
+        public byte[] SendDiagnosticSessionControl(UDSApi.UDS_SERVICE_DSC authParameter)
         {
             Console.WriteLine($"Service: {UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, authParameter)}");
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
