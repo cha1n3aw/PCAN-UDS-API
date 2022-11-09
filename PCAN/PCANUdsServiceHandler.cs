@@ -14,7 +14,7 @@ namespace PCAN_UDS_TEST.PCAN
     }
     #endregion
 
-    public class UdsServiceHandler
+    public class PcanUdsServiceHandler
     {
         #region GlobalParameters
         private readonly CantpHandle handle;
@@ -24,7 +24,7 @@ namespace PCAN_UDS_TEST.PCAN
         #endregion
 
         #region Constructor
-        public UdsServiceHandler(CantpHandle handle, byte sourceAddress, byte destinationAddress)
+        public PcanUdsServiceHandler(CantpHandle handle, byte sourceAddress, byte destinationAddress)
         {
             this.handle = handle;
             NAI = new()
@@ -465,10 +465,8 @@ namespace PCAN_UDS_TEST.PCAN
         public byte[] SendDiagnosticSessionControl(UDSApi.uds_svc_param_dsc authParameter)
         {
             Console.Write("DSC pending: ");
-            //Console.WriteLine($"Service: {
-            UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, authParameter); //}");
+            UDSApi.SvcDiagnosticSessionControl_2013(handle, requestConfig, out UdsMessage outMessage, authParameter);
             UdsStatus responseStatus = UDSApi.WaitForService_2013(handle, ref outMessage, out UdsMessage udsMessageResponse, out _);
-            //Console.WriteLine($"WaitForService: {responseStatus}");
             if (UDSApi.StatusIsOk_2013(responseStatus) && !udsMessageResponse.Equals(null) && !udsMessageResponse.message.Equals(null) && udsMessageResponse.message.MessageDataAnyCopy.length != 0)
             {
                 byte[] udsMessageByteArray = new byte[udsMessageResponse.message.MessageDataAnyCopy.length];
@@ -476,10 +474,8 @@ namespace PCAN_UDS_TEST.PCAN
                 {
                     if (UDSApi.StatusIsOk_2013(UDSApi.MsgAlloc_2013(out UdsMessage service_response_msg, responseConfig, 1)))
                         UDSApi.SetDataServiceId_2013(ref service_response_msg, (byte)UDS_SERVICE.PUDS_SERVICE_SI_DiagnosticSessionControl + UDSApi.PUDS_SI_POSITIVE_RESPONSE);
-                    //Console.WriteLine($"Write response message for service: {
-                    UDSApi.Write_2013(handle, ref service_response_msg);//}");
-                                                                        //Console.WriteLine($"Free response message: {
-                    UDSApi.MsgFree_2013(ref service_response_msg);//}");
+                    UDSApi.Write_2013(handle, ref service_response_msg);
+                    UDSApi.MsgFree_2013(ref service_response_msg);
                     Console.WriteLine("OK");
                     return udsMessageByteArray;
                 }

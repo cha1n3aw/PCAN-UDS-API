@@ -1,9 +1,9 @@
-﻿namespace PCAN_UDS_TEST.DST_CAN_COM
+﻿namespace PCAN_UDS_TEST.DST_CAN
 {
-    internal class DstCanComCanHandler
+    internal class DstCanHandler
     {
-        private DstCanComComHandler comHandler;
-        public delegate void CanReceiveHandler(CanComCanMessage message);
+        private DstComHandler comHandler;
+        public delegate void CanReceiveHandler(DstCanMessage message);
         private CanReceiveHandler? _canMessageReceived;
         public event CanReceiveHandler CanMessageReceived
         {
@@ -19,24 +19,14 @@
             }
         }
 
-        public DstCanComCanHandler(string portName)
+        public DstCanHandler(string portName)
         {
             comHandler = new(portName);
-        }
-
-        public void Initialize()
-        {
             comHandler.ComMessageReceived += ParseCanMessage;
             comHandler.Initialize();
         }
 
-        public void Uninitialize()
-        {
-            comHandler.ComMessageReceived -= ParseCanMessage;
-            comHandler.Uninitialize();
-        }
-
-        public bool SendCanMessage(CanComCanMessage canMessage)
+        public bool SendCanMessage(DstCanMessage canMessage)
         {
             try
             {
@@ -51,7 +41,7 @@
         private void ParseCanMessage(List<byte> comMessage)
         {
             byte i = 1;
-            CanComCanMessage canMessage = new()
+            DstCanMessage canMessage = new()
             {
                 Size = (byte)(comMessage[i] & 0x0F),
                 Type = (byte)((comMessage[i++] & 0xF0) >> 4),
