@@ -162,7 +162,7 @@ namespace PCAN_UDS_TEST
         #region DST_CAN_WRAPPERS
         static void DstInitialize()
         {
-            dstUdsHandler = new(portName, dstUdsSourceAddress, dstUdsDestinationAddress);
+            dstUdsHandler = new(portName, dstUdsSourceAddress, dstUdsDestinationAddress, 60000);
             dstUdsHandler.UdsMessageReceived += DebugReceiveDstUds;
         }
 
