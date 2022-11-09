@@ -23,7 +23,7 @@ namespace PCAN_UDS_TEST.DST_CAN
         public bool SendDiagnosticSessionControl(UDS_SERVICE_DSC sessionType)
         {
             Console.Write("Security access pending: ");
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x10, Data = new() { (byte)sessionType } });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x10, Data = new() { (byte)sessionType }, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForServce;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
@@ -45,11 +45,11 @@ namespace PCAN_UDS_TEST.DST_CAN
             }
         }
 
-        private bool SendSecurityAccess(byte securityAccessLevel, out List<byte> securitySeed)
+        public bool SendSecurityAccess(byte securityAccessLevel, out List<byte> securitySeed)
         {
             Console.Write("Security access pending: ");
             securitySeed = new();
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x27, Data = new() { securityAccessLevel } });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x27, Data = new() { securityAccessLevel }, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForServce;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
@@ -62,12 +62,12 @@ namespace PCAN_UDS_TEST.DST_CAN
             else return false;
         }
 
-        private bool SendSecurityAccessWithData(byte securityAccessLevel, byte[] securityAccessData)
+        public bool SendSecurityAccessWithData(byte securityAccessLevel, byte[] securityAccessData)
         {
             Console.Write("Security access w/data pending: ");
             List<byte> tempList = securityAccessData.ToList();
             tempList.Insert(0, securityAccessLevel);
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(2 + securityAccessData.Length), SID = 0x27, Data = tempList });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x27, Data = tempList, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForServce;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
@@ -79,10 +79,10 @@ namespace PCAN_UDS_TEST.DST_CAN
             else return false;
         }
 
-        private bool SendEcuReset(byte resetParameter)
+        public bool SendEcuReset(UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
         {
             Console.Write("ECU Reset pending: ");
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x11, Data = new() { resetParameter } });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x11, Data = new() { (byte)resetParameter }, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForServce;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
