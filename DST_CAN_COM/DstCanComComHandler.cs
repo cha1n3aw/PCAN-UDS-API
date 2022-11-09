@@ -42,7 +42,7 @@ namespace PCAN_UDS_TEST.DST_CAN_COM
                 {
                     List<byte> comMessage = new();
                     while (serialPort.BytesToRead > 0) comMessage.Add((byte)serialPort.ReadByte());
-                    if (comMessage[^1] == CalculateCrc8(comMessage.Skip(1).Take(comMessage.Count - 3).ToArray())) _comMessageReceived?.Invoke(comMessage);
+                    if (comMessage[^1] == CalculateCrc8(comMessage.Skip(1).Take(comMessage.Count - 2).ToArray())) _comMessageReceived?.Invoke(comMessage);
                     Thread.Sleep(1);
                 }
             }
@@ -50,16 +50,19 @@ namespace PCAN_UDS_TEST.DST_CAN_COM
 
         public bool SendComMessage(List<byte> dataToSend)
         {
-            dataToSend.Insert(0, 0x24);
-            if (dataToSend.Count < 8) dataToSend.Insert(1, (byte)(dataToSend.Count - 1 + 0x10));
-            else if (dataToSend.Count == 8) dataToSend.Insert(1, 0x18);
-            else return false;
-            dataToSend.Add(CalculateCrc8(dataToSend.Skip(1).ToArray()));
-            serialPort.Write(dataToSend.ToArray(), 0, dataToSend.Count);
-            return true;
+            try
+            {
+                if (dataToSend.Count <= 12) dataToSend.Insert(0, (byte)(dataToSend.Count - 4 + 0x10));
+                else return false;
+                dataToSend.Insert(0, 0x24);
+                dataToSend.Add(CalculateCrc8(dataToSend.Skip(1).ToArray()));
+                serialPort.Write(dataToSend.ToArray(), 0, dataToSend.Count);
+                return true;
+            }
+            catch(Exception) { return false; }
         }
 
-        public byte CalculateCrc8(byte[] array)
+        private byte CalculateCrc8(byte[] array)
         {
             byte crc = 0x00;
             byte i, j, b;

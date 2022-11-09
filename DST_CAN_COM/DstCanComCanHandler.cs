@@ -54,7 +54,7 @@
             CanComCanMessage canMessage = new()
             {
                 Size = (byte)(comMessage[i] & 0x0F),
-                Type = (byte)((comMessage[i] & 0xF0) >> 4),
+                Type = (byte)((comMessage[i++] & 0xF0) >> 4),
                 Address = (uint)((comMessage[i++] << 24) + (comMessage[i++] << 16) + (comMessage[i++] << 8) + comMessage[i++])
             };
             canMessage.Data = comMessage.Skip(i).Take(canMessage.Size).ToList();

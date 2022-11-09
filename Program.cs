@@ -1,5 +1,4 @@
-﻿using PCAN_UDS_TEST;
-using PCAN_UDS_TEST.DST_CAN_COM;
+﻿using PCAN_UDS_TEST.DST_CAN_COM;
 using PCAN_UDS_TEST.PCAN;
 using Peak.Can.IsoTp;
 using Peak.Can.Uds;
@@ -210,7 +209,8 @@ namespace PCAN_UDS_TEST
             DstCanComUdsHandler udsHandler = new(portName, sourceAddress, destinationAddress);
             udsHandler.UdsMessageReceived += ReceiveUds;
             udsHandler.Initialize();
-            udsHandler.SendUdsMessage(new CanComUdsMessage() { Size = 5, SID = 22, Data = new List<byte>() { 0x01, 0x01, 0x01, 0x01, 0x01 } });
+            Console.WriteLine(udsHandler.SendUdsMessage(new CanComUdsMessage() { Size = 20, SID = 0x22, Data = new List<byte>() { 0x01, 0x01, 0x01, 0x01, 0x01, 0x03, 0x01, 0x01, 0x01, 0x07, 0x01, 0x01, 0x01, 0x02, 0x01, 0x01, 0x01, 0x01, 0x02 } })); //size = data size + sid size
+            udsHandler.UdsMessageReceived -= ReceiveUds;
             udsHandler.Uninitialize();
 
 
