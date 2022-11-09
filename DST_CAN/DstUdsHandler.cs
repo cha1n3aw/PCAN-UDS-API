@@ -1,6 +1,6 @@
-﻿namespace PCAN_UDS_TEST.DST_CAN_COM
+﻿namespace PCAN_UDS_TEST.DST_CAN
 {
-    struct CanComCanMessage
+    struct DstCanMessage
     {
         public byte Size;
         public byte Type;
@@ -8,22 +8,23 @@
         public List<byte> Data;
     }
 
-    struct CanComUdsMessage
+    struct DstUdsMessage
     {
+        public uint Address;
         public byte Size;
         public byte SID;
         public List<byte> Data;
     }
-    internal class DstCanComUdsHandler
+    internal class DstUdsHandler
     {
         private readonly uint sourceAddress; //32-bit address that is used to send uds packets
         private readonly uint destinationAddress; //32-bit address that is used to receive uds packets
-        private readonly DstCanComCanHandler canHandler;
+        private readonly DstCanHandler canHandler;
         private readonly TimeSpan MaxWait = TimeSpan.FromMilliseconds(60000);
         private AutoResetEvent _consequentFramesAckFlag;
-        private CanComUdsMessage udsMessage;
+        private DstUdsMessage udsMessage;
 
-        public delegate void UdsReceiveHandler(CanComUdsMessage message);
+        public delegate void UdsReceiveHandler(DstUdsMessage message);
         private UdsReceiveHandler? _udsMessageReceived;
         public event UdsReceiveHandler UdsMessageReceived
         {
@@ -39,7 +40,7 @@
             }
         }
 
-        private void ParseConsequentFramesAck(CanComCanMessage canMessage)
+        private void ParseConsequentFramesAck(DstCanMessage canMessage)
         {
             if (canMessage.Type != 0x00 && canMessage.Address == destinationAddress && canMessage.Data[0] == 0x30)
             {
@@ -49,61 +50,55 @@
             }
         }
 
-        private void ParseUdsMessage(CanComCanMessage canMessage)
+        private void ParseUdsMessage(DstCanMessage canMessage)
         {
             if (canMessage.Type != 0x00 && canMessage.Address == destinationAddress)
             {
                 if (udsMessage.Size == 0)
                 {
                     int i = 0;
-                    if (canMessage.Data[i++] < 0x08)
+                    if (canMessage.Data[i] < 0x08)
                     {
-                        udsMessage.SID = canMessage.Data[i++];
-                        for (; i < canMessage.Size; i++) udsMessage.Data.Add(canMessage.Data[i]);
-                    }
-                    else
-                    {
+                        udsMessage.Address = canMessage.Address;
                         udsMessage.Size = canMessage.Data[i++];
                         udsMessage.SID = canMessage.Data[i++];
                         for (; i < canMessage.Size; i++) udsMessage.Data.Add(canMessage.Data[i]);
-                        canHandler.SendCanMessage(new CanComCanMessage() { Address = sourceAddress, Data = new List<byte>() { 0x30, 0x0A, 0x0A } });
+                        _udsMessageReceived?.Invoke(udsMessage);
+                        udsMessage = new() { Data = new(), SID = 0, Size = 0, Address = 0 };
+                    }
+                    else
+                    {
+                        i++; //skip counter 0x10
+                        udsMessage.Address = canMessage.Address;
+                        udsMessage.Size = canMessage.Data[i++];
+                        udsMessage.SID = canMessage.Data[i++];
+                        for (; i < canMessage.Size; i++) udsMessage.Data.Add(canMessage.Data[i]);
+                        canHandler.SendCanMessage(new DstCanMessage() { Address = sourceAddress, Data = new List<byte>() { 0x30, 0x0A, 0x0A } });
                     }
                 }
                 else
                 {
                     for (int i = 1; i < canMessage.Size; i++) udsMessage.Data.Add(canMessage.Data[i]);
-                    if (udsMessage.Size == udsMessage.Data.Count)
+                    if (udsMessage.Size - 1 == udsMessage.Data.Count)
                     {
                         _udsMessageReceived?.Invoke(udsMessage);
-                        udsMessage = new() { Data = new(), SID = 0, Size = 0 };
+                        udsMessage = new() { Data = new(), SID = 0, Size = 0, Address = 0 };
                     }
                 }
             }
         }
 
-        public DstCanComUdsHandler(string portName, uint sourceAddress, uint destinationAddress)
+        public DstUdsHandler(string portName, uint sourceAddress, uint destinationAddress)
         {
             udsMessage = new() { Data = new(), SID = 0, Size = 0 };
             this.sourceAddress = sourceAddress;
             this.destinationAddress = destinationAddress;
             _consequentFramesAckFlag = new AutoResetEvent(false);
             canHandler = new(portName);
-            
-        }
-
-        public void Initialize()
-        {
             canHandler.CanMessageReceived += ParseUdsMessage;
-            canHandler.Initialize();
         }
 
-        public void Uninitialize()
-        {
-            canHandler.CanMessageReceived -= ParseUdsMessage;
-            canHandler.Uninitialize();
-        }
-
-        public bool SendUdsMessage(CanComUdsMessage udsMessage)
+        public bool SendUdsMessage(DstUdsMessage udsMessage)
         {
             try
             {
@@ -111,7 +106,7 @@
                 {
                     List<byte> buffer = new() { udsMessage.Size, udsMessage.SID };
                     buffer.AddRange(udsMessage.Data);
-                    if (!canHandler.SendCanMessage(new CanComCanMessage() { Data = buffer, Address = sourceAddress })) return false;
+                    if (!canHandler.SendCanMessage(new DstCanMessage() { Data = buffer, Address = udsMessage.Address })) return false;
                 }
                 else
                 {
@@ -121,7 +116,7 @@
                     counter += 0x11;
                     buffer.AddRange(tempByteList.Take(5));
                     tempByteList.RemoveRange(0, 5);
-                    if (!canHandler.SendCanMessage(new CanComCanMessage() { Data = buffer, Address = sourceAddress })) return false;
+                    if (!canHandler.SendCanMessage(new DstCanMessage() { Data = buffer, Address = udsMessage.Address })) return false;
                     canHandler.CanMessageReceived -= ParseUdsMessage;
                     canHandler.CanMessageReceived += ParseConsequentFramesAck;
                     bool? response = _consequentFramesAckFlag?.WaitOne(MaxWait);
@@ -145,7 +140,7 @@
                             buffer.AddRange(tempByteList);
                             tempByteList.Clear();
                         }
-                        if (!canHandler.SendCanMessage(new CanComCanMessage() { Data = buffer, Address = sourceAddress })) return false;
+                        if (!canHandler.SendCanMessage(new DstCanMessage() { Data = buffer, Address = udsMessage.Address })) return false;
                     }
                 }
                 return true;

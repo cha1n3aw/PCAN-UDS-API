@@ -1,9 +1,10 @@
 ﻿using System.IO.Ports;
 
-namespace PCAN_UDS_TEST.DST_CAN_COM
+namespace PCAN_UDS_TEST.DST_CAN
 {
-    internal class DstCanComComHandler
+    internal class DstComHandler
     {
+        private Thread receiveThread;
         public delegate void ComReceiveHandler(List<byte> comMessage);
         private ComReceiveHandler? _comMessageReceived;
         public event ComReceiveHandler ComMessageReceived
@@ -23,7 +24,7 @@ namespace PCAN_UDS_TEST.DST_CAN_COM
         private bool run;
         private string portName;
 
-        public DstCanComComHandler(string portName)
+        public DstComHandler(string portName)
         {
             this.portName = portName;
             run = false;
@@ -87,17 +88,15 @@ namespace PCAN_UDS_TEST.DST_CAN_COM
             {
                 if (SerialPort.GetPortNames().Contains(portName))
                 {
+                    run = true;
                     serialPort = new() { PortName = portName, BaudRate = 115200, Parity = Parity.None, DataBits = 8, StopBits = StopBits.One, ReadTimeout = 500, WriteTimeout = 500 };
                     serialPort.Open();
-                    run = true;
-                    ComMessageReceived += DebugComReceiveMessage;
-                    new Thread(() => { ReceiveComMessage(); }).Start();
+                    //ComMessageReceived += DebugComReceiveMessage;
+                    receiveThread = new Thread(() => { ReceiveComMessage(); });
+                    receiveThread.Start();
                     return true;
                 }
-                else
-                {
-                    return false;
-                }
+                else return false;
             }
             catch { return false; }
         }
@@ -107,16 +106,16 @@ namespace PCAN_UDS_TEST.DST_CAN_COM
             try
             {
                 run = false;
-                ComMessageReceived -= DebugComReceiveMessage;
+                //ComMessageReceived -= DebugComReceiveMessage;
                 if (serialPort.IsOpen)
                 {
+                    while (receiveThread.ThreadState != ThreadState.Stopped) ;
                     serialPort.Close();
+                    serialPort.Dispose();
+                    GC.Collect();
                     return true;
                 }
-                else
-                {
-                    return false;
-                }
+                else return false;
             }
             catch { return false; }
         }
