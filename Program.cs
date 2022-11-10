@@ -229,9 +229,10 @@ namespace PCAN_UDS_TEST
             DstInitialize();
             DstUdsServiceHandler udsServiceHandler = new(dstUdsHandler);
             udsServiceHandler.Authenticate(UDS_SERVICE_DSC.ECU_EXTENDED_DIAGNOSTIC_SESSION, UDS_ACCESS_LEVEL.DEVELOPER);
-            udsServiceHandler.UdsGetErrorsList(0x02, 0x01, out byte[] activeErrorsResponse);
-            Console.WriteLine("Errors:");
-            foreach (byte b in activeErrorsResponse) Console.Write($"{b:X2} ");
+            //udsServiceHandler.UdsGetErrorsList(0x02, 0x01, out byte[] activeErrorsResponse);
+            //Console.WriteLine("Errors:");
+            //foreach (byte b in activeErrorsResponse) Console.Write($"{b:X2} ");
+
             //udsServiceHandler.UdsGetUnitcodes(out Dictionary<byte, string> units);
             //foreach (KeyValuePair<byte, string> kv in units) Console.Write($"{kv.Key} {kv.Value}");
 
