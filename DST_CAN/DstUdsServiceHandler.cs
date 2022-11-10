@@ -32,7 +32,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                 if (!SendDiagnosticSessionControl(sessionType)
                 || !SendSecurityAccess(accessLevel, out List<byte> seed)
                 || !SendSecurityAccessWithData((byte)(accessLevel + 1), new SecurityAccess().GetKey(seed.ToArray(), (byte)accessLevel).ToList())) return false;
-                else testerPresentThread.Start();
+                //else testerPresentThread.Start();
                 return true;
             }
             catch (Exception) { return false; }
@@ -462,6 +462,7 @@ namespace PCAN_UDS_TEST.DST_CAN
         {
             while (true)
             {
+                Console.WriteLine("TesterPresent executed: ");
                 while (_servicePending) Thread.Sleep(10);
                 _servicePending = true;
                 udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x3E, Data = new() { 0x00 }, Address = udsHandler.sourceAddress });
@@ -472,7 +473,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     udsHandler.UdsMessageReceived -= WaitForService;
                     break;
                 }
-                if (dstUdsServiceResponseMessage.Data[0] != 0x7E) break;
+                if (dstUdsServiceResponseMessage.SID != 0x7E) break;
                 _servicePending = false;
                 Thread.Sleep(3000);
             }
@@ -486,7 +487,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             _servicePending = true;
             udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x10, Data = new() { (byte)sessionType }, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForService;
-            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+			bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             _servicePending = false;
             if (response == null || response == false)
             {
@@ -512,7 +513,9 @@ namespace PCAN_UDS_TEST.DST_CAN
                 udsHandler.UdsMessageReceived -= WaitForService;
                 return false;
             }
-            securitySeed = dstUdsServiceResponseMessage.Data;
+            securitySeed = dstUdsServiceResponseMessage.Data.Skip(1).ToList();
+            Console.WriteLine("Received seed: ");
+            foreach (byte b in securitySeed) Console.Write($"{b:X2} ");
             if (dstUdsServiceResponseMessage.SID == 0x67) return true;
             else return false;
         }
@@ -537,7 +540,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             else return false;
         }
 
-        public bool SendEcuReset(UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
+        private bool SendEcuReset(UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
         {
             Console.Write("ECU Reset pending: ");
             while (_servicePending) Thread.Sleep(1);
@@ -564,7 +567,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             outData = Array.Empty<byte>();
             List<byte> tempList = new();
             foreach (DATA_IDENTIFIER d in dataIdentifiers) tempList.AddRange(BitConverter.GetBytes((ushort)d));
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForService;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             _servicePending = false;
@@ -583,7 +586,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             Console.Write("Write data service pending: ");
             List<byte> tempList = new() { (byte)(((ushort) dataIdentifier) >> 8), (byte)(((ushort)dataIdentifier) & 0xFF) };
             tempList.AddRange(value);
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForService;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
@@ -601,7 +604,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             List<byte> tempList = new();
             tempList.AddRange(memoryAddressBuffer);
             tempList.AddRange(memorySizeBuffer);
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForService;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
@@ -617,7 +620,7 @@ namespace PCAN_UDS_TEST.DST_CAN
         {
             Console.Write("Write data service pending: ");
             List<byte> tempList = new();
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x3D, Data = tempList });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x3D, Data = tempList, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForService;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
@@ -632,15 +635,28 @@ namespace PCAN_UDS_TEST.DST_CAN
         private bool SendReadDTCInformation(byte readInformationType, byte dtcStatusMask)
         {
             Console.Write("Read DTC service pending: ");
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = 3, SID = 0x19, Data = new() { readInformationType, dtcStatusMask } });
-            udsHandler.UdsMessageReceived += WaitForService;
-            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
-            if (response == null || response == false)
+            while (_servicePending) 
+            {
+                Console.Write("DTC waiting...");
+                Thread.Sleep(1);
+            }
+			_servicePending = true;
+			udsHandler.SendUdsMessage(new DstUdsMessage { Size = 3, SID = 0x19, Data = new() { readInformationType, dtcStatusMask }, Address = udsHandler.sourceAddress });
+            Console.Write("DTC Sent1 ");
+			udsHandler.UdsMessageReceived += WaitForService;
+            Console.Write("DTC Sent2 ");
+			bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+            Console.WriteLine($"res sid {dstUdsServiceResponseMessage.SID}");
+			Console.Write("DTC Sent3 ");
+			_servicePending = false;
+			if (response == null || response == false)
             {
                 udsHandler.UdsMessageReceived -= WaitForService;
                 return false;
             }
-            if (dstUdsServiceResponseMessage.SID == 0x6E) return true;
+			Console.WriteLine($"res sid {dstUdsServiceResponseMessage.Data}");
+
+			if (dstUdsServiceResponseMessage.SID == 0x6E) return true;
             else return false;
         }
         #endregion
