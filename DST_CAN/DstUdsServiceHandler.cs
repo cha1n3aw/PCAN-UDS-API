@@ -39,7 +39,7 @@ namespace PCAN_UDS_TEST.DST_CAN
         }
 
         #region UdsServiceWrappers
-        public bool UdsEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
+        public bool UdsEcuReset(UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
         {
             try
             {
@@ -65,12 +65,12 @@ namespace PCAN_UDS_TEST.DST_CAN
             }
         }
 
-        public bool UdsGetErrorsList(UDSApi.UDS_SERVICE_PARAMETER_READ_DTC_INFORMATION_TYPE dtcType, byte statusMask, out byte[] response)
+        public bool UdsGetErrorsList(byte dtcType, byte statusMask, out byte[] response)
         {
             response = Array.Empty<byte>();
             try
             {
-                response = SendReadDTCInformation(dtcType, statusMask);
+                SendReadDTCInformation(dtcType, statusMask);
                 return true;
             }
             catch (Exception)
@@ -81,35 +81,35 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         public bool UdsSendDiagnosticSessionControl(UDSApi.UDS_SERVICE_DSC sessionType)
         {
-            byte[] response = SendDiagnosticSessionControl(sessionType);
+            SendDiagnosticSessionControl(sessionType);
             return true;
         }
 
-        public bool UdsSetSecurityAccessLevel(UDSApi.UDS_ACCESS_LEVEL accessLevel)
-        {
-            try
-            {
-                byte[] response = SendSecurityAccess(accessLevel);
-                byte[] responseSeed = new byte[response.Length - 2];
-                Array.Copy(response, 2, responseSeed, 0, response.Length - 2);
-                Array.Resize(ref responseSeed, 16);
-                SecurityAccess securityAccess = new();
-                byte[] key = securityAccess.GetKey(responseSeed, (byte)accessLevel);
-                response = SendSecurityAccessWithData((byte)(accessLevel + 1), key);
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
+        //public bool UdsSetSecurityAccessLevel(UDSApi.UDS_ACCESS_LEVEL accessLevel)
+        //{
+        //    try
+        //    {
+        //        SendSecurityAccess(accessLevel, out List<byte> response);
+        //        byte[] responseSeed = new byte[response.Count - 2];
+        //        Array.Copy(response, 2, responseSeed, 0, response.Length - 2);
+        //        Array.Resize(ref responseSeed, 16);
+        //        SecurityAccess securityAccess = new();
+        //        byte[] key = securityAccess.GetKey(responseSeed, (byte)accessLevel);
+        //        response = SendSecurityAccessWithData((byte)(accessLevel + 1), key);
+        //        return true;
+        //    }
+        //    catch (Exception)
+        //    {
+        //        return false;
+        //    }
+        //}
 
         public bool UdsGetDataByIdentifiers(DATA_IDENTIFIER[] dataIdentifiers, out byte[] dataArray)
         {
             dataArray = Array.Empty<byte>();
             try
             {
-                dataArray = SendReadDataByIdentifier(dataIdentifiers);
+                SendReadDataByIdentifier(dataIdentifiers, out dataArray);
                 if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
                 else return false;
             }
@@ -125,7 +125,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2200 });
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2200 }, out byte[] dataArray);
                 byte numberOfMenus = dataArray[i++];
                 for (; ; i++)
                 {
@@ -136,7 +136,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (menuList.Count == numberOfMenus) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2200 });
+                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2200 }, out dataArray);
                         i = 3;
                     }
                 }
@@ -154,7 +154,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) });
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) }, out byte[] dataArray);
                 byte numberOfSubmenus = dataArray[i++];
                 if (dataArray.Length < 5) return true;
                 for (; ; i++)
@@ -166,7 +166,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (submenuList.Count == numberOfSubmenus) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) });
+                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) }, out dataArray);
                         i = 3;
                     }
                 }
@@ -184,7 +184,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1261 });
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1261 }, out byte[] dataArray);
                 byte numberOfGroups = dataArray[i++];
                 for (; ; i++)
                 {
@@ -195,7 +195,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (groupList.Count == numberOfGroups) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1261 });
+                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1261 }, out dataArray);
                         i = 3;
                     }
                 }
@@ -213,7 +213,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2000 + (groupAddress << 4) + parameterAddress) });
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2000 + (groupAddress << 4) + parameterAddress) }, out byte[] dataArray);
                 byte numberOfParameters = dataArray[i++];
                 if (dataArray.Length < 5) return true; //62 DIDHB DIDLB SIZE
                 for (; ; i++)
@@ -237,7 +237,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (parameterList.Count == numberOfParameters) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2000 + (groupAddress << 4) + parameterAddress) });
+                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2000 + (groupAddress << 4) + parameterAddress) }, out dataArray);
                         i = 5;
                     }
                 }
@@ -255,7 +255,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)((menuAddress << 7) + (subMenuAddress << 4) + parameterAddress) });
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)((menuAddress << 7) + (subMenuAddress << 4) + parameterAddress) }, out byte[] dataArray);
                 byte numberOfParameters = dataArray[i++];
                 if (dataArray.Length < 5) return true;
                 for (; ; i++)
@@ -285,7 +285,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (parameterList.Count == numberOfParameters) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)((menuAddress << 7) + (subMenuAddress << 4) + parameterAddress) });
+                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)((menuAddress << 7) + (subMenuAddress << 4) + parameterAddress) }, out dataArray);
                         Console.WriteLine($"{menuAddress} {subMenuAddress} {parameterAddress}");
                         Console.WriteLine($"{(menuAddress << 7) + (subMenuAddress << 4) + parameterAddress:X4}");
                         foreach (byte b in dataArray) Console.Write($"{b:X2} ");
@@ -307,7 +307,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1262 });
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1262 }, out byte[] dataArray);
                 byte numberOfUnitcodes = dataArray[i++];
                 for (; ; i++)
                 {
@@ -318,7 +318,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (unitcodesList.Count == numberOfUnitcodes) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1262 });
+                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1262 }, out dataArray);
                         i = 3;
                     }
                 }
@@ -336,7 +336,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1263 });
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1263 }, out byte[] dataArray);
                 ushort numberOfListDescriptions = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
                 byte maxNumberOfListEntries = dataArray[i++];
                 for (; ; i++)
@@ -349,7 +349,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (listDescriptions.Count == numberOfListDescriptions / maxNumberOfListEntries) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1263 });
+                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1263 }, out dataArray);
                         i = 5;
                     }
                 }
@@ -367,7 +367,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 }, out byte[] dataArray);
                 byte numberOfErrors = dataArray[i++];
                 for (; ; i++)
                 {
@@ -382,7 +382,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (errorList.Count == numberOfErrors) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 }, out dataArray);
                         i = 3;
                     }
                 }
@@ -400,7 +400,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 }, out byte[] dataArray);
                 byte numberOfErrors = dataArray[i++];
                 for (; ; i++)
                 {
@@ -415,7 +415,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (errorList.Count == numberOfErrors) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 }, out dataArray);
                         i = 3;
                     }
                 }
@@ -436,7 +436,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             dataArray = Array.Empty<byte>();
             try
             {
-                dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { UdsGetParameterIdentifier(menuNumber, subMenuNumber, parameterNumber) });
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { UdsGetParameterIdentifier(menuNumber, subMenuNumber, parameterNumber) }, out dataArray);
                 if (dataArray != null && dataArray != Array.Empty<byte>()) return true;
                 else return false;
             }
@@ -610,6 +610,22 @@ namespace PCAN_UDS_TEST.DST_CAN
                 return false;
             }
             if (dstUdsServiceResponseMessage.SID == 0x6E) return true;
+            else return false;
+        }
+
+        private bool SendWriteMemoryByAddress()
+        {
+            Console.Write("Write data service pending: ");
+            List<byte> tempList = new();
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x3D, Data = tempList });
+            udsHandler.UdsMessageReceived += WaitForServce;
+            bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
+            if (response == null || response == false)
+            {
+                udsHandler.UdsMessageReceived -= WaitForServce;
+                return false;
+            }
+            if (dstUdsServiceResponseMessage.SID == 0x7D) return true;
             else return false;
         }
 

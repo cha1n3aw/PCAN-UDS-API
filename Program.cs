@@ -226,6 +226,8 @@ namespace PCAN_UDS_TEST
 
             DstInitialize();
             DstUdsServiceHandler udsServiceHandler = new(dstUdsHandler);
+            udsServiceHandler.UdsGetActiveErrors(out List<Error> errors);
+            foreach (Error error in errors) Console.WriteLine($"{error.description}, {error.errorCode}");
 
             //Console.WriteLine(udsServiceHandler.SendDiagnosticSessionControl(UDS_SERVICE_DSC.ECU_EXTENDED_DIAGNOSTIC_SESSION));
             //Console.WriteLine(udsServiceHandler.SendEcuReset(UDS_SERVICE_PARAMETER_ECU_RESET.SOFT_RESET));
