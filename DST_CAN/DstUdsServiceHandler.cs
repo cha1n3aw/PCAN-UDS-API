@@ -583,7 +583,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             Console.Write("Write data service pending: ");
             List<byte> tempList = new() { (byte)(((ushort) dataIdentifier) >> 8), (byte)(((ushort)dataIdentifier) & 0xFF) };
             tempList.AddRange(value);
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList, Address = udsHandler.sourceAddress });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x2E, Data = tempList, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForService;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
@@ -601,7 +601,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             List<byte> tempList = new();
             tempList.AddRange(memoryAddressBuffer);
             tempList.AddRange(memorySizeBuffer);
-            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList, Address = udsHandler.sourceAddress });
+            udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x23, Data = tempList, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForService;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
             if (response == null || response == false)
@@ -609,7 +609,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                 udsHandler.UdsMessageReceived -= WaitForService;
                 return false;
             }
-            if (dstUdsServiceResponseMessage.SID == 0x6E) return true;
+            if (dstUdsServiceResponseMessage.SID == 0x63) return true;
             else return false;
         }
 
@@ -653,7 +653,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             }
 			Console.WriteLine($"res sid {dstUdsServiceResponseMessage.Data}");
 
-			if (dstUdsServiceResponseMessage.SID == 0x6E) return true;
+			if (dstUdsServiceResponseMessage.SID == 0x59) return true;
             else return false;
         }
         #endregion
