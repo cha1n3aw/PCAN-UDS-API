@@ -40,7 +40,6 @@
 
         private void ParseCanMessage(List<byte> comMessage)
         {
-            Console.WriteLine("ParseCanMessage");
             byte i = 1;
             DstCanMessage canMessage = new()
             {
@@ -49,7 +48,6 @@
                 Address = (uint)((comMessage[i++] << 24) + (comMessage[i++] << 16) + (comMessage[i++] << 8) + comMessage[i++])
             };
             canMessage.Data = comMessage.Skip(i).Take(canMessage.Size).ToList();
-            Console.WriteLine($"{canMessage.Address:X}");
             _canMessageReceived?.Invoke(canMessage);
         }
     }
