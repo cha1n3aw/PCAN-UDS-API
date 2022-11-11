@@ -2085,24 +2085,56 @@ namespace Peak.Can.Uds
         #region UDS Service: DiagnosticSessionControl
 
         // ISO-14229-1:2013 §9.2.2.2 p.39
-        public enum uds_svc_param_dsc : Byte
+        public enum UDS_SERVICE_DSC : Byte
         {
             /// <summary>
             /// Default Session
             /// </summary>
-            PUDS_SVC_PARAM_DSC_DS = 0x01,
+            DEFAULT_SESSION = 0x01,
             /// <summary>
             /// ECU Programming Session
             /// </summary>
-            PUDS_SVC_PARAM_DSC_ECUPS = 0x02,
+            ECU_PROGRAMMING_SESSION = 0x02,
             /// <summary>
             /// ECU Extended Diagnostic Session
             /// </summary>
-            PUDS_SVC_PARAM_DSC_ECUEDS = 0x03,
+            ECU_EXTENDED_DIAGNOSTIC_SESSION = 0x03,
             /// <summary>
             /// Safety System Diagnostic Session
             /// </summary>
-            PUDS_SVC_PARAM_DSC_SSDS = 0x04
+            SAFETY_SYSTEM_DIAGNOSTIC_SESSION = 0x04
+        }
+
+        public enum UDS_ACCESS_LEVEL : Byte
+        {
+            /// <summary>
+            /// Demo level
+            /// </summary>
+            DEMO = 0x01,
+            /// <summary>
+            /// Adjust 0 level
+            /// </summary>
+            ADJUST0 = 0x03,
+            /// <summary>
+            /// Adjust 1 level
+            /// </summary>
+            ADJUST1 = 0x05,
+            /// <summary>
+            /// Adjust 2 level
+            /// </summary>
+            ADJUST2 = 0x07,
+            /// <summary>
+            /// Adjust 3 level
+            /// </summary>
+            ADJUST3 = 0x09,
+            /// <summary>
+            /// Adjust 4 level
+            /// </summary>
+            ADJUST4 = 0x0B,
+            /// <summary>
+            /// Developer level
+            /// </summary>
+            DEVELOPER = 0x0D
         }
 
         /// <summary>
@@ -2120,7 +2152,7 @@ namespace Peak.Can.Uds
             UdsMessageConfig request_config,
             out UdsMessage out_msg_request,
             [MarshalAs(UnmanagedType.U1)]
-            uds_svc_param_dsc session_type);
+            UDS_SERVICE_DSC session_type);
 
         #endregion
 
@@ -2131,23 +2163,23 @@ namespace Peak.Can.Uds
             /// <summary>
             /// Hard Reset
             /// </summary>
-            PUDS_SVC_PARAM_ER_HR = 0x01,
+            HARD_RESET = 0x01,
             /// <summary>
             /// Key Off on Reset
             /// </summary>
-            PUDS_SVC_PARAM_ER_KOFFONR = 0x02,
+            KEY_OFF_ON_RESET = 0x02,
             /// <summary>
             /// Soft Reset
             /// </summary>
-            PUDS_SVC_PARAM_ER_SR = 0x03,
+            SOFT_RESET = 0x03,
             /// <summary>
             /// Enable Rapid Power Shutdown
             /// </summary>
-            PUDS_SVC_PARAM_ER_ERPSD = 0x04,
+            EN_RAPID_POWER_SHUTDOWN = 0x04,
             /// <summary>
             /// Disable Rapid Power Shutdown
             /// </summary>
-            PUDS_SVC_PARAM_ER_DRPSD = 0x05,
+            DIS_RAPID_POWER_SHUTDOWN = 0x05
         }
         /// <summary>
         /// The ECUReset service is used by the client to request a server reset.

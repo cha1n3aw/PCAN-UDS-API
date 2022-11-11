@@ -31,20 +31,64 @@ namespace PCAN_UDS_TEST.DST_CAN
         }
         private void DebugComReceiveMessage(List<byte> comMessage)
         {
-            foreach (byte b in comMessage) Console.Write($"{b:X2} ");
-            Console.WriteLine();
+			if (comMessage[2] == 0x18 && comMessage[3] == 0xDA && comMessage[4] == 0xFA && comMessage[5] == 0x03)
+            {
+				Console.Write("CAN MESSAGE RECEIVED: ");
+				foreach (byte b in comMessage) Console.Write($"{b:X2} ");
+				Console.WriteLine();
+			}
         }
 
         private void ReceiveComMessage()
         {
-            while (run)
+            List<byte> redundantBytes = new();
+			while (run)
             {
                 if (serialPort.IsOpen && serialPort.BytesToRead > 0)
                 {
-                    List<byte> comMessage = new();
-                    while (serialPort.BytesToRead > 0) comMessage.Add((byte)serialPort.ReadByte());
-                    if (comMessage[^1] == CalculateCrc8(comMessage.Skip(1).Take(comMessage.Count - 2).ToArray())) _comMessageReceived?.Invoke(comMessage);
-                    Thread.Sleep(1);
+                    int bytesToRead = serialPort.BytesToRead;
+                    //Console.WriteLine($"Receive COM message: {bytesToRead} bytes");
+					List<byte> comBuffer = redundantBytes.ToList();
+					//Console.WriteLine($"REDUNDANT BYTES SIZE {redundantBytes.Count}");
+					redundantBytes.Clear();
+
+					byte[] byteArray = new byte[bytesToRead];
+                    serialPort.Read(byteArray, 0, bytesToRead);
+					comBuffer.AddRange(byteArray.ToList());
+					//Console.WriteLine("COM BUFFER: ");
+					//foreach (byte b in comBuffer) Console.Write($"{b:X2} ");
+					//Console.WriteLine();
+					//if ()
+					//Console.WriteLine("COM BUFFER: ");
+					//               foreach (byte b in comBuffer) Console.Write($"{b:X2} ");
+					//               Console.WriteLine();
+					int y = 0;
+                    while (y < comBuffer.Count)
+                    {
+                        List<byte> comMessage = new();
+                        while (comBuffer[y++] != 0x24 && y < comBuffer.Count);
+                        if (y >= comBuffer.Count)
+                        {
+							redundantBytes.Clear();
+							//Console.WriteLine($"COM BUFFER 1 SIZE {comBuffer.Count}");
+							redundantBytes.Add(comBuffer[y - 1]);
+							break;
+                        }
+                        int packetStartIndex = --y;
+                        int canPacketSize;
+                        if (comBuffer[y + 1] >> 4 == 0x00) canPacketSize = (comBuffer[y + 1] & 0x0F) + 4;
+                        else canPacketSize = (comBuffer[y + 1] & 0x0F) + 6; //do not jump to 1st address byte because crc requires byteArray [1]..[^1]
+                        if (packetStartIndex + canPacketSize + 1 > comBuffer.Count)
+                        {
+                            redundantBytes.Clear();
+							//Console.WriteLine($"COM BUFFER 2 SIZE {comBuffer.Count}");
+							redundantBytes.AddRange(comBuffer.Skip(packetStartIndex).Take(14));
+							break;
+                        }
+                        for (; y < packetStartIndex + canPacketSize; y++) comMessage.Add(comBuffer[y]);
+                        if (comBuffer[y++] == CalculateCrc8(comMessage.Skip(1).ToArray())) _comMessageReceived?.Invoke(comMessage.ToList());
+                        else y = packetStartIndex + 1;
+                    }
                 }
             }
         }
@@ -91,7 +135,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     run = true;
                     serialPort = new() { PortName = portName, BaudRate = 115200, Parity = Parity.None, DataBits = 8, StopBits = StopBits.One, ReadTimeout = 500, WriteTimeout = 500 };
                     serialPort.Open();
-                    //ComMessageReceived += DebugComReceiveMessage;
+                    ComMessageReceived += DebugComReceiveMessage;
                     receiveThread = new Thread(() => { ReceiveComMessage(); });
                     receiveThread.Start();
                     return true;
@@ -106,7 +150,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 run = false;
-                //ComMessageReceived -= DebugComReceiveMessage;
+                ComMessageReceived -= DebugComReceiveMessage;
                 if (serialPort.IsOpen)
                 {
                     while (receiveThread.ThreadState != ThreadState.Stopped) ;

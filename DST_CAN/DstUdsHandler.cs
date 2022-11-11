@@ -66,14 +66,14 @@
                         _udsMessageReceived?.Invoke(udsMessage);
                         udsMessage = new() { Data = new(), SID = 0, Size = 0, Address = 0 };
                     }
-                    else
+                    else if (canMessage.Data[i] == 0x10)
                     {
                         i++; //skip counter 0x10
                         udsMessage.Address = canMessage.Address;
                         udsMessage.Size = canMessage.Data[i++];
                         udsMessage.SID = canMessage.Data[i++];
                         for (; i < canMessage.Size; i++) udsMessage.Data.Add(canMessage.Data[i]);
-                        canHandler.SendCanMessage(new DstCanMessage() { Address = sourceAddress, Data = new List<byte>() { 0x30, 0x0A, 0x0A } });
+                        canHandler.SendCanMessage(new DstCanMessage() { Address = sourceAddress, Data = new List<byte>() { 0x30, 0xFF, 0x00 } });
                     }
                 }
                 else
@@ -142,6 +142,7 @@
                             tempByteList.Clear();
                         }
                         if (!canHandler.SendCanMessage(new DstCanMessage() { Data = buffer, Address = udsMessage.Address })) return false;
+                        else Thread.Sleep(2);
                     }
                 }
                 return true;
