@@ -37,15 +37,17 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         private void ReceiveComMessage()
         {
-            while (run)
+			while (run) //цикл останавливается
             {
                 if (serialPort.IsOpen && serialPort.BytesToRead > 0)
                 {
-                    List<byte> comMessage = new();
+					Console.WriteLine($"qwe {serialPort.IsOpen} {serialPort.BytesToRead}");
+					List<byte> comMessage = new();
                     while (serialPort.BytesToRead > 0) comMessage.Add((byte)serialPort.ReadByte());
                     if (comMessage[^1] == CalculateCrc8(comMessage.Skip(1).Take(comMessage.Count - 2).ToArray())) _comMessageReceived?.Invoke(comMessage);
                     Thread.Sleep(1);
                 }
+                //else Console.WriteLine($"asd {serialPort.IsOpen}");
             }
         }
 
@@ -91,7 +93,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     run = true;
                     serialPort = new() { PortName = portName, BaudRate = 115200, Parity = Parity.None, DataBits = 8, StopBits = StopBits.One, ReadTimeout = 500, WriteTimeout = 500 };
                     serialPort.Open();
-                    //ComMessageReceived += DebugComReceiveMessage;
+                    ComMessageReceived += DebugComReceiveMessage;
                     receiveThread = new Thread(() => { ReceiveComMessage(); });
                     receiveThread.Start();
                     return true;
@@ -106,7 +108,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 run = false;
-                //ComMessageReceived -= DebugComReceiveMessage;
+                ComMessageReceived -= DebugComReceiveMessage;
                 if (serialPort.IsOpen)
                 {
                     while (receiveThread.ThreadState != ThreadState.Stopped) ;
