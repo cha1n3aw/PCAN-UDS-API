@@ -31,6 +31,7 @@ namespace PCAN_UDS_TEST.DST_CAN
         }
         private void DebugComReceiveMessage(List<byte> comMessage)
         {
+            Console.Write("CAN MESSAGE RECEIVED: ");
             foreach (byte b in comMessage) Console.Write($"{b:X2} ");
             Console.WriteLine();
         }
@@ -41,20 +42,27 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 if (serialPort.IsOpen && serialPort.BytesToRead > 0)
                 {
-					Console.WriteLine($"qwe {serialPort.IsOpen} {serialPort.BytesToRead}");
-					List<byte> comBuffer = new();
+
                     int bytesToRead = serialPort.BytesToRead;
-                    for (int i = 0; i < bytesToRead; i++) comBuffer.Add((byte)serialPort.ReadByte());
-
+                    Console.WriteLine($"Receive COM message: {bytesToRead} bytes");
+					List<byte> comBuffer = new();
+                    byte[] byteArray = new byte[bytesToRead];
+                    serialPort.Read(byteArray, 0, bytesToRead);
+                    comBuffer = byteArray.ToList();
+                    //for (int i = 0; i < bytesToRead; i++) comBuffer.Add((byte)serialPort.ReadByte());
                     int y = 0;
-                    while (comBuffer[y] != 0x24) y++;
-                    int size = comBuffer[y] & 0x0F
-
-                    foreach (byte b in comBuffer) Console.Write($"{b:X2} ");
-                    Console.WriteLine();
-					//while (serialPort.BytesToRead > 0) comMessage.Add((byte)serialPort.ReadByte());
-					if (comBuffer[^1] == CalculateCrc8(comBuffer.Skip(1).Take(comBuffer.Count - 2).ToArray())) _comMessageReceived?.Invoke(comBuffer);
-                    //Thread.Sleep(1);
+                    while (y < comBuffer.Count)
+                    {
+                        List<byte> comMessage = new();
+                        while (comBuffer[y++] != 0x24);
+                        int packetStartIndex = --y;
+                        int canPacketSize;
+                        if (comBuffer[y + 1] >> 4 == 0x00) canPacketSize = (comBuffer[y + 1] & 0x0F) + 4;
+                        else canPacketSize = (comBuffer[y + 1] & 0x0F) + 6; //do not jump to 1st address byte because crc requires byteArray [1]..[^1]
+                        for (; y < packetStartIndex + canPacketSize; y++) comMessage.Add(comBuffer[y]);
+                        if (comBuffer[y++] == CalculateCrc8(comMessage.Skip(1).ToArray())) _comMessageReceived?.Invoke(comMessage.ToList());
+                        else y = packetStartIndex + 1;
+                    }
                 }
             }
         }
