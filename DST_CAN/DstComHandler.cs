@@ -42,7 +42,6 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 if (serialPort.IsOpen && serialPort.BytesToRead > 0)
                 {
-
                     int bytesToRead = serialPort.BytesToRead;
                     Console.WriteLine($"Receive COM message: {bytesToRead} bytes");
 					List<byte> comBuffer = new();
