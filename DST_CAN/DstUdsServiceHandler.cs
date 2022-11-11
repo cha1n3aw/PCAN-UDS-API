@@ -32,7 +32,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                 if (!SendDiagnosticSessionControl(sessionType)
                 || !SendSecurityAccess(accessLevel, out List<byte> seed)
                 || !SendSecurityAccessWithData((byte)(accessLevel + 1), new SecurityAccess().GetKey(seed.ToArray(), (byte)accessLevel).ToList())) return false;
-                else testerPresentThread.Start();
+                //else testerPresentThread.Start();
                 return true;
             }
             catch (Exception) { return false; }
