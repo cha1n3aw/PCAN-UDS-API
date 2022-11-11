@@ -37,17 +37,25 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         private void ReceiveComMessage()
         {
-			while (run) //цикл останавливается
+			while (run)
             {
                 if (serialPort.IsOpen && serialPort.BytesToRead > 0)
                 {
 					Console.WriteLine($"qwe {serialPort.IsOpen} {serialPort.BytesToRead}");
-					List<byte> comMessage = new();
-                    while (serialPort.BytesToRead > 0) comMessage.Add((byte)serialPort.ReadByte());
-                    if (comMessage[^1] == CalculateCrc8(comMessage.Skip(1).Take(comMessage.Count - 2).ToArray())) _comMessageReceived?.Invoke(comMessage);
-                    Thread.Sleep(1);
+					List<byte> comBuffer = new();
+                    int bytesToRead = serialPort.BytesToRead;
+                    for (int i = 0; i < bytesToRead; i++) comBuffer.Add((byte)serialPort.ReadByte());
+
+                    int y = 0;
+                    while (comBuffer[y] != 0x24) y++;
+                    int size = comBuffer[y] & 0x0F
+
+                    foreach (byte b in comBuffer) Console.Write($"{b:X2} ");
+                    Console.WriteLine();
+					//while (serialPort.BytesToRead > 0) comMessage.Add((byte)serialPort.ReadByte());
+					if (comBuffer[^1] == CalculateCrc8(comBuffer.Skip(1).Take(comBuffer.Count - 2).ToArray())) _comMessageReceived?.Invoke(comBuffer);
+                    //Thread.Sleep(1);
                 }
-                //else Console.WriteLine($"asd {serialPort.IsOpen}");
             }
         }
 

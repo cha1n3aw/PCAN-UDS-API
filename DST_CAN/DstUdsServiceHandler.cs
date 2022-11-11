@@ -32,14 +32,14 @@ namespace PCAN_UDS_TEST.DST_CAN
                 if (!SendDiagnosticSessionControl(sessionType)
                 || !SendSecurityAccess(accessLevel, out List<byte> seed)
                 || !SendSecurityAccessWithData((byte)(accessLevel + 1), new SecurityAccess().GetKey(seed.ToArray(), (byte)accessLevel).ToList())) return false;
-                else testerPresentThread.Start();
+                //else testerPresentThread.Start();
                 return true;
             }
             catch (Exception) { return false; }
         }
 
         #region UdsServiceWrappers
-        public bool UdsEcuReset(UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
+        public bool ResetECU(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
         {
             try
             {
@@ -537,7 +537,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             else return false;
         }
 
-        private bool SendEcuReset(UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
+        private bool SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
         {
             Console.Write("ECU Reset pending: ");
             while (_servicePending) Thread.Sleep(1);

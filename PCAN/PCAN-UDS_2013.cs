@@ -2163,23 +2163,23 @@ namespace Peak.Can.Uds
             /// <summary>
             /// Hard Reset
             /// </summary>
-            PUDS_SVC_PARAM_ER_HR = 0x01,
+            HARD_RESET = 0x01,
             /// <summary>
             /// Key Off on Reset
             /// </summary>
-            PUDS_SVC_PARAM_ER_KOFFONR = 0x02,
+            KEY_OFF_ON_RESET = 0x02,
             /// <summary>
             /// Soft Reset
             /// </summary>
-            PUDS_SVC_PARAM_ER_SR = 0x03,
+            SOFT_RESET = 0x03,
             /// <summary>
             /// Enable Rapid Power Shutdown
             /// </summary>
-            PUDS_SVC_PARAM_ER_ERPSD = 0x04,
+            EN_RAPID_POWER_SHUTDOWN = 0x04,
             /// <summary>
             /// Disable Rapid Power Shutdown
             /// </summary>
-            PUDS_SVC_PARAM_ER_DRPSD = 0x05,
+            DIS_RAPID_POWER_SHUTDOWN = 0x05
         }
         /// <summary>
         /// The ECUReset service is used by the client to request a server reset.

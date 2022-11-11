@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using static PCAN_UDS_TEST.DST_CAN.DstUdsServiceHandler;
 using static Peak.Can.Uds.UDSApi;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
-using UDS_SERVICE_PARAMETER_ECU_RESET = PCAN_UDS_TEST.DST_CAN.DstUdsServiceHandler.UDS_SERVICE_PARAMETER_ECU_RESET;
 
 namespace PCAN_UDS_TEST
 {
@@ -147,7 +146,7 @@ namespace PCAN_UDS_TEST
 
         static void SoftResetECU(PCANBodasServiceHandler serviceHandler)
         {
-            serviceHandler.SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.PUDS_SVC_PARAM_ER_SR);
+            serviceHandler.SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.SOFT_RESET);
         }
 
         static void DiagnosticSessionControl(PCANBodasServiceHandler serviceHandler, UDSApi.UDS_SERVICE_DSC sessionType)
@@ -225,10 +224,10 @@ namespace PCAN_UDS_TEST
                 new MenuParameterMapping { menuNumber = 1, parameterNumber = 1 }
             };
 
-
             DstInitialize();
             DstUdsServiceHandler udsServiceHandler = new(dstUdsHandler);
             udsServiceHandler.Authenticate(UDS_SERVICE_DSC.ECU_EXTENDED_DIAGNOSTIC_SESSION, UDS_ACCESS_LEVEL.DEVELOPER);
+            udsServiceHandler.ResetECU(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.SOFT_RESET);
             //udsServiceHandler.UdsGetErrorsList(0x02, 0x01, out byte[] activeErrorsResponse);
             //Console.WriteLine("Errors:");
             //foreach (byte b in activeErrorsResponse) Console.Write($"{b:X2} ");
