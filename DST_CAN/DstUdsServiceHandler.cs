@@ -112,7 +112,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             menuList = new();
             try
             {
-                int i = 3;
+                int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2200 }, out byte[] dataArray);
                 byte numberOfMenus = dataArray[i++];
                 for (; ; i++)
@@ -354,7 +354,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             errorList = new();
             try
             {
-                int i = 3;
+                int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2404 }, out byte[] dataArray);
                 byte numberOfErrors = dataArray[i++];
                 for (; ; i++)
@@ -387,7 +387,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             errorList = new();
             try
             {
-                int i = 3;
+                int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2405 }, out byte[] dataArray);
                 byte numberOfErrors = dataArray[i++];
                 for (; ; i++)

@@ -237,7 +237,7 @@ namespace PCAN_UDS_TEST
             //udsServiceHandler.UdsGetSavedErrors(out List<Error> savedErrorList);
             //foreach (Error err in savedErrorList) Console.WriteLine($"{err.description}");
 
-            //udsServiceHandler.UdsGetParameterMenus(out Dictionary<byte, string> menuList);
+            udsServiceHandler.UdsGetParameterMenus(out Dictionary<byte, string> menuList);
             //foreach (KeyValuePair<byte, string> menu in menuList) Console.WriteLine($"{menu.Key} - {menu.Value}");
             //udsServiceHandler.UdsGetParameterSubmenus(0x00, out Dictionary<byte, string> subMenuList);
             //foreach (KeyValuePair<byte, string> subMenu in subMenuList) Console.WriteLine($"{subMenu.Key} - {subMenu.Value}");
