@@ -125,7 +125,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2200 }, out dataArray);
-                        i = 3;
+                        i = 2;
                     }
                 }
                 return true;
@@ -141,7 +141,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             submenuList = new();
             try
             {
-                int i = 3;
+                int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) }, out byte[] dataArray);
                 byte numberOfSubmenus = dataArray[i++];
                 if (dataArray.Length < 5) return true;
@@ -155,7 +155,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) }, out dataArray);
-                        i = 3;
+                        i = 2;
                     }
                 }
                 return true;
@@ -242,7 +242,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             parameterList = new();
             try
             {
-                int i = 3;
+                int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)((menuAddress << 7) + (subMenuAddress << 4) + parameterAddress) }, out byte[] dataArray);
                 byte numberOfParameters = dataArray[i++];
                 if (dataArray.Length < 5) return true;
@@ -278,7 +278,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                         //Console.WriteLine($"{(menuAddress << 7) + (subMenuAddress << 4) + parameterAddress:X4}");
                         //foreach (byte b in dataArray) Console.Write($"{b:X2} ");
                         //Console.WriteLine();
-                        i = 3;
+                        i = 2;
                     }
                 }
                 return true;
@@ -382,7 +382,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             }
         }
 
-        public bool UdsGetActiveErrors(out List<Error> errorList)
+        public bool UdsGetActiveErrors(out Dictionary<byte, Error> errorList)
         {
             errorList = new();
             try
@@ -399,12 +399,13 @@ namespace PCAN_UDS_TEST.DST_CAN
                     uint timestamp = (uint)((dataArray[i++] << 24) + (dataArray[i++] << 16) + (dataArray[i++] << 8) + dataArray[i++]);
                     string description = string.Empty;
                     while (dataArray[i] != 0x00) description += (char)dataArray[i++];
-                    errorList.Add(new Error() { errorCode = code, occurence = occurence, parameter = parameter, description = description, timestamp = timestamp });
+                    if (description == string.Empty) description = "No description available";
+                    errorList.Add(address, new Error() { errorCode = code, occurence = occurence, parameter = parameter, description = description, timestamp = timestamp });
                     if (errorList.Count == numberOfErrors) break;
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2405 }, out dataArray);
-                        i = 3;
+                        i = 2;
                     }
                 }
                 return true;

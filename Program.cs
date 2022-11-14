@@ -227,23 +227,32 @@ namespace PCAN_UDS_TEST
             DstInitialize();
             DstUdsServiceHandler udsServiceHandler = new(dstUdsHandler);
             udsServiceHandler.Authenticate(UDS_SERVICE_DSC.ECU_EXTENDED_DIAGNOSTIC_SESSION, UDS_ACCESS_LEVEL.DEVELOPER);
-            //udsServiceHandler.ResetECU(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.SOFT_RESET);
-            //udsServiceHandler.UdsGetErrorsList(0x02, UDSApi.UDS_SERVICE_ERRORS_TYPE.ACTIVE_ERRORS, out List<byte> activeErrorsResponse);
-            //foreach (byte b in activeErrorsResponse) Console.Write($"{b:X2} ");
+			//udsServiceHandler.ResetECU(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.SOFT_RESET);
 
-            //udsServiceHandler.UdsGetActiveErrors(out List<Error> activeErrorList);
-            //foreach (Error err in activeErrorList) Console.WriteLine($"{err.description}");
 
-            //udsServiceHandler.UdsGetSavedErrors(out List<Error> savedErrorList);
-            //foreach (Error err in savedErrorList) Console.WriteLine($"{err.description}");
+			//udsServiceHandler.UdsGetErrorsList(0x02, UDSApi.UDS_SERVICE_ERRORS_TYPE.ACTIVE_ERRORS, out List<byte> activeErrorsResponse);
+			//foreach (byte b in activeErrorsResponse) Console.Write($"{b:X2} ");
 
+			//udsServiceHandler.UdsGetActiveErrors(out Dictionary<byte, Error> activeErrorList);
+			//foreach (var err in activeErrorList) Console.WriteLine($"{err.Key} - {err.Value.description}");
+
+			udsServiceHandler.UdsGetSavedErrors(out List<Error> savedErrorList);
+            foreach (Error err in savedErrorList) Console.WriteLine($"{err.description}");
+
+			/* DONE, TESTED
+			udsServiceHandler.ResetECU(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.SOFT_RESET);
+			
             udsServiceHandler.UdsGetParameterMenus(out Dictionary<byte, string> menuList);
-            //foreach (KeyValuePair<byte, string> menu in menuList) Console.WriteLine($"{menu.Key} - {menu.Value}");
-            //udsServiceHandler.UdsGetParameterSubmenus(0x00, out Dictionary<byte, string> subMenuList);
-            //foreach (KeyValuePair<byte, string> subMenu in subMenuList) Console.WriteLine($"{subMenu.Key} - {subMenu.Value}");
+            foreach (KeyValuePair<byte, string> menu in menuList) Console.WriteLine($"{menu.Key} - {menu.Value}");
 
-            //udsServiceHandler.UdsGetParameters(0x00, 0x00, 0x00, out Dictionary<byte, Data> parameterList);
-            //foreach (KeyValuePair<byte, Data> parameter in parameterList) Console.WriteLine($"{parameter.Key} - {parameter.Value.name}");
+            udsServiceHandler.UdsGetParameterSubmenus(0x00, out Dictionary<byte, string> subMenuList);
+            foreach (KeyValuePair<byte, string> subMenu in subMenuList) Console.WriteLine($"{subMenu.Key} - {subMenu.Value}");
+
+			udsServiceHandler.UdsGetParameters(0x00, 0x00, 0x08, out Dictionary<byte, Data> parameterList);
+            foreach (KeyValuePair<byte, Data> parameter in parameterList) Console.WriteLine($"{parameter.Key} - {parameter.Value.name}");
+            */
+
+
 
 
 
@@ -254,8 +263,8 @@ namespace PCAN_UDS_TEST
 			//         udsServiceHandler.UdsGetUnitcodes;
 
 
-			udsServiceHandler.UdsGetUnitcodes(out Dictionary<byte, string> units);
-			foreach (KeyValuePair<byte, string> kv in units) Console.Write($"{kv.Key} {kv.Value}");
+			//udsServiceHandler.UdsGetUnitcodes(out Dictionary<byte, string> units);
+			//foreach (KeyValuePair<byte, string> kv in units) Console.Write($"{kv.Key} {kv.Value}");
 
 
 
