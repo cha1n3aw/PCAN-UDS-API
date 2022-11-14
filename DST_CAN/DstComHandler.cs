@@ -12,12 +12,12 @@ namespace PCAN_UDS_TEST.DST_CAN
             add
             {
                 _comMessageReceived += value;
-                Console.WriteLine($"{value.Method.Name} subscribed to comMessageHandler");
+                //Console.WriteLine($"{value.Method.Name} subscribed to comMessageHandler");
             }
             remove
             {
                 _comMessageReceived -= value;
-                Console.WriteLine($"{value.Method.Name} unsubscribed from comMessageHandler");
+                //Console.WriteLine($"{value.Method.Name} unsubscribed from comMessageHandler");
             }
         }
         private SerialPort serialPort = new();
@@ -31,9 +31,12 @@ namespace PCAN_UDS_TEST.DST_CAN
         }
         private void DebugComReceiveMessage(List<byte> comMessage)
         {
-			Console.Write("CAN MESSAGE RECEIVED: ");
-			foreach (byte b in comMessage) Console.Write($"{b:X2} ");
-			Console.WriteLine();
+            if (comMessage[2] == 0x18 && comMessage[3] == 0xDA && comMessage[4] == 0xFA && comMessage[5] == 0x03)
+            {
+				Console.Write("CAN MESSAGE RECEIVED: ");
+				foreach (byte b in comMessage) Console.Write($"{b:X2} ");
+				Console.WriteLine();
+			}
         }
 
         private void ReceiveComMessage()
@@ -87,6 +90,9 @@ namespace PCAN_UDS_TEST.DST_CAN
                 dataToSend.Insert(0, 0x24);
                 dataToSend.Add(CalculateCrc8(dataToSend.Skip(1).ToArray()));
                 serialPort.Write(dataToSend.ToArray(), 0, dataToSend.Count);
+                Console.Write("CAN MESSAGE SENT: ");
+                foreach (byte b in dataToSend) Console.Write($"{b:X2} ");
+                Console.WriteLine();
                 return true;
             }
             catch(Exception) { return false; }
@@ -120,7 +126,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     run = true;
                     serialPort = new() { PortName = portName, BaudRate = 115200, Parity = Parity.None, DataBits = 8, StopBits = StopBits.One, ReadTimeout = 500, WriteTimeout = 500 };
                     serialPort.Open();
-                    //ComMessageReceived += DebugComReceiveMessage;
+                    ComMessageReceived += DebugComReceiveMessage;
                     receiveThread = new Thread(() => { ReceiveComMessage(); });
                     receiveThread.Start();
                     return true;

@@ -31,12 +31,12 @@
             add
             {
                 _udsMessageReceived += value;
-                Console.WriteLine($"{value.Method.Name} subscribed to udsMessageHandler");
+                //Console.WriteLine($"{value.Method.Name} subscribed to udsMessageHandler");
             }
             remove
             {
                 _udsMessageReceived -= value;
-                Console.WriteLine($"{value.Method.Name} unsubscribed from udsMessageHandler");
+                //Console.WriteLine($"{value.Method.Name} unsubscribed from udsMessageHandler");
             }
         }
 

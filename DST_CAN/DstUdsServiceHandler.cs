@@ -65,24 +65,18 @@ namespace PCAN_UDS_TEST.DST_CAN
             }
         }
 
-        public bool UdsGetErrorsList(byte dtcType, byte statusMask, out List<byte> response)
+        public bool UdsGetErrorsList(byte dtcType, UDSApi.UDS_SERVICE_ERRORS_TYPE statusMask, out List<byte> response)
         {
             response = new();
             try
             {
-                return SendReadDTCInformation(dtcType, statusMask, out response);
+                return SendReadDTCInformation(dtcType, (byte)statusMask, out response);
 			}
             catch (Exception)
             {
                 return false;
             }
         }
-
-        //public bool UdsSendDiagnosticSessionControl(UDSApi.UDS_SERVICE_DSC sessionType)
-        //{
-        //    SendDiagnosticSessionControl(sessionType);
-        //    return true;
-        //}
 
         public bool UdsSetSecurityAccessLevel(UDSApi.UDS_ACCESS_LEVEL accessLevel)
         {
@@ -280,10 +274,10 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)((menuAddress << 7) + (subMenuAddress << 4) + parameterAddress) }, out dataArray);
-                        Console.WriteLine($"{menuAddress} {subMenuAddress} {parameterAddress}");
-                        Console.WriteLine($"{(menuAddress << 7) + (subMenuAddress << 4) + parameterAddress:X4}");
-                        foreach (byte b in dataArray) Console.Write($"{b:X2} ");
-                        Console.WriteLine();
+                        //Console.WriteLine($"{menuAddress} {subMenuAddress} {parameterAddress}");
+                        //Console.WriteLine($"{(menuAddress << 7) + (subMenuAddress << 4) + parameterAddress:X4}");
+                        //foreach (byte b in dataArray) Console.Write($"{b:X2} ");
+                        //Console.WriteLine();
                         i = 3;
                     }
                 }
@@ -458,7 +452,7 @@ namespace PCAN_UDS_TEST.DST_CAN
 			while (true)
             {
 				Thread.Sleep(3000);
-				Console.WriteLine("TesterPresent executed: ");
+				Console.WriteLine("TesterPresent executed");
                 while (_servicePending) Thread.Sleep(10);
                 _servicePending = true;
                 udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x3E, Data = new() { 0x00 }, Address = udsHandler.sourceAddress });
@@ -477,7 +471,7 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         public bool SendDiagnosticSessionControl(UDSApi.UDS_SERVICE_DSC sessionType)
         {
-            Console.Write("DSC pending: ");
+            Console.WriteLine("DSC pending");
             while (_servicePending) Thread.Sleep(1);
             _servicePending = true;
             udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x10, Data = new() { (byte)sessionType }, Address = udsHandler.sourceAddress });
@@ -495,7 +489,7 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         private bool SendSecurityAccess(UDSApi.UDS_ACCESS_LEVEL securityAccessLevel, out List<byte> securitySeed)
         {
-            Console.Write("Security access pending: ");
+            Console.WriteLine("Security access pending");
             while (_servicePending) Thread.Sleep(1);
             _servicePending = true;
             securitySeed = new();
@@ -509,16 +503,16 @@ namespace PCAN_UDS_TEST.DST_CAN
                 return false;
             }
             securitySeed = dstUdsServiceResponseMessage.Data.Skip(1).ToList();
-            Console.Write("Received seed: ");
-            foreach (byte b in securitySeed) Console.Write($"{b:X2} ");
-            Console.WriteLine();
+            //Console.Write("Received seed: ");
+            //foreach (byte b in securitySeed) Console.Write($"{b:X2} ");
+            //Console.WriteLine();
             if (dstUdsServiceResponseMessage.SID == 0x67) return true;
             else return false;
         }
 
         private bool SendSecurityAccessWithData(byte securityAccessLevel, List<byte> securityAccessData)
         {
-            Console.Write("Security access w/data pending: ");
+            Console.WriteLine("Security access w/data pending");
             while (_servicePending) Thread.Sleep(1);
             _servicePending = true;
             List<byte> tempList = securityAccessData;
@@ -538,7 +532,7 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         private bool SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
         {
-            Console.Write("ECU Reset pending: ");
+            Console.WriteLine("ECU Reset pending");
             while (_servicePending) Thread.Sleep(1);
             _servicePending = true;
             udsHandler.SendUdsMessage(new DstUdsMessage { Size = 2, SID = 0x11, Data = new() { (byte)resetParameter }, Address = udsHandler.sourceAddress });
@@ -557,12 +551,16 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         private bool SendReadDataByIdentifier(DATA_IDENTIFIER[] dataIdentifiers, out byte[] outData)
         {
-            Console.Write("Read data service pending: ");
+            Console.WriteLine("Read data service pending");
             while (_servicePending) Thread.Sleep(1);
             _servicePending = true;
             outData = Array.Empty<byte>();
             List<byte> tempList = new();
-            foreach (DATA_IDENTIFIER d in dataIdentifiers) tempList.AddRange(BitConverter.GetBytes((ushort)d));
+            foreach (DATA_IDENTIFIER dataIdentifier in dataIdentifiers)
+            {
+                tempList.Add((byte)((ushort)dataIdentifier >> 8));
+                tempList.Add((byte)((ushort)dataIdentifier & 0xFF));
+            }
             udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x22, Data = tempList, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForService;
             bool? response = _responseFlag?.WaitOne(udsHandler.MaxWait);
@@ -579,7 +577,7 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         private bool SendWriteDataByIdentifier(DATA_IDENTIFIER dataIdentifier, byte[] value)
         {
-            Console.Write("Write data service pending: ");
+            Console.WriteLine("Write data service pending");
             List<byte> tempList = new() { (byte)(((ushort) dataIdentifier) >> 8), (byte)(((ushort)dataIdentifier) & 0xFF) };
             tempList.AddRange(value);
             udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x2E, Data = tempList, Address = udsHandler.sourceAddress });
@@ -596,7 +594,7 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         private bool SendReadMemoryByAddress(byte[] memoryAddressBuffer, byte[] memorySizeBuffer)
         {
-            Console.Write("Write data service pending: ");
+            Console.WriteLine("Write data service pending");
             List<byte> tempList = new();
             tempList.AddRange(memoryAddressBuffer);
             tempList.AddRange(memorySizeBuffer);
@@ -614,7 +612,7 @@ namespace PCAN_UDS_TEST.DST_CAN
 
         private bool SendWriteMemoryByAddress()
         {
-            Console.Write("Write data service pending: ");
+            Console.WriteLine("Write data service pending");
             List<byte> tempList = new();
             udsHandler.SendUdsMessage(new DstUdsMessage { Size = (byte)(tempList.Count + 1), SID = 0x3D, Data = tempList, Address = udsHandler.sourceAddress });
             udsHandler.UdsMessageReceived += WaitForService;
@@ -631,7 +629,7 @@ namespace PCAN_UDS_TEST.DST_CAN
         private bool SendReadDTCInformation(byte readInformationType, byte dtcStatusMask, out List<byte> arrayResponse)
         {
 			arrayResponse = new();
-            Console.Write("Read DTC service pending: ");
+            Console.WriteLine("Read DTC service pending");
             while (_servicePending) Thread.Sleep(1);
 			_servicePending = true;
 			udsHandler.SendUdsMessage(new DstUdsMessage { Size = 3, SID = 0x19, Data = new() { readInformationType, dtcStatusMask }, Address = udsHandler.sourceAddress });
