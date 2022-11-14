@@ -229,16 +229,6 @@ namespace PCAN_UDS_TEST
             udsServiceHandler.Authenticate(UDS_SERVICE_DSC.ECU_EXTENDED_DIAGNOSTIC_SESSION, UDS_ACCESS_LEVEL.DEVELOPER);
 			//udsServiceHandler.ResetECU(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.SOFT_RESET);
 
-
-			//udsServiceHandler.UdsGetErrorsList(0x02, UDSApi.UDS_SERVICE_ERRORS_TYPE.ACTIVE_ERRORS, out List<byte> activeErrorsResponse);
-			//foreach (byte b in activeErrorsResponse) Console.Write($"{b:X2} ");
-
-			//udsServiceHandler.UdsGetActiveErrors(out Dictionary<byte, Error> activeErrorList);
-			//foreach (var err in activeErrorList) Console.WriteLine($"{err.Key} - {err.Value.description}");
-
-			udsServiceHandler.UdsGetSavedErrors(out List<Error> savedErrorList);
-            foreach (Error err in savedErrorList) Console.WriteLine($"{err.description}");
-
 			/* DONE, TESTED
 			udsServiceHandler.ResetECU(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.SOFT_RESET);
 			
@@ -250,6 +240,15 @@ namespace PCAN_UDS_TEST
 
 			udsServiceHandler.UdsGetParameters(0x00, 0x00, 0x08, out Dictionary<byte, Data> parameterList);
             foreach (KeyValuePair<byte, Data> parameter in parameterList) Console.WriteLine($"{parameter.Key} - {parameter.Value.name}");
+
+            udsServiceHandler.UdsGetActiveErrors(out Dictionary<byte, Error> activeErrorList);
+            foreach (var err in activeErrorList) Console.WriteLine($"{err.Key} - {err.Value.description}");
+
+            udsServiceHandler.UdsGetSavedErrors(out Dictionary<byte, Error> savedErrorList);
+			foreach (var err in savedErrorList) Console.WriteLine($"{err.Key} - {err.Value.description}");
+
+            udsServiceHandler.UdsGetUnitcodes(out Dictionary<byte, string> units);
+            foreach (KeyValuePair<byte, string> kv in units) Console.WriteLine($"{kv.Key} - {kv.Value}");
             */
 
 
@@ -259,12 +258,12 @@ namespace PCAN_UDS_TEST
 			//         udsServiceHandler.UdsGetProcessDataGroups;
 			//         udsServiceHandler.UdsGetProcessData;
 
-			//         udsServiceHandler.UdsGetListDescriptions;
-			//         udsServiceHandler.UdsGetUnitcodes;
+			udsServiceHandler.UdsGetListDescriptions(out List<ListEntry> listDesriptions);
+            foreach (var desc in listDesriptions)
+                foreach (var entry in desc.listEntries)
+                    Console.WriteLine($"{entry.Key} - {entry.Value}");
 
 
-			//udsServiceHandler.UdsGetUnitcodes(out Dictionary<byte, string> units);
-			//foreach (KeyValuePair<byte, string> kv in units) Console.Write($"{kv.Key} {kv.Value}");
 
 
 
