@@ -6,14 +6,6 @@ using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIE
 
 namespace PCAN_UDS_TEST.PCAN
 {
-    #region Structs
-    public struct ListEntry
-    {
-        public byte address;
-        public Dictionary<byte, string> listEntries;
-    }
-    #endregion
-
     public class PcanUdsServiceHandler
     {
         #region GlobalParameters
@@ -194,7 +186,7 @@ namespace PCAN_UDS_TEST.PCAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1261 });
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2401 });
                 byte numberOfGroups = dataArray[i++];
                 for (; ; i++)
                 {
@@ -205,7 +197,7 @@ namespace PCAN_UDS_TEST.PCAN
                     if (groupList.Count == numberOfGroups) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1261 });
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2401 });
                         i = 3;
                     }
                 }
@@ -317,7 +309,7 @@ namespace PCAN_UDS_TEST.PCAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1262 });
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2402 });
                 byte numberOfUnitcodes = dataArray[i++];
                 for (; ; i++)
                 {
@@ -328,7 +320,7 @@ namespace PCAN_UDS_TEST.PCAN
                     if (unitcodesList.Count == numberOfUnitcodes) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1262 });
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2402 });
                         i = 3;
                     }
                 }
@@ -340,13 +332,13 @@ namespace PCAN_UDS_TEST.PCAN
             }
         }
 
-        public bool UdsGetListDescriptions(out List<ListEntry> listDescriptions)
+        public bool UdsGetListDescriptions(out Dictionary<byte, Dictionary<byte, string>> listDescriptions)
         {
             listDescriptions = new();
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1263 });
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2403 });
                 ushort numberOfListDescriptions = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
                 byte maxNumberOfListEntries = dataArray[i++];
                 for (; ; i++)
@@ -354,12 +346,12 @@ namespace PCAN_UDS_TEST.PCAN
                     ushort address = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
                     string listEntryString = string.Empty;
                     while (dataArray[i] != 0x00) listEntryString += (char)dataArray[i++];
-                    if (listDescriptions.Any(x => x.address == address / maxNumberOfListEntries)) listDescriptions.First(x => x.address == address / maxNumberOfListEntries).listEntries.Add((byte)(address % maxNumberOfListEntries), listEntryString);
-                    else listDescriptions.Add(new ListEntry() { address = (byte)(address / maxNumberOfListEntries), listEntries = new Dictionary<byte, string>(new[] { new KeyValuePair<byte, string>((byte)(address % maxNumberOfListEntries), listEntryString) }) });
-                    if (listDescriptions.Count == numberOfListDescriptions / maxNumberOfListEntries) break;
+                    if (!listDescriptions.Any(x => x.Key == address / maxNumberOfListEntries)) listDescriptions.Add((byte)(address / maxNumberOfListEntries), new Dictionary<byte, string>(new[] { new KeyValuePair<byte, string>((byte)(address % maxNumberOfListEntries), listEntryString) }));
+                    else listDescriptions.First(x => x.Key == address / maxNumberOfListEntries).Value.Add((byte)(address % maxNumberOfListEntries), listEntryString);
+                    if (listDescriptions.Values.SelectMany(x => x).Distinct().Count() == numberOfListDescriptions) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1263 });
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2403 });
                         i = 5;
                     }
                 }
@@ -377,7 +369,7 @@ namespace PCAN_UDS_TEST.PCAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2404 });
                 byte numberOfErrors = dataArray[i++];
                 for (; ; i++)
                 {
@@ -392,7 +384,7 @@ namespace PCAN_UDS_TEST.PCAN
                     if (errorList.Count == numberOfErrors) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2404 });
                         i = 3;
                     }
                 }
@@ -410,7 +402,7 @@ namespace PCAN_UDS_TEST.PCAN
             try
             {
                 int i = 3;
-                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                byte[] dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2405 });
                 byte numberOfErrors = dataArray[i++];
                 for (; ; i++)
                 {
@@ -425,7 +417,7 @@ namespace PCAN_UDS_TEST.PCAN
                     if (errorList.Count == numberOfErrors) break;
                     if (i == dataArray.Length - 1)
                     {
-                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1264 });
+                        dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2405 });
                         i = 3;
                     }
                 }

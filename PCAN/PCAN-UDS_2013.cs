@@ -2158,6 +2158,18 @@ namespace Peak.Can.Uds
 
         #region UDS Service: ECU_Reset
         // ISO-14229-1:2013 §9.3.2.2 p.43
+        public enum UDS_SERVICE_ERRORS_TYPE : Byte
+        {
+            /// <summary>
+            /// Fetch saved errors
+            /// </summary>
+            SAVED_ERRORS = 0x08,
+            /// <summary>
+            /// Fetch active errors
+            /// </summary>
+            ACTIVE_ERRORS = 0x01
+        }
+
         public enum UDS_SERVICE_PARAMETER_ECU_RESET : Byte
         {
             /// <summary>

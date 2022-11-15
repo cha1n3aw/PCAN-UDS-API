@@ -12,12 +12,12 @@ namespace PCAN_UDS_TEST.DST_CAN
             add
             {
                 _comMessageReceived += value;
-                Console.WriteLine($"{value.Method.Name} subscribed to comMessageHandler");
+                //Console.WriteLine($"{value.Method.Name} subscribed to comMessageHandler");
             }
             remove
             {
                 _comMessageReceived -= value;
-                Console.WriteLine($"{value.Method.Name} unsubscribed from comMessageHandler");
+                //Console.WriteLine($"{value.Method.Name} unsubscribed from comMessageHandler");
             }
         }
         private SerialPort serialPort = new();
@@ -31,7 +31,7 @@ namespace PCAN_UDS_TEST.DST_CAN
         }
         private void DebugComReceiveMessage(List<byte> comMessage)
         {
-			if (comMessage[2] == 0x18 && comMessage[3] == 0xDA && comMessage[4] == 0xFA && comMessage[5] == 0x03)
+            if (comMessage[2] == 0x18 && comMessage[3] == 0xDA && comMessage[4] == 0xFA && comMessage[5] == 0x03)
             {
 				Console.Write("CAN MESSAGE RECEIVED: ");
 				foreach (byte b in comMessage) Console.Write($"{b:X2} ");
@@ -47,21 +47,11 @@ namespace PCAN_UDS_TEST.DST_CAN
                 if (serialPort.IsOpen && serialPort.BytesToRead > 0)
                 {
                     int bytesToRead = serialPort.BytesToRead;
-                    //Console.WriteLine($"Receive COM message: {bytesToRead} bytes");
 					List<byte> comBuffer = redundantBytes.ToList();
-					//Console.WriteLine($"REDUNDANT BYTES SIZE {redundantBytes.Count}");
 					redundantBytes.Clear();
-
 					byte[] byteArray = new byte[bytesToRead];
                     serialPort.Read(byteArray, 0, bytesToRead);
 					comBuffer.AddRange(byteArray.ToList());
-					//Console.WriteLine("COM BUFFER: ");
-					//foreach (byte b in comBuffer) Console.Write($"{b:X2} ");
-					//Console.WriteLine();
-					//if ()
-					//Console.WriteLine("COM BUFFER: ");
-					//               foreach (byte b in comBuffer) Console.Write($"{b:X2} ");
-					//               Console.WriteLine();
 					int y = 0;
                     while (y < comBuffer.Count)
                     {
@@ -70,8 +60,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                         if (y >= comBuffer.Count)
                         {
 							redundantBytes.Clear();
-							//Console.WriteLine($"COM BUFFER 1 SIZE {comBuffer.Count}");
-							redundantBytes.Add(comBuffer[y - 1]);
+                            redundantBytes.Add(comBuffer[--y]);
 							break;
                         }
                         int packetStartIndex = --y;
@@ -81,7 +70,6 @@ namespace PCAN_UDS_TEST.DST_CAN
                         if (packetStartIndex + canPacketSize + 1 > comBuffer.Count)
                         {
                             redundantBytes.Clear();
-							//Console.WriteLine($"COM BUFFER 2 SIZE {comBuffer.Count}");
 							redundantBytes.AddRange(comBuffer.Skip(packetStartIndex).Take(14));
 							break;
                         }
@@ -102,6 +90,9 @@ namespace PCAN_UDS_TEST.DST_CAN
                 dataToSend.Insert(0, 0x24);
                 dataToSend.Add(CalculateCrc8(dataToSend.Skip(1).ToArray()));
                 serialPort.Write(dataToSend.ToArray(), 0, dataToSend.Count);
+                Console.Write("CAN MESSAGE SENT: ");
+                foreach (byte b in dataToSend) Console.Write($"{b:X2} ");
+                Console.WriteLine();
                 return true;
             }
             catch(Exception) { return false; }
@@ -150,7 +141,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 run = false;
-                ComMessageReceived -= DebugComReceiveMessage;
+                //ComMessageReceived -= DebugComReceiveMessage;
                 if (serialPort.IsOpen)
                 {
                     while (receiveThread.ThreadState != ThreadState.Stopped) ;

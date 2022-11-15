@@ -10,12 +10,12 @@
             add
             {
                 _canMessageReceived += value;
-                Console.WriteLine($"{value.Method.Name} subscribed to canMessageHandler");
+                //Console.WriteLine($"{value.Method.Name} subscribed to canMessageHandler");
             }
             remove
             {
                 _canMessageReceived -= value;
-                Console.WriteLine($"{value.Method.Name} unsubscribed from canMessageHandler");
+                //Console.WriteLine($"{value.Method.Name} unsubscribed from canMessageHandler");
             }
         }
 
