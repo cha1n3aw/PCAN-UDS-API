@@ -111,9 +111,9 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2200 }, out byte[] dataArray);
-                for (; ; i++)
+				byte numberOfMenus = dataArray[i++];
+				for (; ; i++)
                 {
-                    byte numberOfMenus = dataArray[i++];
                     byte address = dataArray[i++];
                     string menuName = string.Empty;
                     while (dataArray[i] != 0x00) menuName += (char)dataArray[i++];
@@ -122,7 +122,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2200 }, out dataArray);
-                        i = 1;
+                        i = 2;
                     }
                 }
                 return true;
@@ -140,10 +140,10 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) }, out byte[] dataArray);
-                for (; ; i++)
+				if (dataArray.Length < 5) return true;
+				byte numberOfSubmenus = dataArray[i++];
+				for (; ; i++)
                 {
-                    if (dataArray.Length < 5) return true;
-                    byte numberOfSubmenus = dataArray[i++];
                     byte address = dataArray[i++];
                     string submenuName = string.Empty;
                     while (dataArray[i] != 0x00) submenuName += (char)dataArray[i++];
@@ -152,7 +152,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) }, out dataArray);
-                        i = 1;
+                        i = 2;
                     }
                 }
                 return true;
@@ -170,9 +170,9 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2201 }, out byte[] dataArray);
-                for (; ; i++)
+				byte numberOfGroups = dataArray[i++];
+				for (; ; i++)
                 {
-                    byte numberOfGroups = dataArray[i++];
                     byte address = dataArray[i++];
                     string groupName = string.Empty;
                     while (dataArray[i] != 0x00) groupName += (char)dataArray[i++];
@@ -181,7 +181,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2201 }, out dataArray);
-                        i = 1;
+                        i = 2;
                     }
                 }
                 return true;
@@ -199,10 +199,12 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2000 + (groupAddress << 4) + parameterAddress) }, out byte[] dataArray);
+                foreach (byte b in dataArray) Console.Write($"{b:X2} ");
+                Console.WriteLine();
                 if (dataArray.Length < 5) return true; //62 DIDHB DIDLB SIZE
-                for (; ; i++)
+				byte numberOfParameters = dataArray[i++];
+				for (; ; i++)
                 {
-                    byte numberOfParameters = dataArray[i++];
                     byte address = dataArray[i++];
                     if (dataArray[i] == 0x00)
                     {
@@ -223,7 +225,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2000 + (groupAddress << 4) + parameterAddress) }, out dataArray);
-                        i = 1;
+                        i = 2;
                     }
                 }
                 return true;
@@ -242,9 +244,9 @@ namespace PCAN_UDS_TEST.DST_CAN
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)((menuAddress << 7) + (subMenuAddress << 4) + parameterAddress) }, out byte[] dataArray);
                 if (dataArray.Length < 5) return true;
-                for (; ; i++)
+				byte numberOfParameters = dataArray[i++];
+				for (; ; i++)
                 {
-                    byte numberOfParameters = dataArray[i++];
                     byte address = dataArray[i++];
                     if (dataArray[i] == 0x00)
                     {
@@ -271,7 +273,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)((menuAddress << 7) + (subMenuAddress << 4) + parameterAddress) }, out dataArray);
-                        i = 1;
+                        i = 2;
                     }
                 }
                 return true;
@@ -289,9 +291,9 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2402 }, out byte[] dataArray);
-                for (; ; i++)
+				byte numberOfUnitcodes = dataArray[i++];
+				for (; ; i++)
                 {
-                    byte numberOfUnitcodes = dataArray[i++];
                     byte address = dataArray[i++];
                     string unitcode = string.Empty;
                     while (dataArray[i] != 0x00) unitcode += (char)dataArray[i++];
@@ -300,7 +302,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2402 }, out dataArray);
-                        i = 1;
+                        i = 2;
                     }
                 }
                 return true;
@@ -318,10 +320,10 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2403 }, out byte[] dataArray);
-                for (; ; i++)
+				ushort numberOfListDescriptions = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
+				byte maxNumberOfListEntries = dataArray[i++];
+				for (; ; i++)
                 {
-                    ushort numberOfListDescriptions = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
-                    byte maxNumberOfListEntries = dataArray[i++];
                     ushort address = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
                     string listEntryString = string.Empty;
                     while (dataArray[i] != 0x00) listEntryString += (char)dataArray[i++];
@@ -331,7 +333,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2403 }, out dataArray);
-                        i = 1;
+                        i = 4;
                     }
                 }
                 return true;
@@ -349,9 +351,9 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2404 }, out byte[] dataArray);
-                for (; ; i++)
+				byte numberOfErrors = dataArray[i++];
+				for (; ; i++)
                 {
-                    byte numberOfErrors = dataArray[i++];
                     byte address = dataArray[i++];
                     ushort code = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
                     byte parameter = dataArray[i++];
@@ -365,7 +367,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2404 }, out dataArray);
-                        i = 1;
+                        i = 2;
                     }
                 }
                 return true;
@@ -383,9 +385,9 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2405 }, out byte[] dataArray);
-                for (; ; i++)
+				byte numberOfErrors = dataArray[i++];
+				for (; ; i++)
                 {
-                    byte numberOfErrors = dataArray[i++];
                     byte address = dataArray[i++];
                     ushort code = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
                     byte parameter = dataArray[i++];
@@ -399,7 +401,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2405 }, out dataArray);
-                        i = 1;
+                        i = 2;
                     }
                 }
                 return true;
