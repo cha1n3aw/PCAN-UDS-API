@@ -1,12 +1,9 @@
 ﻿using PCAN_UDS_TEST.PCAN;
-using Peak.Can.Uds;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static PCAN_UDS_TEST.DST_CAN.DstUdsServiceHandler;
 using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIER;
+using ACCESS_LEVEL = Peak.Can.Uds.UDSApi.UDS_ACCESS_LEVEL;
+using SERVICE_DSC = Peak.Can.Uds.UDSApi.UDS_SERVICE_DSC;
+using SERVICE_PARAMETER_ECU_RESET = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET;
+using SERVICE_ERRORS_TYPE = Peak.Can.Uds.UDSApi.UDS_SERVICE_ERRORS_TYPE;
 
 namespace PCAN_UDS_TEST.DST_CAN
 {
@@ -25,7 +22,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             _responseFlag = new AutoResetEvent(false);
         }
 
-        public bool Authenticate(UDSApi.UDS_SERVICE_DSC sessionType, UDSApi.UDS_ACCESS_LEVEL accessLevel)
+        public bool Authenticate(SERVICE_DSC sessionType, ACCESS_LEVEL accessLevel)
         {
             try
             {
@@ -39,7 +36,7 @@ namespace PCAN_UDS_TEST.DST_CAN
         }
 
         #region UdsServiceWrappers
-        public bool ResetECU(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
+        public bool ResetECU(SERVICE_PARAMETER_ECU_RESET resetParameter)
         {
             try
             {
@@ -65,7 +62,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             }
         }
 
-        public bool UdsGetErrorsList(byte dtcType, UDSApi.UDS_SERVICE_ERRORS_TYPE statusMask, out List<byte> response)
+        public bool UdsGetErrorsList(byte dtcType, SERVICE_ERRORS_TYPE statusMask, out List<byte> response)
         {
             response = new();
             try
@@ -78,7 +75,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             }
         }
 
-        public bool UdsSetSecurityAccessLevel(UDSApi.UDS_ACCESS_LEVEL accessLevel)
+        public bool UdsSetSecurityAccessLevel(ACCESS_LEVEL accessLevel)
         {
             try
             {
@@ -114,9 +111,9 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2200 }, out byte[] dataArray);
-                byte numberOfMenus = dataArray[i++];
                 for (; ; i++)
                 {
+                    byte numberOfMenus = dataArray[i++];
                     byte address = dataArray[i++];
                     string menuName = string.Empty;
                     while (dataArray[i] != 0x00) menuName += (char)dataArray[i++];
@@ -125,7 +122,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2200 }, out dataArray);
-                        i = 2;
+                        i = 1;
                     }
                 }
                 return true;
@@ -143,10 +140,10 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) }, out byte[] dataArray);
-                byte numberOfSubmenus = dataArray[i++];
-                if (dataArray.Length < 5) return true;
                 for (; ; i++)
                 {
+                    if (dataArray.Length < 5) return true;
+                    byte numberOfSubmenus = dataArray[i++];
                     byte address = dataArray[i++];
                     string submenuName = string.Empty;
                     while (dataArray[i] != 0x00) submenuName += (char)dataArray[i++];
@@ -155,7 +152,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2201 + menuAddress) }, out dataArray);
-                        i = 2;
+                        i = 1;
                     }
                 }
                 return true;
@@ -171,11 +168,11 @@ namespace PCAN_UDS_TEST.DST_CAN
             groupList = new();
             try
             {
-                int i = 3;
+                int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2201 }, out byte[] dataArray);
-                byte numberOfGroups = dataArray[i++];
                 for (; ; i++)
                 {
+                    byte numberOfGroups = dataArray[i++];
                     byte address = dataArray[i++];
                     string groupName = string.Empty;
                     while (dataArray[i] != 0x00) groupName += (char)dataArray[i++];
@@ -184,7 +181,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (i == dataArray.Length - 1)
                     {
                         SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2201 }, out dataArray);
-                        i = 3;
+                        i = 1;
                     }
                 }
                 return true;
@@ -448,7 +445,7 @@ namespace PCAN_UDS_TEST.DST_CAN
         {
 			while (true)
             {
-				Thread.Sleep(3000);
+				Thread.Sleep(3500);
 				Console.WriteLine("TesterPresent executed");
                 while (_servicePending) Thread.Sleep(10);
                 _servicePending = true;
@@ -466,7 +463,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             _servicePending = false;
         }
 
-        public bool SendDiagnosticSessionControl(UDSApi.UDS_SERVICE_DSC sessionType)
+        public bool SendDiagnosticSessionControl(SERVICE_DSC sessionType)
         {
             Console.WriteLine("DSC pending");
             while (_servicePending) Thread.Sleep(1);
@@ -484,7 +481,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             else return false;
         }
 
-        private bool SendSecurityAccess(UDSApi.UDS_ACCESS_LEVEL securityAccessLevel, out List<byte> securitySeed)
+        private bool SendSecurityAccess(ACCESS_LEVEL securityAccessLevel, out List<byte> securitySeed)
         {
             Console.WriteLine("Security access pending");
             while (_servicePending) Thread.Sleep(1);
@@ -500,9 +497,6 @@ namespace PCAN_UDS_TEST.DST_CAN
                 return false;
             }
             securitySeed = dstUdsServiceResponseMessage.Data.Skip(1).ToList();
-            //Console.Write("Received seed: ");
-            //foreach (byte b in securitySeed) Console.Write($"{b:X2} ");
-            //Console.WriteLine();
             if (dstUdsServiceResponseMessage.SID == 0x67) return true;
             else return false;
         }
@@ -527,7 +521,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             else return false;
         }
 
-        private bool SendEcuReset(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET resetParameter)
+        private bool SendEcuReset(SERVICE_PARAMETER_ECU_RESET resetParameter)
         {
             Console.WriteLine("ECU Reset pending");
             while (_servicePending) Thread.Sleep(1);
