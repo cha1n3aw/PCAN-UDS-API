@@ -6,14 +6,6 @@ using DATA_IDENTIFIER = Peak.Can.Uds.UDSApi.UDS_SERVICE_PARAMETER_DATA_IDENTIFIE
 
 namespace PCAN_UDS_TEST.PCAN
 {
-    #region Structs
-    public struct ListEntry
-    {
-        public byte address;
-        public Dictionary<byte, string> listEntries;
-    }
-    #endregion
-
     public class PcanUdsServiceHandler
     {
         #region GlobalParameters
@@ -340,7 +332,7 @@ namespace PCAN_UDS_TEST.PCAN
             }
         }
 
-        public bool UdsGetListDescriptions(out List<ListEntry> listDescriptions)
+        public bool UdsGetListDescriptions(out Dictionary<byte, Dictionary<byte, string>> listDescriptions)
         {
             listDescriptions = new();
             try
@@ -354,9 +346,9 @@ namespace PCAN_UDS_TEST.PCAN
                     ushort address = (ushort)((dataArray[i++] << 8) + dataArray[i++]);
                     string listEntryString = string.Empty;
                     while (dataArray[i] != 0x00) listEntryString += (char)dataArray[i++];
-                    if (listDescriptions.Any(x => x.address == address / maxNumberOfListEntries)) listDescriptions.First(x => x.address == address / maxNumberOfListEntries).listEntries.Add((byte)(address % maxNumberOfListEntries), listEntryString);
-                    else listDescriptions.Add(new ListEntry() { address = (byte)(address / maxNumberOfListEntries), listEntries = new Dictionary<byte, string>(new[] { new KeyValuePair<byte, string>((byte)(address % maxNumberOfListEntries), listEntryString) }) });
-                    if (listDescriptions.Count == numberOfListDescriptions / maxNumberOfListEntries) break;
+                    if (!listDescriptions.Any(x => x.Key == address / maxNumberOfListEntries)) listDescriptions.Add((byte)(address / maxNumberOfListEntries), new Dictionary<byte, string>(new[] { new KeyValuePair<byte, string>((byte)(address % maxNumberOfListEntries), listEntryString) }));
+                    else listDescriptions.First(x => x.Key == address / maxNumberOfListEntries).Value.Add((byte)(address % maxNumberOfListEntries), listEntryString);
+                    if (listDescriptions.Values.SelectMany(x => x).Distinct().Count() == numberOfListDescriptions) break;
                     if (i == dataArray.Length - 1)
                     {
                         dataArray = SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x1263 });
