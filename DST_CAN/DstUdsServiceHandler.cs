@@ -169,7 +169,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             try
             {
                 int i = 2;
-                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2201 }, out byte[] dataArray);
+                SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2401 }, out byte[] dataArray);
 				byte numberOfGroups = dataArray[i++];
 				for (; ; i++)
                 {
@@ -180,7 +180,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     if (groupList.Count == numberOfGroups) break;
                     if (i == dataArray.Length - 1)
                     {
-                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2201 }, out dataArray);
+                        SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)0x2401 }, out dataArray);
                         i = 2;
                     }
                 }
@@ -199,9 +199,7 @@ namespace PCAN_UDS_TEST.DST_CAN
             {
                 int i = 2;
                 SendReadDataByIdentifier(new DATA_IDENTIFIER[] { (DATA_IDENTIFIER)(0x2000 + (groupAddress << 4) + parameterAddress) }, out byte[] dataArray);
-                foreach (byte b in dataArray) Console.Write($"{b:X2} ");
-                Console.WriteLine();
-                if (dataArray.Length < 5) return true; //62 DIDHB DIDLB SIZE
+                if (dataArray.Length < 4) return true; //DIDHB DIDLB SIZE
 				byte numberOfParameters = dataArray[i++];
 				for (; ; i++)
                 {
@@ -219,7 +217,7 @@ namespace PCAN_UDS_TEST.DST_CAN
                     data.valueType = dataArray[i++];
                     data.digits = (ushort)(dataArray[i++] << 8 | dataArray[i++]);
                     data.unitCode = dataArray[i++];
-                    data.accessLevel = dataArray[i++];
+                    data.accessLevel = dataArray[i];
                     parameterList.Add(address, data);
                     if (parameterList.Count == numberOfParameters) break;
                     if (i == dataArray.Length - 1)
