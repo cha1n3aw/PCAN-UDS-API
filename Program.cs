@@ -329,14 +329,14 @@ namespace PCAN_UDS_TEST
             udsServiceHandler.Authenticate(UDS_SERVICE_DSC.ECU_EXTENDED_DIAGNOSTIC_SESSION, UDS_ACCESS_LEVEL.DEVELOPER);
             //udsServiceHandler.ResetECU(UDSApi.UDS_SERVICE_PARAMETER_ECU_RESET.SOFT_RESET);
 
-            udsServiceHandler.UdsGetParameterMenus(out Dictionary<byte, string> menuList);
-            foreach (KeyValuePair<byte, string> menu in menuList) Console.WriteLine($"{menu.Key} - {menu.Value}");
+            //udsServiceHandler.UdsGetParameterMenus(out Dictionary<byte, string> menuList);
+            //foreach (KeyValuePair<byte, string> menu in menuList) Console.WriteLine($"{menu.Key} - {menu.Value}");
 
-            //udsServiceHandler.UdsGetParameterSubmenus(0x00, out Dictionary<byte, string> subMenuList);
+            //udsServiceHandler.UdsGetParameterSubmenus(0x10, out Dictionary<byte, string> subMenuList);
             //foreach (KeyValuePair<byte, string> subMenu in subMenuList) Console.WriteLine($"{subMenu.Key} - {subMenu.Value}");
 
-            //udsServiceHandler.UdsGetParameters(0x00, 0x00, 0x08, out Dictionary<byte, Data> parameterList);
-            //foreach (KeyValuePair<byte, Data> parameter in parameterList) Console.WriteLine($"{parameter.Key} - {parameter.Value.name}");
+            udsServiceHandler.UdsGetParameters(0x00, 0x00, 0x08, out Dictionary<byte, Data> parameterList);
+            foreach (KeyValuePair<byte, Data> parameter in parameterList) Console.WriteLine($"{parameter.Key} - {parameter.Value.name}");
 
             //udsServiceHandler.UdsGetProcessDataGroups(out Dictionary<byte, string> groupList);
             //foreach (var group in groupList) Console.WriteLine($"{group.Key} - {group.Value}");
